@@ -25,6 +25,15 @@ Passes parsePass(std::string pass) {
 		return BITANGENT;
 }
 */
+
+class RngGenerator {
+
+public:
+	uint32_t seed = 328;
+	RngGenerator(uint32_t _seed);
+	float next();
+};
+
 struct dev_Scene {
     Camera* camera;
 
@@ -44,6 +53,8 @@ struct dev_Scene {
     HDRI* hdri;
 
     float dev_passes[PASSES_COUNT * 1920 * 1080 * 4];
+	float dev_samples[1920 * 1080];
+	RngGenerator dev_randstate[1920 * 1080];
 };
 
 struct RenderParameters {

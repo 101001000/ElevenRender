@@ -22,30 +22,25 @@
 
 // TODO HACER ESTO CON MEMORIA DINÁMICA PARA ELIMINAR EL MÁXIMO DE 1920*1080
 
-class RngGenerator {
-   public:
-    uint32_t seed = 328;
+RngGenerator::RngGenerator(uint32_t _seed) {
+    this->seed = _seed + 1;
+    for (int i = 0; i < _seed; i++) this->next();
+}
 
-    RngGenerator(uint32_t _seed) {
-        this->seed = _seed + 1;
-        for (int i = 0; i < _seed; i++) this->next();
-    }
-
-    float next() {
-        seed ^= seed << 13;
-        seed ^= seed >> 17;
-        seed ^= seed << 5;
-        return ((float)seed / (float)UINT_MAX);
-    }
-};
+float RngGenerator::next() {
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
+    return ((float)seed / (float)UINT_MAX);
+}
 
 unsigned long textureMemory = 0;
 unsigned long geometryMemory = 0;
 
 //auto dev_passes = cl::sycl::buffer<float>(PASSES_COUNT * 1920 * 1080 * 4);
 auto dev_samples = cl::sycl::buffer<unsigned int>(1920 * 1080);
-auto dev_pathcount = cl::sycl::buffer<unsigned int>(1920 * 1080);
-auto dev_randstate = cl::sycl::buffer<RngGenerator>(1920 * 1080);
+//auto dev_pathcount = cl::sycl::buffer<unsigned int>(1920 * 1080);
+//auto dev_randstate = cl::sycl::buffer<RngGenerator>(1920 * 1080);
 
 
 void generateHitData(dev_Scene* dev_scene_g, Material* material,
@@ -120,11 +115,9 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     hitdata.bitangent = bitangent;
 }
 
-void setupKernel(cl::sycl::accessor<unsigned int> dev_samples,
-                 cl::sycl::accessor<RngGenerator> dev_randstate,
-                 dev_Scene* dev_scene_g, int idx, sycl::stream out) {
+void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
     
-    dev_randstate[idx] = RngGenerator(idx);
+    dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
 
     for (int i = 0; i < PASSES_COUNT; i++) {
         dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
@@ -141,7 +134,7 @@ void setupKernel(cl::sycl::accessor<unsigned int> dev_samples,
                    (4 * idx + 3)] = 1.0;
     }
 
-    dev_samples[idx] = 0;
+    dev_scene_g->dev_samples[idx] = 0;
 
     if (idx == 0) {
         int triSum = 0;
@@ -388,14 +381,11 @@ void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
     bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
 }
 
-void renderingKernel(//cl::sycl::accessor<float> dev_passes,
-                     cl::sycl::accessor<unsigned int> dev_samples,
-                     cl::sycl::accessor<RngGenerator> dev_randstate,
-                     dev_Scene* scene, int idx, sycl::stream out) {
+void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
 
-    RngGenerator rnd = dev_randstate[idx];
+    RngGenerator rnd = scene->dev_randstate[idx];
 
-    unsigned int sa = dev_samples[idx];
+    unsigned int sa = scene->dev_samples[idx];
 
     Ray ray;
 
@@ -507,10 +497,10 @@ void renderingKernel(//cl::sycl::accessor<float> dev_passes,
         scene->dev_passes[(BITANGENT * 1920 * 1080 * 4) + (4 * idx + 2)] +=
             bitangent.z / ((float)sa + 1);
 
-        dev_samples[idx]++;
+        scene->dev_samples[idx]++;
     }
 
-    dev_randstate[idx] = rnd;
+    scene->dev_randstate[idx] = rnd;
 }
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
@@ -548,8 +538,10 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     Tri* dev_tris = sycl::malloc_device<Tri>(triCount, q);
     BVH* dev_bvh = sycl::malloc_device<BVH>(1, q);
     int* dev_triIndices = sycl::malloc_device<int>(triCount, q);
-    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * 1920 * 1080 * 4, q);
 
+    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * 1920 * 1080 * 4, q);
+    float* dev_samples = sycl::malloc_device<float>(1920 * 1080, q);
+    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(1920 * 1080, q);
 
     geometryMemory += sizeof(MeshObject) * meshObjectCount +
                       sizeof(Tri) * triCount + sizeof(BVH) +
@@ -582,6 +574,8 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     q.memcpy(&(dev_scene->tris), &(dev_tris), sizeof(Tri*)).wait();
     q.memcpy(&(dev_scene->bvh), &(dev_bvh), sizeof(BVH*)).wait();
     q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
+    q.memcpy(&(dev_scene->dev_samples), &(dev_samples), sizeof(float*)).wait();
+    q.memcpy(&(dev_scene->dev_randstate), &(dev_randstate), sizeof(RngGenerator*)).wait();
 
     q.memcpy(&(dev_bvh->tris), &(dev_tris), sizeof(Tri*)).wait();
     q.memcpy(&(dev_bvh->triIndices), &(dev_triIndices), sizeof(int*)).wait();
@@ -682,17 +676,10 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto cg = [&](sycl::handler& h) {
         sycl::stream out = sycl::stream(1024, 256, h);
-        //auto dev_passes_acc =
-       //     dev_passes.get_access<cl::sycl::access::mode::read_write>(h);
-        auto dev_samples_acc =
-            dev_samples.get_access<cl::sycl::access::mode::read_write>(h);
-        auto dev_randstate_acc =
-            dev_randstate.get_access<cl::sycl::access::mode::read_write>(h);
-
+       
         h.parallel_for(sycl::range(camera->xRes * camera->yRes),
                        [=](sycl::id<1> i) {
-                           setupKernel(dev_samples_acc,
-                                       dev_randstate_acc, dev_scene, i, out);
+                           setupKernel(dev_scene, i, out);
                        });
     };
 
@@ -706,17 +693,9 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
             sycl::stream out = sycl::stream(1024, 256, h);
 
-            //auto dev_passes_acc =
-            //    dev_passes.get_access<cl::sycl::access::mode::read_write>(h);
-            auto dev_samples_acc =
-                dev_samples.get_access<cl::sycl::access::mode::read_write>(h);
-            auto dev_randstate_acc =
-                dev_randstate.get_access<cl::sycl::access::mode::read_write>(h);
-
             h.parallel_for(
                 sycl::range(camera->xRes * camera->yRes), [=](sycl::id<1> i) {
-                    renderingKernel(dev_samples_acc,
-                        dev_randstate_acc, dev_scene, i, out);
+                    renderingKernel(dev_scene, i, out);
                 });
         };
 

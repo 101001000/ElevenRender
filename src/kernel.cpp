@@ -581,7 +581,8 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     q.memcpy(&(dev_scene->camera), &(dev_camera), sizeof(Camera*)).wait();
     q.memcpy(&(dev_scene->tris), &(dev_tris), sizeof(Tri*)).wait();
     q.memcpy(&(dev_scene->bvh), &(dev_bvh), sizeof(BVH*)).wait();
-    
+    q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
+
     q.memcpy(&(dev_bvh->tris), &(dev_tris), sizeof(Tri*)).wait();
     q.memcpy(&(dev_bvh->triIndices), &(dev_triIndices), sizeof(int*)).wait();
 
@@ -770,17 +771,23 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int
 
     */
     
+    float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
+
+    q.memcpy(a, dev_scene->dev_passes, 1920 * 1080 * 4 * PASSES_COUNT).wait();
+
     for (int i = 0; i < PASSES_COUNT; i++) {
         printf("\nRetrieving pass %d\n", i);
         for (int j = 0; j < size; j++) {
             int n = i * size * 4;
-            renderData.passes[i][j * 4 + 0] = dev_scene->dev_passes[n + j * 4 + 0];
-            renderData.passes[i][j * 4 + 1] = dev_scene->dev_passes[n + j * 4 + 1];
-            renderData.passes[i][j * 4 + 2] = dev_scene->dev_passes[n + j * 4 + 2];
-            renderData.passes[i][j * 4 + 3] = dev_scene->dev_passes[n + j * 4 + 3];
+            renderData.passes[i][j * 4 + 0] = a[n + j * 4 + 0];
+            renderData.passes[i][j * 4 + 1] = a[n + j * 4 + 1];
+            renderData.passes[i][j * 4 + 2] = a[n + j * 4 + 2];
+            renderData.passes[i][j * 4 + 3] = a[n + j * 4 + 3];
         }
     }
     
+    delete[] a;
+
     return 0;
 }
 

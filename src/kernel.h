@@ -7,24 +7,8 @@
 
 enum Passes {BEAUTY, DENOISE, NORMAL, TANGENT, BITANGENT};
 
-/*
+Passes parsePass(std::string pass);
 
-Passes parsePass(std::string pass) {
-
-	std::transform(pass.begin(), pass.end(), pass.begin(), ::tolower);
-
-	if (pass.compare("beauty") == 0)
-		return BEAUTY;
-	if (pass.compare("denoise") == 0)
-		return BITANGENT;
-	if (pass.compare("normal") == 0)
-		return NORMAL;
-	if (pass.compare("tangent") == 0)
-		return TANGENT;
-	if (pass.compare("bitangent") == 0)
-		return BITANGENT;
-}
-*/
 
 class RngGenerator {
 
@@ -53,7 +37,7 @@ struct dev_Scene {
     HDRI* hdri;
 
     float dev_passes[PASSES_COUNT * 1920 * 1080 * 4];
-	float dev_samples[1920 * 1080];
+	unsigned int dev_samples[1920 * 1080];
 	RngGenerator dev_randstate[1920 * 1080];
 };
 
@@ -135,5 +119,5 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData,
                int* pathcountBuffer,
                int size);
 
-int getSamples();
+int getSamples(dev_Scene* dev_scene, sycl::queue& q);
 

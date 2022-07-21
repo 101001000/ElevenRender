@@ -12,6 +12,7 @@
 //Forward declaration
 class CommandManager;
 
+
 class Manager {
 
 public:
@@ -19,6 +20,15 @@ public:
     Manager(CommandManager* _cm);
 };
 
+
+class SceneManager : Manager {
+    
+public:
+    Scene scene;
+    SceneLoader sceneLoader;
+
+    using Manager::Manager;
+};
 
 class RenderingManager : Manager {
     

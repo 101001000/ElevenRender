@@ -103,19 +103,11 @@ int main(int argc, char* argv[]) {
 
     CommandManager cm;
     cm.init();
-    
-    std::cout << "TEST" << std::endl;
 
-    int i = 1;
-
-    while (1) {
-        if (i == 1000000)
-            std::cout << " ";
-        i++;
-    }
+    while (1)
+        __asm("");
 
     return 0;
-  
 }
 
 

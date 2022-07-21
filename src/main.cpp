@@ -97,7 +97,7 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
 }
 
 
-/*
+
 
 int main(int argc, char* argv[]) {
 
@@ -115,9 +115,11 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-    
+  
 }
-*/
+
+
+/*
 
 int main(int argc, char* argv[]) {
 
@@ -223,5 +225,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
+*/
 

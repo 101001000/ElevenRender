@@ -7,7 +7,9 @@ CommandManager::CommandManager() {
     dm = std::make_shared<DenoiseManager>(this);}
 
 void CommandManager::open_window() {
-    wm->start();
+    //wm->start();
+    wm_t = std::thread(&WindowManager::run, this->wm);
+    //wm->run();
 }
 
 void CommandManager::close_window() {
@@ -19,10 +21,9 @@ void CommandManager::toggle_window() {
 }
 
 void CommandManager::change_preview(std::string pass) {
-    //wm->setPreviewData(rm->get_pass(pass));
+    wm->set_preview_data(rm->get_pass(pass));
 }
 
 void CommandManager::init() {
-
     im_t = std::thread(&InputManager::run, this->im);
 }

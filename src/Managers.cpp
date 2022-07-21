@@ -9,6 +9,7 @@ void InputManager::run() {
     desc.add_options()
         ("help", "produce help message")
         ("window", po::value<bool>(), "open or close preview window")
+        ("preview_pass", po::value<std::string>(), "preview some pass")
         ("start", "start rendering")
         ("stop", "stop rendering")
         ("load_obj", po::value<std::string>(), "load wavefront obj from file path")
@@ -54,6 +55,12 @@ void InputManager::run() {
             }
         }
 
+        if (vm.count("preview_pass")) {
+            cm->change_preview(vm["preview_pass"].as<std::string>());
+        }
+
+       
+
         for (const char* c : argv) {
 
             if (strcmp(c,"ElevenRender") != 0) {
@@ -65,9 +72,19 @@ void InputManager::run() {
 
 
 WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080), is_open(false) {
+
     pb.width = 1920;
     pb.height = 1080;
     pb.channels = 4;
+    pb.data = new float[1920 * 1080 * 4];
+
+    for (int i = 0; i < 1920 * 1080; i++) {
+        pb.data[i * 4 + 0] = 0;
+        pb.data[i * 4 + 1] = 0;
+        pb.data[i * 4 + 2] = 1;
+        pb.data[i * 4 + 3] = 1;
+    }
+
     window.previewBuffer = pb;
 };
 
@@ -82,11 +99,28 @@ void WindowManager::close() {
 }
 
 void WindowManager::set_preview_data(float* data) {
-
+    pb.data = data;
 }
 
 void WindowManager::run() {
-    window.renderUpdate();
+
+    std::cout << "starting" << std::endl;
+
+    start();
+
+    std::cout << "running" << std::endl;
+
+    while (!glfwWindowShouldClose(window.window)) {
+        // TODO make this a reference
+
+        //std::cout << "upadte" << std::endl;
+
+        window.previewBuffer = pb;
+        window.renderUpdate();
+        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
+    }
+
+    std::cout << "out" << std::endl;
 }
 
 
@@ -103,11 +137,50 @@ public:
     }
 };
 
-
-
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     q = sycl::queue(CUDASelector());
     dev_Scene* dev_scene = sycl::malloc_device<dev_Scene>(1, q);
+}
+
+
+float* RenderingManager::get_pass(std::string pass) {
+    
+    printf("\nRetrieving pass %d\n", parsePass(pass));
+
+
+
+    //TODO load just one pass at the time.
+
+    /*
+
+    float* r = new float[1920 * 1080 * 4];
+
+    for (int i = 0; i < 1920 * 1080; i++) {
+        r[i * 4 + 0] = ((float)parsePass(pass))/((float)PASSES_COUNT);
+        r[i * 4 + 1] = 0;
+        r[i * 4 + 2] = 0;
+        r[i * 4 + 3] = 1;
+    }
+
+    return r;
+    */
+
+    float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
+    float* pass_result = new float[1920 * 1080 * 4];
+
+    q.memcpy(a, dev_scene->dev_passes, 1920 * 1080 * 4 * PASSES_COUNT).wait();
+
+    for (int j = 0; j < rp.width * rp.height; j++) {
+        int n = parsePass(pass) * rp.width * rp.height * 4;
+        pass_result[j * 4 + 0] = a[n + j * 4 + 0];
+        pass_result[j * 4 + 1] = a[n + j * 4 + 1];
+        pass_result[j * 4 + 2] = a[n + j * 4 + 2];
+        pass_result[j * 4 + 3] = a[n + j * 4 + 3];
+    }
+
+    delete[] a;
+
+    return pass_result;
 }
 
 /*

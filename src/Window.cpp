@@ -51,13 +51,11 @@ void checkCompileErrors(GLuint shader, std::string type)
 
 
 
-Window::Window(int _width, int _height){
+Window::Window(int _width, int _height) : width(_width), height(_height){
 	width = _width; height = _height;
 }
 
 int Window::init() {
-
-
 
 	// glfw: initialize and configure
 	// ------------------------------
@@ -81,6 +79,7 @@ int Window::init() {
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
@@ -134,7 +133,6 @@ int Window::init() {
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 
-
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 	float vertices[] = {
@@ -171,7 +169,6 @@ int Window::init() {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-
 	// load and create a texture 
 	// -------------------------
 
@@ -184,7 +181,6 @@ int Window::init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// load image, create texture and generate mipmaps
-
 
 	// render loop
 	// -----------

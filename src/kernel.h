@@ -9,7 +9,6 @@ enum Passes {BEAUTY, DENOISE, NORMAL, TANGENT, BITANGENT};
 
 Passes parsePass(std::string pass);
 
-
 class RngGenerator {
 
 public:

@@ -19,54 +19,59 @@ void InputManager::run() {
 
     while (1) {
 
-        std::string sinput;
-        std::string s;
-        po::variables_map vm;
+        try {
 
-        std::vector<const char*> argv;
+            std::string sinput;
+            std::string s;
+            po::variables_map vm;
 
-        std::getline(std::cin, sinput);
-        std::istringstream iss(sinput);
+            std::vector<const char*> argv;
 
-        argv.push_back("ElevenRender");
+            std::getline(std::cin, sinput);
+            std::istringstream iss(sinput);
 
-        while (iss >> std::quoted(s)) {
-            char* c = new char[s.size()];
-            strcpy(c, s.c_str());
-            argv.push_back(c);
-        }
+            argv.push_back("ElevenRender");
 
-        po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
-        po::notify(vm);
-
-        if (vm.count("help")) {
-            std::cout << desc << "\n";
-        }
-
-        if (vm.count("window")) {
-
-            if (vm["window"].as<bool>()) {
-                std::cout << "Opening preview window";
-                cm->open_window();
+            while (iss >> std::quoted(s)) {
+                char* c = new char[s.size()];
+                strcpy(c, s.c_str());
+                argv.push_back(c);
             }
-            else {
-                std::cout << "Closing preview window";
-                cm->close_window();
+
+            po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
+            po::notify(vm);
+
+            if (vm.count("help")) {
+                std::cout << desc << "\n";
             }
-        }
 
-        if (vm.count("preview_pass")) {
-            cm->change_preview(vm["preview_pass"].as<std::string>());
-        }
+            if (vm.count("window")) {
 
-       
-
-        for (const char* c : argv) {
-
-            if (strcmp(c,"ElevenRender") != 0) {
-                delete[] c;
+                if (vm["window"].as<bool>()) {
+                    std::cout << "Opening preview window";
+                    cm->open_window();
+                }
+                else {
+                    std::cout << "Closing preview window";
+                    cm->close_window();
+                }
             }
+
+            if (vm.count("preview_pass")) {
+                cm->change_preview(vm["preview_pass"].as<std::string>());
+            }
+
+            for (const char* c : argv) {
+
+                if (strcmp(c, "ElevenRender") != 0) {
+                    delete[] c;
+                }
+            }
+
+        } catch (std::exception const& e) {
+            std::cerr << e.what() << "\n";
         }
+
     }
 }
 

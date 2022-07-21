@@ -48,6 +48,8 @@ Passes parsePass(std::string pass) {
         return TANGENT;
     if (pass.compare("bitangent") == 0)
         return BITANGENT;
+
+    return BEAUTY;
 }
 
 unsigned long textureMemory = 0;

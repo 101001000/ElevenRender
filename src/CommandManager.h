@@ -14,6 +14,7 @@ public:
     std::shared_ptr<DenoiseManager> dm;
 
     std::thread im_t;
+    std::thread wm_t;
     std::thread dm_t;
 
     CommandManager();

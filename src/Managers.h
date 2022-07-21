@@ -25,7 +25,7 @@ class SceneManager : Manager {
     
 public:
     Scene scene;
-    SceneLoader sceneLoader;
+    //SceneLoader sceneLoader;
 
     using Manager::Manager;
 };
@@ -35,6 +35,7 @@ class RenderingManager : Manager {
 public:
 
     dev_Scene* dev_scene;
+    RenderParameters rp;
     sycl::queue q;
 
     RenderingManager(CommandManager* _cm);

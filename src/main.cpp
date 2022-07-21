@@ -73,42 +73,6 @@ void startRender(sycl::queue& q, RenderData& data, Scene& scene, dev_Scene* devS
     data.startTime = std::chrono::high_resolution_clock::now();
 }
 
-/*
-
-void denoise(RenderData data, bool* terminate) {
-    int width = data.pars.width;
-    int height = data.pars.height;
-
-    int i = 0;
-
-    // TODO add stopping condition
-    while (true) {
-        //printf("Denoising...\n");
-
-        // Create a filter for denoising a beauty (color) image using optional
-        // auxiliary images too
-        OIDNFilter filter =
-            oidnNewFilter(device, "RT");  // generic ray tracing filter
-        oidnSetSharedFilterImage(filter, "color", data.passes[BEAUTY],
-                                 OIDN_FORMAT_FLOAT3, width, height, 0,
-                                 sizeof(float) * 4, 0);  // beauty
-        oidnSetFilter1b(filter, "hdr", true);            // beauty image is HDR
-        oidnSetSharedFilterImage(filter, "output", data.passes[DENOISE],
-                                 OIDN_FORMAT_FLOAT3, width, height, 0,
-                                 sizeof(float) * 4, 0);  // denoised beauty
-
-        oidnCommitFilter(filter);
-        oidnExecuteFilter(filter);
-
-        const char* errorMessage;
-        if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
-            printf("Error: %s\n", errorMessage);
-
-        // Cleanup
-        oidnReleaseFilter(filter);
-    }
-}
-*/
 void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
     int width = data.pars.width;
     int height = data.pars.height;
@@ -121,7 +85,7 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
     clampPixels(data.passes[BEAUTY], width, height);
     // applysRGB(data.passes[BEAUTY], width, height);
 
-    data.samples = getSamples();
+    data.samples = getSamples(dev_scene, q);
     data.pathCount = 0;
 
     /*

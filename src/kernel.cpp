@@ -34,14 +34,24 @@ float RngGenerator::next() {
     return ((float)seed / (float)UINT_MAX);
 }
 
+Passes parsePass(std::string pass) {
+
+    std::transform(pass.begin(), pass.end(), pass.begin(), ::tolower);
+
+    if (pass.compare("beauty") == 0)
+        return BEAUTY;
+    if (pass.compare("denoise") == 0)
+        return BITANGENT;
+    if (pass.compare("normal") == 0)
+        return NORMAL;
+    if (pass.compare("tangent") == 0)
+        return TANGENT;
+    if (pass.compare("bitangent") == 0)
+        return BITANGENT;
+}
+
 unsigned long textureMemory = 0;
 unsigned long geometryMemory = 0;
-
-//auto dev_passes = cl::sycl::buffer<float>(PASSES_COUNT * 1920 * 1080 * 4);
-auto dev_samples = cl::sycl::buffer<unsigned int>(1920 * 1080);
-//auto dev_pathcount = cl::sycl::buffer<unsigned int>(1920 * 1080);
-//auto dev_randstate = cl::sycl::buffer<RngGenerator>(1920 * 1080);
-
 
 void generateHitData(dev_Scene* dev_scene_g, Material* material,
                      HitData& hitdata, Hit hit) {
@@ -540,7 +550,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     int* dev_triIndices = sycl::malloc_device<int>(triCount, q);
 
     float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * 1920 * 1080 * 4, q);
-    float* dev_samples = sycl::malloc_device<float>(1920 * 1080, q);
+    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(1920 * 1080, q);
     RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(1920 * 1080, q);
 
     geometryMemory += sizeof(MeshObject) * meshObjectCount +
@@ -574,7 +584,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     q.memcpy(&(dev_scene->tris), &(dev_tris), sizeof(Tri*)).wait();
     q.memcpy(&(dev_scene->bvh), &(dev_bvh), sizeof(BVH*)).wait();
     q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
-    q.memcpy(&(dev_scene->dev_samples), &(dev_samples), sizeof(float*)).wait();
+    q.memcpy(&(dev_scene->dev_samples), &(dev_samples), sizeof(unsigned int*)).wait();
     q.memcpy(&(dev_scene->dev_randstate), &(dev_randstate), sizeof(RngGenerator*)).wait();
 
     q.memcpy(&(dev_bvh->tris), &(dev_tris), sizeof(Tri*)).wait();
@@ -731,25 +741,7 @@ int renderCuda(sycl::queue& q, Scene* scene, int sampleTarget) {
 int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int* pathcountBuffer,
                int size) {
 
-    /*
 
-    auto host_acc = dev_passes.get_access<sycl::access::mode::read>();
-
-    
-
-    for (int i = 0; i < PASSES_COUNT; i++) {
-        printf("\nRetrieving pass %d\n", i);
-        for (int j = 0; j < size; j++) {
-            int n = i * size * 4;
-            renderData.passes[i][j * 4 + 0] = host_acc[n + j * 4 + 0];
-            renderData.passes[i][j * 4 + 1] = host_acc[n + j * 4 + 1];
-            renderData.passes[i][j * 4 + 2] = host_acc[n + j * 4 + 2];
-            renderData.passes[i][j * 4 + 3] = host_acc[n + j * 4 + 3];
-        }
-    }
-
-    */
-    
     float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
 
     q.memcpy(a, dev_scene->dev_passes, 1920 * 1080 * 4 * PASSES_COUNT).wait();
@@ -770,9 +762,14 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int
     return 0;
 }
 
-int getSamples() {
-    auto host_acc = dev_samples.get_access<sycl::access::mode::read>();
-    return host_acc[0];
+int getSamples(dev_Scene* dev_scene, sycl::queue& q) {
+
+    unsigned int i;
+    unsigned int* a = new unsigned int[1920 * 1080];
+    q.memcpy(a, dev_scene->dev_samples, 1920 * 1080).wait();
+    i = a[0];
+    delete[] a;
+    return i;
 }
 
 void printHDRISampling(HDRI hdri, int samples) {

@@ -12,7 +12,7 @@
 
 #include "Material.hpp"
 #include "Tri.hpp"
-#include "Camera.hpp"
+#include "Camera.h"
 #include "BVH.h"
 #include "PointLight.hpp"
 #include "HDRI.hpp"

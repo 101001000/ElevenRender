@@ -1,5 +1,4 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 
 #include "Vector.hpp"
 
@@ -26,18 +25,10 @@ public:
 
 	Camera() {}
 
-	Camera(unsigned int _xRes, unsigned int _yRes) {
-		xRes = _xRes;
-		yRes = _yRes;
-		setSensorWidth(sensorWidth);
-	}
+	Camera(unsigned int _xRes, unsigned int _yRes);
 
-	void setSensorWidth(float size) {
-		sensorHeight = size * ((float)yRes / (float)xRes);
-	}
+	void setSensorWidth(float size);
 
 
 };
 
-
-#endif

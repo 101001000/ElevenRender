@@ -1,4 +1,4 @@
-#include "Camera.hpp"
+#include "Camera.h"
 #include "Scene.hpp"
 #include "HDRI.hpp"
 #include <CL/sycl.hpp>

@@ -11,7 +11,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "BVH.h"
-#include "Camera.hpp"
+#include "Camera.h"
 #include "Definitions.h"
 #include "PostProcessing.h"
 #include "Ray.hpp"

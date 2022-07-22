@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "BVH.h"
-#include "Camera.hpp"
+#include "Camera.h"
 #include "Definitions.h"
 #include "Disney.hpp"
 #include "HDRI.hpp"

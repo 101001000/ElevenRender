@@ -7,7 +7,7 @@
 #include <iostream>
 #include <limits>
 
-#include "BVH.hpp"
+#include "BVH.h"
 #include "Camera.hpp"
 #include "Definitions.h"
 #include "Disney.hpp"

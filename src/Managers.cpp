@@ -128,6 +128,13 @@ public:
     }
 };
 
+
+void RenderingManager::start_rendering(Scene* scene) {
+
+    //std::thread(renderSetup, std::ref(q), &scene, dev_scene);
+
+}
+
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     q = sycl::queue(CUDASelector());
     dev_Scene* dev_scene = sycl::malloc_device<dev_Scene>(1, q);

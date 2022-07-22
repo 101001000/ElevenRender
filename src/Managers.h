@@ -40,6 +40,7 @@ public:
 
     RenderingManager(CommandManager* _cm);
 
+    void start_rendering(Scene* scene);
     float* get_pass(std::string pass);
 
 };

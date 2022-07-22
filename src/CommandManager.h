@@ -16,6 +16,7 @@ public:
     std::thread im_t;
     std::thread wm_t;
     std::thread dm_t;
+    std::thread cm_t;
 
     CommandManager();
 
@@ -28,6 +29,8 @@ public:
     void change_preview(std::string pass);
 
 
+
+    void run();
     void init();
 
 };

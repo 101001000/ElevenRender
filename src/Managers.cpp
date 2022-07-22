@@ -86,6 +86,19 @@ WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1
     window.previewBuffer = pb;
 };
 
+void WindowManager::run() {
+
+    while (1) {
+        if (start_window) {
+            start();
+            start_window_mutex.lock();
+            start_window = false;
+            start_window_mutex.unlock();
+        }     
+        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
+    }
+}
+
 void WindowManager::start() {
     window.init();
     while (!glfwWindowShouldClose(window.window)) {

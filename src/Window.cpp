@@ -223,6 +223,7 @@ void Window::renderUpdate() {
 	// -------------------------------------------------------------------------------
 	glfwSwapBuffers(window);
 	glfwPollEvents();
+
 }
 
 void Window::stop() {

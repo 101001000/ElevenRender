@@ -105,35 +105,7 @@ public:
         hit.normal = geomNormal;
         hit.position = geomPosition;
 #endif
-
-        //http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
-        /*
-        Vector3 edgeUV1 = uv[1] - uv[0];
-        Vector3 edgeUV2 = uv[2] - uv[0];
-        float r = 1.0f / (edgeUV1.x * edgeUV2.y - edgeUV1.y * edgeUV2.x);
-        hit.tangent = ((edge1 * edgeUV2.y - edge2 * edgeUV1.y) * r).normalized();
-        hit.bitangent = ((edge2 * edgeUV1.x - edge1 * edgeUV2.x) * r).normalized();
-        /*
-        hit.tangent = (hit.tangent - N * Vector3::dot(N, hit.tangent)).normalized();
-        if (Vector3::dot(Vector3::cross(N, hit.tangent), hit.bitangent) < 0.0f) {
-           hit.tangent = hit.tangent * -1.0f;
-        }
-        hit.bitangent = Vector3::cross(hit.normal, hit.tangent).normalized();
-        if (Vector3::dot(Vector3::cross(hit.normal, hit.bitangent), hit.tangent) > 0.0f) {
-            hit.bitangent = hit.bitangent * -1.0f;
-        }
-        */
-        /*
-        float x1 = uv[1].x - uv[0].x;
-        float x2 = uv[2].x - uv[0].x;
-        float y1 = uv[1].y - uv[0].y;
-        float y2 = uv[2].y - uv[0].y;
-        float r = 1.0F / (x1 * y2 - x2 * y1);
-        hit.tangent =   ((edge1 * y2 - edge2 * y1) * r).normalized();
-        hit.bitangent = ((edge2 * x1 - edge1 * x2) * r).normalized();
-        hit.tangent = (hit.tangent - N * Vector3::dot(N, hit.tangent)).normalized();
-        */
-
+     
         hit.bitangent = tangentsSign * Vector3::cross(hit.normal, hit.tangent);
         hit.valid = true;
         hit.tu = tUV.x;

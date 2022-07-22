@@ -104,9 +104,6 @@ int main(int argc, char* argv[]) {
     CommandManager cm;
     cm.init();
 
-    while (1)
-        __asm("");
-
     return 0;
 }
 

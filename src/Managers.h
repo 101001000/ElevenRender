@@ -57,12 +57,14 @@ class WindowManager : Manager {
     Window window;
     PixelBuffer pb;
 
-
 public:
 
+    std::mutex start_window_mutex;
+    bool start_window = false;
 
     WindowManager(CommandManager* _cm);
 
+    void run();
     void start();
     void set_preview_data(float* data);
 

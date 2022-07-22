@@ -10,7 +10,7 @@
 
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "BVH.hpp"
+#include "BVH.h"
 #include "Camera.hpp"
 #include "Definitions.h"
 #include "PostProcessing.h"
@@ -97,7 +97,7 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
 }
 
 
-
+/*
 
 int main(int argc, char* argv[]) {
 
@@ -105,10 +105,9 @@ int main(int argc, char* argv[]) {
     cm.init();
 
     return 0;
-}
+}*/
 
 
-/*
 
 int main(int argc, char* argv[]) {
 
@@ -214,5 +213,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-*/
+
 

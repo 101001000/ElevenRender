@@ -8,7 +8,7 @@ void InputManager::run() {
 
     desc.add_options()
         ("help", "produce help message")
-        ("window", po::value<bool>(), "open or close preview window")
+        ("window", "open a preview window")
         ("preview_pass", po::value<std::string>(), "preview some pass")
         ("start", "start rendering")
         ("stop", "stop rendering")
@@ -46,15 +46,8 @@ void InputManager::run() {
             }
 
             if (vm.count("window")) {
-
-                if (vm["window"].as<bool>()) {
-                    std::cout << "Opening preview window";
-                    cm->open_window();
-                }
-                else {
-                    std::cout << "Closing preview window";
-                    cm->close_window();
-                }
+                std::cout << "Opening preview window";
+                cm->open_window();
             }
 
             if (vm.count("preview_pass")) {
@@ -76,7 +69,7 @@ void InputManager::run() {
 }
 
 
-WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080), is_open(false) {
+WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080) {
 
     pb.width = 1920;
     pb.height = 1080;
@@ -95,37 +88,17 @@ WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1
 
 void WindowManager::start() {
     window.init();
-    is_open = true;
-}
-
-void WindowManager::close() {
-    window.stop();
-    is_open = false;
-}
-
-void WindowManager::set_preview_data(float* data) {
-    pb.data = data;
-}
-
-void WindowManager::run() {
-
-    std::cout << "starting" << std::endl;
-
-    start();
-
-    std::cout << "running" << std::endl;
-
     while (!glfwWindowShouldClose(window.window)) {
         // TODO make this a reference
-
-        //std::cout << "upadte" << std::endl;
-
         window.previewBuffer = pb;
         window.renderUpdate();
         std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
     }
+    window.stop();
+}
 
-    std::cout << "out" << std::endl;
+void WindowManager::set_preview_data(float* data) {
+    pb.data = data;
 }
 
 
@@ -151,24 +124,6 @@ RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
 float* RenderingManager::get_pass(std::string pass) {
     
     printf("\nRetrieving pass %d\n", parsePass(pass));
-
-
-
-    //TODO load just one pass at the time.
-
-    /*
-
-    float* r = new float[1920 * 1080 * 4];
-
-    for (int i = 0; i < 1920 * 1080; i++) {
-        r[i * 4 + 0] = ((float)parsePass(pass))/((float)PASSES_COUNT);
-        r[i * 4 + 1] = 0;
-        r[i * 4 + 2] = 0;
-        r[i * 4 + 3] = 1;
-    }
-
-    return r;
-    */
 
     float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
     float* pass_result = new float[1920 * 1080 * 4];

@@ -60,15 +60,11 @@ class WindowManager : Manager {
 
 public:
 
-    bool is_open;
 
     WindowManager(CommandManager* _cm);
 
     void start();
-    void close();
     void set_preview_data(float* data);
-    void run();
-
 
 };
 

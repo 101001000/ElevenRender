@@ -7,17 +7,7 @@ CommandManager::CommandManager() {
     dm = std::make_shared<DenoiseManager>(this);}
 
 void CommandManager::open_window() {
-    //wm->start();
-    wm_t = std::thread(&WindowManager::run, this->wm);
-    //wm->run();
-}
-
-void CommandManager::close_window() {
-    wm->close();
-}
-
-void CommandManager::toggle_window() {
-    wm->is_open ? wm->close() : wm->start();
+    wm->start();
 }
 
 void CommandManager::change_preview(std::string pass) {

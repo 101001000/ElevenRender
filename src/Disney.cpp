@@ -1,12 +1,4 @@
-#ifndef DISNEY_H
-#define DISNEY_H
-
-#include <CL/sycl.hpp>
-
-#include "Math.hpp"
-#include "Ray.hpp"
-#include "Material.hpp"
-#include "Sampling.hpp"
+#include "disney.h"
 
 /*
  * MIT License
@@ -37,6 +29,8 @@
 // https://github.com/knightcrawler25/GLSL-PathTracer/blob/master/src/shaders/common/disney.glsl
 
 // Limitado solo a BRDF sin BSDF
+
+
 
 void createBasis(Vector3 normal, Vector3 &tangent, Vector3 &bitangent) {
     Vector3 UpVector = Vector3(0, 1, 0);
@@ -251,5 +245,3 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
 
     return brdf;
 }
-
-#endif

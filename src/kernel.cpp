@@ -10,7 +10,7 @@
 #include "BVH.h"
 #include "Camera.h"
 #include "Definitions.h"
-#include "Disney.hpp"
+#include "Disney.h"
 #include "HDRI.hpp"
 #include "Hit.hpp"
 #include "Material.hpp"

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "Vector.hpp"
+#include "Vector.h"
 #include "libs/mikktspace.h"
 #include "Tri.hpp"
 #include "MeshObject.hpp"

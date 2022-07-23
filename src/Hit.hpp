@@ -1,7 +1,7 @@
 #ifndef HIT_H
 #define HIT_H
 
-#include "Vector.hpp"
+#include "Vector.h"
 
 class Hit {
 

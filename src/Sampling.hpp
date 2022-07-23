@@ -2,7 +2,7 @@
 #define SAMPLING_H
 
 
-#include "Vector.hpp"
+#include "Vector.h"
 #include "Math.hpp"
 #include <CL/sycl.hpp>
 

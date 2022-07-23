@@ -1,4 +1,4 @@
-#include "Vector.hpp"
+#include "Vector.h"
 #include "Texture.hpp"
 
 #ifndef MATERIAL_H

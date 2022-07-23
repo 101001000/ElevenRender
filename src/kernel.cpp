@@ -11,7 +11,7 @@
 #include "Camera.h"
 #include "Definitions.h"
 #include "Disney.h"
-#include "HDRI.hpp"
+#include "HDRI.h"
 #include "Hit.hpp"
 #include "Material.hpp"
 #include "Math.hpp"

@@ -1,6 +1,6 @@
 #include "Camera.h"
 #include "Scene.hpp"
-#include "HDRI.hpp"
+#include "HDRI.h"
 #include <CL/sycl.hpp>
 
 #pragma once

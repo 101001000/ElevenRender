@@ -1,6 +1,4 @@
-#ifndef SAMPLING_H
-#define SAMPLING_H
-
+#pragma once
 
 #include "Vector.h"
 #include "Math.hpp"
@@ -53,5 +51,3 @@ inline Vector3 ImportanceSampleGGX(float rgh, float r1, float r2) {
 
     return Vector3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
 }
-
-#endif

@@ -9,7 +9,7 @@
 #include "Math.hpp"
 #include "Ray.hpp"
 #include "Material.h"
-#include "Sampling.hpp"
+#include "Sampling.h"
 #include "kernel.h"
 
 /*

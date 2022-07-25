@@ -2,7 +2,7 @@
 
 
 #include "Texture.hpp"
-#include "Sampling.hpp"
+#include "Sampling.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Winconsistent-dllimport"

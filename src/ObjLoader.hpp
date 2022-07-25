@@ -10,7 +10,7 @@
 
 #include "Vector.h"
 #include "libs/mikktspace.h"
-#include "Tri.hpp"
+#include "Tri.h"
 #include "MeshObject.hpp"
 
 struct UnloadedMaterial {

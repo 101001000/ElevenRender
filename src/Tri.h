@@ -1,6 +1,4 @@
-#ifndef TRI_H
-#define TRI_H
-
+#pragma once
 
 #include "Hit.h"
 #include "Ray.h"
@@ -124,6 +122,3 @@ public:
         (t1.vertices[1] == t2.vertices[1]) &&
         (t1.vertices[2] == t2.vertices[2]);
 }
-
-
-#endif

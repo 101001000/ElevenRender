@@ -11,7 +11,7 @@
 #include <map>
 
 #include "Material.h"
-#include "Tri.hpp"
+#include "Tri.h"
 #include "Camera.h"
 #include "BVH.h"
 #include "PointLight.h"

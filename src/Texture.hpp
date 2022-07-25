@@ -139,10 +139,10 @@ public:
 	}
 
     Vector3 getValueFromUVFiltered(float u, float v) {
-        if (filter == NO_FILTER)
-            return getValueFromUV(u, v);
-        else if (filter == BILINEAR)
+        if (filter == BILINEAR)
             return getValueBilinear(u, v);
+        else
+            return getValueFromUV(u, v);
     }
 
     static inline void sphericalMapping(Vector3 origin, Vector3 point, float radius, float& u, float& v) {

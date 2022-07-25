@@ -162,7 +162,7 @@ Hit throwRay(Ray ray, dev_Scene* scene) {
 
 #if USEBVH
     scene->bvh->transverse(ray, nearestHit);
-#else:
+#else
     for (int j = 0; j < scene->meshObjectCount; j++) {
         Hit hit = Hit();
 
@@ -651,8 +651,8 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
             .wait();
         q.memcpy(&(dev_textures[i].data), &textureData, sizeof(float*)).wait();
 
-        printf("Texture %ld copied, %dpx x %ldpx\n", i, textures[i].width,
-               textures[i].height);
+        std::cout << "Texture " << i << " copied, " << textures[i].width << "px x  " << textures[i].height << "px\n";
+
     }
 
     q.memcpy(&(dev_scene->textures), &(dev_textures), sizeof(Texture*)).wait();

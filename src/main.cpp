@@ -31,7 +31,7 @@ int keyPress() {
     {
         c = 0;
 
-        switch ((c = getch())) {
+        switch ((c = _getch())) {
         case 75:
             std::cout << std::endl << "Left" << std::endl;  // key left
             currentPass--;

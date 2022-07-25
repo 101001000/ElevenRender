@@ -115,7 +115,6 @@ public:
 
 		std::cout << "\nBVH built in  " << ms_int.count() << std::endl;
 
-
 		return bvh;
 	}
 

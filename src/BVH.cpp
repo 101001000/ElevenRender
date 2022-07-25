@@ -287,6 +287,8 @@ void BVH::buildAux(int depth, std::vector<BVHTri>* _tris) {
 	}
 }
 
+/*
+
 void BVH::dividePlane(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, std::vector<BVHTri>* trisRight) {
 
 	Vector3 b1, b2;
@@ -327,6 +329,7 @@ void BVH::dividePlane(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, 
 		}
 	}
 }
+*/
 
 void BVH::divideSAH(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, std::vector<BVHTri>* trisRight) {
 

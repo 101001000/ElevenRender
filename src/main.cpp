@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
             stbi_write_png(argv[3], data.pars.width, data.pars.height, 4,
                            saveBuffer, data.pars.width * 4);
             saved = true;
-            delete (saveBuffer);
+            delete[] (saveBuffer);
 
             printf("Saved!\n");
         }

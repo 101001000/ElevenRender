@@ -126,7 +126,7 @@ void gaussianBlur(float* pixels, int width, int height, int kernelSize, float* r
 	for (int i = 0; i < width * height * 4; i++)
 		result[i] = resultTemp[i];
 
-	delete(resultTemp);
+	delete[] (resultTemp);
 }
 
 void basicBlur(float* pixels, int width, int height, float threshold, float power, float radius) {

@@ -113,7 +113,8 @@ public:
 
 		auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-		printf("\nBVH built in %dms\n\n", ms_int);
+		std::cout << "\nBVH built in  " << ms_int.count() << std::endl;
+
 
 		return bvh;
 	}

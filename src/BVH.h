@@ -1,9 +1,9 @@
 #pragma once
 
 #include <limits>
-#include "Tri.hpp"
+#include "Tri.h"
 #include "Math.hpp"
-#include "Ray.hpp"
+#include "Ray.h"
 #include <vector>
 #include <algorithm>
 #include <chrono>  

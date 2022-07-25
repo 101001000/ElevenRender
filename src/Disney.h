@@ -3,7 +3,7 @@
 #include "sycl.h"
 
 #include "Math.hpp"
-#include "Ray.hpp"
+#include "Ray.h"
 #include "Material.h"
 #include "Sampling.h"
 #include "kernel.h"

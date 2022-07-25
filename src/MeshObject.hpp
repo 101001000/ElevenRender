@@ -2,7 +2,7 @@
 #define MESHOBJECT_H
 
 #include "Tri.h"
-#include "Ray.hpp"
+#include "Ray.h"
 #include "Hit.h"
 
 static int objectIDCount = 0;

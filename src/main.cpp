@@ -14,7 +14,7 @@
 #include "Camera.h"
 #include "Definitions.h"
 #include "PostProcessing.h"
-#include "Ray.hpp"
+#include "Ray.h"
 #include "Scene.hpp"
 #include "SceneLoader.hpp"
 #include "Texture.hpp"

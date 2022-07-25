@@ -3,7 +3,7 @@
 
 
 #include "Hit.h"
-#include "Ray.hpp"
+#include "Ray.h"
 #include "Definitions.h"
 
 

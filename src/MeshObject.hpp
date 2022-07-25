@@ -1,7 +1,7 @@
 #ifndef MESHOBJECT_H
 #define MESHOBJECT_H
 
-#include "Tri.hpp"
+#include "Tri.h"
 #include "Ray.hpp"
 #include "Hit.h"
 

@@ -1,9 +1,7 @@
+#pragma once
+
 #include "Vector.h"
 #include "Texture.hpp"
-
-#ifndef MATERIAL_H
-#define MATERIAL_H
-
 
 class Material {
 
@@ -35,7 +33,3 @@ public:
 	float subsurface = 0;
 	float sheen = 0;
 };
-
-
-
-#endif

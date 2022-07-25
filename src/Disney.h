@@ -8,7 +8,7 @@
 
 #include "Math.hpp"
 #include "Ray.hpp"
-#include "Material.hpp"
+#include "Material.h"
 #include "Sampling.hpp"
 #include "kernel.h"
 

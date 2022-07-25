@@ -17,7 +17,7 @@
 #include "Disney.h"
 #include "HDRI.h"
 #include "Hit.h"
-#include "Material.hpp"
+#include "Material.h"
 #include "Math.hpp"
 #include "PointLight.hpp"
 

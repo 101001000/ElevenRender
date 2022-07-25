@@ -10,7 +10,7 @@
 #include <fstream>
 #include <map>
 
-#include "Material.hpp"
+#include "Material.h"
 #include "Tri.hpp"
 #include "Camera.h"
 #include "BVH.h"

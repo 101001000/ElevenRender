@@ -14,7 +14,7 @@
 #include "Tri.hpp"
 #include "Camera.h"
 #include "BVH.h"
-#include "PointLight.hpp"
+#include "PointLight.h"
 #include "HDRI.h"
 #include "ObjLoader.hpp"
 

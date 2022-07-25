@@ -19,7 +19,7 @@
 #include "Hit.h"
 #include "Material.h"
 #include "Math.hpp"
-#include "PointLight.hpp"
+#include "PointLight.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"

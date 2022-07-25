@@ -1,6 +1,4 @@
-#ifndef POINTLIGHT_H
-#define POINTLIGHT_H
-
+#pragma once
 
 // @todo Define useful constructors as temperature, multiply etc
 class PointLight{
@@ -17,7 +15,3 @@ public:
 
 };
 
-
-
-
-#endif

@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
     class CUDASelector : public sycl::device_selector {
     public:
         int operator()(const sycl::device& device) const override {
-            if (device.get_platform().get_backend() == sycl::backend::cuda) {
+            if (device.get_platform().get_backend() == sycl::backend::ext_oneapi_cuda) {
                 std::cout << " CUDA device found " << std::endl;
                 return 1;
             }

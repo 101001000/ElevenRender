@@ -16,7 +16,7 @@
 #include "BVH.h"
 #include "PointLight.h"
 #include "HDRI.h"
-#include "ObjLoader.hpp"
+#include "ObjLoader.h"
 
 class Scene {
 

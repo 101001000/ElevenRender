@@ -8,6 +8,8 @@ bin
 *.exe
 .ninja_deps
 .ninja_log
+.ninja_log.restat
+.ninja_log.recompact
 build.ninja
 cmake_install.cmake
 CMakeCache.txt

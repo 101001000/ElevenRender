@@ -3,7 +3,10 @@
 
 #include "Texture.hpp"
 #include "Sampling.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <CL/sycl.hpp>
+#pragma clang diagnostic pop
 
 
 class HDRI {

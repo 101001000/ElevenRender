@@ -1,9 +1,12 @@
+#pragma once
+
 #include "Camera.h"
 #include "Scene.hpp"
 #include "HDRI.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <CL/sycl.hpp>
-
-#pragma once
+#pragma clang diagnostic pop
 
 enum Passes {BEAUTY, DENOISE, NORMAL, TANGENT, BITANGENT};
 

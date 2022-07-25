@@ -8,7 +8,10 @@
 #include <algorithm>
 #include <chrono>  
 #include "Definitions.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <CL/sycl.hpp>
+#pragma clang diagnostic pop
 
 
 struct BVHTri {

@@ -1,0 +1,15 @@
+# ninja log v5
+38814	44326	6804554864518665	ElevenRender.exe	1314cdd827126479
+25	5547	6804556116062093	CMakeFiles/ElevenRender.dir/src/PostProcessing.cpp.obj	97387b398430c93d
+18	3895	6804556100074857	CMakeFiles/ElevenRender.dir/src/Camera.cpp.obj	56a778a1f271d03e
+5549	11252	6804556173488523	CMakeFiles/ElevenRender.dir/src/Window.cpp.obj	b426b167e6c1fd03
+22	12857	6804556189495711	CMakeFiles/ElevenRender.dir/src/HDRI.cpp.obj	815a1ab54efa5f23
+12	13929	6804556199808123	CMakeFiles/ElevenRender.dir/src/BVH.cpp.obj	7b2e2ed55ece0a70
+20	22312	6804556284022902	CMakeFiles/ElevenRender.dir/src/Disney.cpp.obj	cd8c79c25d6ec4f7
+12934	17421	6804556235203473	CMakeFiles/ElevenRender.dir/src/libs/mikktspace.cpp.obj	2c793013c642f618
+3896	29987	6804556361774970	CMakeFiles/ElevenRender.dir/src/Managers.cpp.obj	14209c871240efb6
+16	25508	6804556316585825	CMakeFiles/ElevenRender.dir/src/CommandManager.cpp.obj	f3c852e1dd0ee7aa
+17424	24541	6804556307031381	CMakeFiles/ElevenRender.dir/src/glad.c.obj	bcb53c7138f1a810
+22333	25817	6804556320016651	CMakeFiles/ElevenRender.dir/src/libs/mikktspaceCallback.cpp.obj	5d67b12967490321
+13062	36283	6804554784257813	CMakeFiles/ElevenRender.dir/src/kernel.cpp.obj	3ee9022264e6449f
+5157	38792	6804554809338499	CMakeFiles/ElevenRender.dir/src/main.cpp.obj	49473f6ff109a90a

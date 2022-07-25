@@ -7,7 +7,10 @@
 
 
 #include "Math.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <CL/sycl.hpp>
+#pragma clang diagnostic pop
 
 enum Filter { NO_FILTER, BILINEAR };
 enum CS { LINEAR, sRGB };

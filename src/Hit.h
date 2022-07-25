@@ -1,6 +1,4 @@
-#ifndef HIT_H
-#define HIT_H
-
+#pragma once
 #include "Vector.h"
 
 class Hit {
@@ -11,5 +9,3 @@ public:
 	unsigned int objectID;
 	float tu, tv;
 };
-
-#endif

@@ -4,7 +4,6 @@
 #include "Window.h"
 #include "kernel.h"
 
-#include <CL/sycl.hpp>
 #include <iomanip>
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>

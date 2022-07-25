@@ -2,7 +2,7 @@
 
 #include "Vector.h"
 #include "Math.hpp"
-#include <CL/sycl.hpp>
+#include "sycl.h"
 
 //TODO naming convention
 

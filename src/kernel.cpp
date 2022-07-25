@@ -3,11 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic ignored "-Winconsistent-dllimport"
-#include <CL/sycl.hpp>
-#pragma clang diagnostic pop
+#include "sycl.h"
 #include <iostream>
 #include <limits>
 

@@ -2,7 +2,7 @@
 #define TRI_H
 
 
-#include "Hit.hpp"
+#include "Hit.h"
 #include "Ray.hpp"
 #include "Definitions.h"
 

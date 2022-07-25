@@ -5,6 +5,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Winconsistent-dllimport"
 #include <CL/sycl.hpp>
 #pragma clang diagnostic pop
 #include <iostream>
@@ -15,7 +16,7 @@
 #include "Definitions.h"
 #include "Disney.h"
 #include "HDRI.h"
-#include "Hit.hpp"
+#include "Hit.h"
 #include "Material.hpp"
 #include "Math.hpp"
 #include "PointLight.hpp"

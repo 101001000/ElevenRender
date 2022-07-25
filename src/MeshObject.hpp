@@ -3,7 +3,7 @@
 
 #include "Tri.hpp"
 #include "Ray.hpp"
-#include "Hit.hpp"
+#include "Hit.h"
 
 static int objectIDCount = 0;
 

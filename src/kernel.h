@@ -5,6 +5,7 @@
 #include "HDRI.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Winconsistent-dllimport"
 #include <CL/sycl.hpp>
 #pragma clang diagnostic pop
 

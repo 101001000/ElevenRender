@@ -74,6 +74,7 @@ void startRender(sycl::queue& q, RenderData& data, Scene& scene, dev_Scene* devS
 }
 
 void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
+
     int width = data.pars.width;
     int height = data.pars.height;
 
@@ -142,7 +143,7 @@ int main(int argc, char* argv[]) {
 
     startRender(q, data, scene, dev_scene);
 
-    Window window(1920, 1080);
+    Window window(scene.camera.xRes, scene.camera.yRes);
 
     window.init();
 
@@ -157,11 +158,13 @@ int main(int argc, char* argv[]) {
         getRenderData(dev_scene, q, data);
 
         PixelBuffer pb;
+
         pb.width = data.pars.width;
         pb.height = data.pars.height;
 
         pb.channels = 4;
         pb.data = data.passes[currentPass];
+
 
         window.previewBuffer = pb;
 
@@ -198,6 +201,7 @@ int main(int argc, char* argv[]) {
             data.pathCount);
 
         window.renderUpdate();
+
 
         std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
     }

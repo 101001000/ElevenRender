@@ -71,6 +71,8 @@ void InputManager::run() {
 
 WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080) {
 
+    // PARAMETRIZE PX SIZE FOR THIS MANAGER
+
     pb.width = 1920;
     pb.height = 1080;
     pb.channels = 4;
@@ -145,10 +147,10 @@ float* RenderingManager::get_pass(std::string pass) {
     
     printf("\nRetrieving pass %d\n", parsePass(pass));
 
-    float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
-    float* pass_result = new float[1920 * 1080 * 4];
+    float* a = new float[rp.width * rp.height * 4 * PASSES_COUNT];
+    float* pass_result = new float[rp.width * rp.height * 4];
 
-    q.memcpy(a, dev_scene->dev_passes, 1920 * 1080 * 4 * PASSES_COUNT).wait();
+    q.memcpy(a, dev_scene->dev_passes, rp.width * rp.height * 4 * PASSES_COUNT).wait();
 
     for (int j = 0; j < rp.width * rp.height; j++) {
         int n = parsePass(pass) * rp.width * rp.height * 4;

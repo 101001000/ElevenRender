@@ -8,7 +8,7 @@
 #define THREADSIZE 8
 #define MAXBOUNCES 5
 
-#define UPDATE_INTERVAL 100
+#define UPDATE_INTERVAL 1000
 
 #define BVH_DEPTH 18
 #define BVH_SAHBINS 14

@@ -20,7 +20,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"
 
-// TODO HACER ESTO CON MEMORIA DINÁMICA PARA ELIMINAR EL MÁXIMO DE 1920*1080
 
 RngGenerator::RngGenerator(uint32_t _seed) {
     this->seed = _seed + 1;
@@ -128,7 +127,8 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 }
 
 void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
-    
+
+
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
 
     for (int i = 0; i < PASSES_COUNT; i++) {
@@ -155,6 +155,7 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
             triSum += dev_scene_g->meshObjects[i].triCount;
         }
     }
+
 }
 
 Hit throwRay(Ray ray, dev_Scene* scene) {
@@ -395,6 +396,9 @@ void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
 
 void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
 
+    if (idx == 1920 * 1080 / 2)
+        out << scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] << "\n";
+
     RngGenerator rnd = scene->dev_randstate[idx];
 
     unsigned int sa = scene->dev_samples[idx];
@@ -471,42 +475,42 @@ void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
         if (sa > 0) {
             for (int pass = 0; pass < PASSES_COUNT; pass++) {
                 if (pass != DENOISE) {
-                    scene->dev_passes[(pass * 1920 * 1080 * 4) + (4 * idx + 0)] *=
+                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] *=
                         ((float)sa) / ((float)(sa + 1));
-                    scene->dev_passes[(pass * 1920 * 1080 * 4) + (4 * idx + 1)] *=
+                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] *=
                         ((float)sa) / ((float)(sa + 1));
-                    scene->dev_passes[(pass * 1920 * 1080 * 4) + (4 * idx + 2)] *=
+                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] *=
                         ((float)sa) / ((float)(sa + 1));
                 }
             }
         }
 
-        scene->dev_passes[(BEAUTY * 1920 * 1080 * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             light.x / ((float)sa + 1);
-        scene->dev_passes[(BEAUTY * 1920 * 1080 * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             light.y / ((float)sa + 1);
-        scene->dev_passes[(BEAUTY * 1920 * 1080 * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             light.z / ((float)sa + 1);
 
-        scene->dev_passes[(NORMAL * 1920 * 1080 * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             normal.x / ((float)sa + 1);
-        scene->dev_passes[(NORMAL * 1920 * 1080 * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             normal.y / ((float)sa + 1);
-        scene->dev_passes[(NORMAL * 1920 * 1080 * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             normal.z / ((float)sa + 1);
 
-        scene->dev_passes[(TANGENT * 1920 * 1080 * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             tangent.x / ((float)sa + 1);
-        scene->dev_passes[(TANGENT * 1920 * 1080 * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             tangent.y / ((float)sa + 1);
-        scene->dev_passes[(TANGENT * 1920 * 1080 * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             tangent.z / ((float)sa + 1);
 
-        scene->dev_passes[(BITANGENT * 1920 * 1080 * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             bitangent.x / ((float)sa + 1);
-        scene->dev_passes[(BITANGENT * 1920 * 1080 * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             bitangent.y / ((float)sa + 1);
-        scene->dev_passes[(BITANGENT * 1920 * 1080 * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             bitangent.z / ((float)sa + 1);
 
         scene->dev_samples[idx]++;
@@ -518,7 +522,6 @@ void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     printf("Initializing rendering... \n");
 
-    //dev_passes = sycl::malloc_device<float>(1920*1080*4*PASSES_COUNT, q);
 
     unsigned int meshObjectCount = scene->meshObjectCount();
     unsigned int triCount = scene->triCount();
@@ -534,15 +537,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     printf("Allocating GPU memory");
 
-    float* dev_pixelBuffer =
-        sycl::malloc_device<float>(camera->xRes * camera->yRes * 4, q);
-
-    for (int i = 0; i < PASSES_COUNT; i++) {
-        float* d_pass =
-            sycl::malloc_device<float>(camera->xRes * camera->yRes * 4, q);
-        q.memcpy(&(dev_scene->dev_passes[i]), &(d_pass), sizeof(float*));
-    }
-
     Camera* dev_camera = sycl::malloc_device<Camera>(1, q);
     MeshObject* dev_meshObjects =
         sycl::malloc_device<MeshObject>(meshObjectCount, q);
@@ -551,9 +545,9 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     BVH* dev_bvh = sycl::malloc_device<BVH>(1, q);
     int* dev_triIndices = sycl::malloc_device<int>(triCount, q);
 
-    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * 1920 * 1080 * 4, q);
-    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(1920 * 1080, q);
-    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(1920 * 1080, q);
+    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * camera->xRes * camera->yRes * 4, q);
+    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(camera->xRes * camera->yRes, q);
+    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(camera->xRes * camera->yRes, q);
 
     geometryMemory += sizeof(MeshObject) * meshObjectCount +
                       sizeof(Tri) * triCount + sizeof(BVH) +
@@ -686,35 +680,28 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     printf("%luMB of geometry data copied\n",
            (geometryMemory / (1024L * 1024L)));
 
-    auto cg = [&](sycl::handler& h) {
+    printf("Running setup kernel... \n");
+
+    q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(1024, 256, h);
-       
         h.parallel_for(sycl::range(camera->xRes * camera->yRes),
-                       [=](sycl::id<1> i) {
-                           setupKernel(dev_scene, i, out);
-                       });
-    };
+            [=](sycl::id<1> i) {
+                setupKernel(dev_scene, i, out);
+            });
+    }).wait();
 
-    printf("Submiting to the queue...");
-
-    q.submit(cg).wait();
+    printf("Running rendering kernel... \n");
 
     for (int i = 0; i < 10; i++) {
-   
-        auto rg = [&](sycl::handler& h) {
+        printf("Sample %d...\n", i);
 
+        q.submit([&](cl::sycl::handler& h) {
             sycl::stream out = sycl::stream(1024, 256, h);
-
-            h.parallel_for(
-                sycl::range(camera->xRes * camera->yRes), [=](sycl::id<1> i) {
+            h.parallel_for(sycl::range(camera->xRes * camera->yRes),
+                [=](sycl::id<1> i) {
                     renderingKernel(dev_scene, i, out);
                 });
-        };
-
-        printf("Submiting to the queue...");
-
-        // 
-        q.submit(rg);
+        }).wait();
     }
 
     return 0;
@@ -743,10 +730,13 @@ int renderCuda(sycl::queue& q, Scene* scene, int sampleTarget) {
 int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int* pathcountBuffer,
                int size) {
 
+    //TODO size ambiguity
 
-    float* a = new float[1920 * 1080 * 4 * PASSES_COUNT];
+    float* a = new float[renderData.pars.width * renderData.pars.height * 4 * PASSES_COUNT];
 
-    q.memcpy(a, dev_scene->dev_passes, 1920 * 1080 * 4 * PASSES_COUNT).wait();
+    float* dev_passes;
+    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
+    q.memcpy(a, dev_passes, renderData.pars.width * renderData.pars.height * 4  * PASSES_COUNT).wait();
 
     for (int i = 0; i < PASSES_COUNT; i++) {
         printf("\nRetrieving pass %d\n", i);
@@ -760,18 +750,18 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int
     }
     
     delete[] a;
-
+    
     return 0;
 }
 
 int getSamples(dev_Scene* dev_scene, sycl::queue& q) {
-
-    unsigned int i;
-    unsigned int* a = new unsigned int[1920 * 1080];
-    q.memcpy(a, dev_scene->dev_samples, 1920 * 1080).wait();
-    i = a[0];
-    delete[] a;
-    return i;
+    // TODO, clean this, maybe remove samples if i'm not implementing adaptive sampling yet.
+    //unsigned int i;
+    //unsigned int* a = new unsigned int[3840*2160];
+    //q.memcpy(a, dev_scene->dev_samples, 3840 * 2160).wait();
+    //i = a[0];
+    //delete[] a;
+    return 0;
 }
 
 void printHDRISampling(HDRI hdri, int samples) {

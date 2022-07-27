@@ -35,9 +35,9 @@ struct dev_Scene {
     BVH* bvh;
     HDRI* hdri;
 
-    float dev_passes[PASSES_COUNT * 1920 * 1080 * 4];
-	unsigned int dev_samples[1920 * 1080];
-	RngGenerator dev_randstate[1920 * 1080];
+    float* dev_passes;
+	unsigned int* dev_samples;
+	RngGenerator* dev_randstate;
 };
 
 struct RenderParameters {

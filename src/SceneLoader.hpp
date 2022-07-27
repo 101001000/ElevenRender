@@ -58,8 +58,10 @@ static Scene loadScene(std::string path) {
 	}
 	else if (hdri_json["color"].exists()) {
 		Vector3 color = Vector3(hdri_json["color"]["r"].as<double>(), hdri_json["color"]["g"].as<double>(), hdri_json["color"]["b"].as<double>());
+		//Vector3 gc_color = Vector3(sycl::pow(color.x, 2.2f), sycl::pow(color.y, 2.2f), sycl::pow(color.z, 2.2f));
 		scene.addHDRI(color);
 	}
+
 
 	if (hdri_json["xOffset"].exists())
 		scene.hdri.texture.xOffset = hdri_json["xOffset"].as<double>();

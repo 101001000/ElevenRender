@@ -358,7 +358,7 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
 
 void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
            Vector3& newDir, float r1, float r2, float r3, Vector3& hitLight,
-           Vector3& reduction, sycl::stream out, int idx) {
+           Vector3& reduction, int idx) {
 
 
     Vector3 brdfDisney = DisneyEval(ray, hitdata, newDir);
@@ -394,47 +394,44 @@ void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
     bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
 }
 
-void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
-
-    if (idx == 1920 * 1080 / 2)
-        out << scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] << "\n";
+void renderingKernel(dev_Scene* scene, int idx) {
 
     RngGenerator rnd = scene->dev_randstate[idx];
-
+    
     unsigned int sa = scene->dev_samples[idx];
-
+    
     Ray ray;
-
+    
     int x = idx % scene->camera->xRes;
     int y = scene->camera->yRes - (idx / scene->camera->xRes);
-
-
+    
+    
     calculateCameraRay(x, y, *scene->camera, ray, rnd.next(), rnd.next(),
-                       rnd.next(), rnd.next(), rnd.next());
-
+        rnd.next(), rnd.next(), rnd.next());
+    
     // Accumulated radiance
     Vector3 light = Vector3::Zero();
-
+    
     // Accumulated radiance
     Vector3 normal = Vector3::Zero();
     Vector3 tangent = Vector3::Zero();
     Vector3 bitangent = Vector3::Zero();
-
+    
     // How much light is lost in the path
     Vector3 reduction = Vector3::One();
-
+    
     int i = 0;
-
+    
     for (i = 0; i < MAXBOUNCES; i++) {
-
+    
         Vector3 hitLight;
         HitData hitdata;
         Vector3 bouncedDir;
-
+    
         int materialID = 0;
-
+    
         Hit nearestHit = throwRay(ray, scene);
-
+    
         if (!nearestHit.valid) {
             float u, v;
             Texture::sphericalMapping(Vector3(), -1 * ray.direction, 1, u, v);
@@ -442,34 +439,34 @@ void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
                 scene->hdri->texture.getValueFromUVFiltered(u, v) * reduction;
             break;
         }
-
+    
         materialID = scene->meshObjects[nearestHit.objectID].materialID;
-
+    
         Material* material = &scene->materials[materialID];
-
+    
         generateHitData(scene, material, hitdata, nearestHit);
-
+    
         calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
-                        rnd.next());
-
-        shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, out, idx);
-
+            rnd.next());
+    
+        shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, idx);
+    
         light += hitLight;
-
+    
         // First hit
         if (i == 0) {
             normal = nearestHit.normal;
             tangent = nearestHit.tangent;
             bitangent = nearestHit.bitangent;
         }
-
+    
         ray = Ray(nearestHit.position + bouncedDir * 0.001, bouncedDir);
     }
-
+    
     // dev_pathcount[idx] += i;
-
+    
     light = clamp(light, 0, 10);
-
+    
     if (!sycl::isnan(light.x) && !sycl::isnan(light.y) &&
         !sycl::isnan(light.z)) {
         if (sa > 0) {
@@ -484,39 +481,40 @@ void renderingKernel(dev_Scene* scene, int idx, sycl::stream out) {
                 }
             }
         }
-
+    
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             light.x / ((float)sa + 1);
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             light.y / ((float)sa + 1);
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             light.z / ((float)sa + 1);
-
+    
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             normal.x / ((float)sa + 1);
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             normal.y / ((float)sa + 1);
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             normal.z / ((float)sa + 1);
-
+    
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             tangent.x / ((float)sa + 1);
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             tangent.y / ((float)sa + 1);
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             tangent.z / ((float)sa + 1);
-
+    
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             bitangent.x / ((float)sa + 1);
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             bitangent.y / ((float)sa + 1);
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             bitangent.z / ((float)sa + 1);
-
+    
         scene->dev_samples[idx]++;
     }
-
+    
     scene->dev_randstate[idx] = rnd;
+    
 }
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
@@ -692,17 +690,26 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     printf("Running rendering kernel... \n");
 
-    for (int i = 0; i < 10; i++) {
-        printf("Sample %d...\n", i);
+    auto t1 = std::chrono::high_resolution_clock::now();
 
+    for (int i = 0; i < 4096; i++) {
+        printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
-            sycl::stream out = sycl::stream(1024, 256, h);
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),
                 [=](sycl::id<1> i) {
-                    renderingKernel(dev_scene, i, out);
+                    renderingKernel(dev_scene, i);
                 });
-        }).wait();
+            });
     }
+
+    q.wait();
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(
+        t2 - t1);
+
+    std::cout << ms_int.count() << " LOOOL " << std::endl;
 
     return 0;
 }

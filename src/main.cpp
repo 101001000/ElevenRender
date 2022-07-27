@@ -165,7 +165,6 @@ int main(int argc, char* argv[]) {
         pb.channels = 4;
         pb.data = data.passes[currentPass];
 
-
         window.previewBuffer = pb;
 
         if (data.samples >= data.pars.sampleTarget - 1 && !saved) {
@@ -175,7 +174,7 @@ int main(int argc, char* argv[]) {
                 new unsigned char[data.pars.width * data.pars.height * 4];
 
             for (int i = 0; i < data.pars.width * data.pars.height * 4; i++) {
-                saveBuffer[i] = sycl::pow((double)pb.data[i], (1.0 / 2.2)) * 255;
+                saveBuffer[i] = pb.data[i]; //sycl::pow((double)pb.data[i], (1.0 / 2.2)) * 255;
             }
 
             stbi_write_png(argv[3], data.pars.width, data.pars.height, 4,

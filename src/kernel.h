@@ -104,14 +104,6 @@ struct HitData {
 };
 
 
-
-void printPdfMaterial(Material material, int samples);
-void printBRDFMaterial(Material material, int samples);
-void printHDRISampling(HDRI hdri, int samples);
-void calcNormalPass();
-
-int renderCuda(sycl::queue& q, Scene* scene, int sampleTarget);
-
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene);
 
 int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData,

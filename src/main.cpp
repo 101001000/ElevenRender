@@ -80,7 +80,6 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
 
     int* pathCountBuffer = new int[width * height];
 
-    // cudaMemGetInfo(&data.freeMemory, &data.totalMemory);
     getBuffers(dev_scene, q, data, pathCountBuffer, width * height);
 
     clampPixels(data.passes[BEAUTY], width, height);

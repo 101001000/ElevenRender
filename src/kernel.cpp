@@ -714,26 +714,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     return 0;
 }
 
-int renderCuda(sycl::queue& q, Scene* scene, int sampleTarget) {
-    /*
-
-    for (int i = 0; i < sampleTarget; i++) {
-        auto cg = [&](sycl::handler& h) {
-            sycl::stream out = sycl::stream(1024, 256, h);
-
-            h.parallel_for(
-                sycl::range(scene->camera.xRes * scene->camera.yRes),
-                [=](sycl::id<1> i) { renderingKernel(nullptr, i, out); });
-        };
-
-        printf("Submiting to the queue...");
-
-        q.submit(cg).wait();
-    }
-    */
-    return 0;
-}
-
 int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int* pathcountBuffer,
                int size) {
 
@@ -742,6 +722,7 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int
     float* a = new float[renderData.pars.width * renderData.pars.height * 4 * PASSES_COUNT];
 
     float* dev_passes;
+
     q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
     q.memcpy(a, dev_passes, renderData.pars.width * renderData.pars.height * 4  * PASSES_COUNT).wait();
 
@@ -756,7 +737,7 @@ int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int
         }
     }
     
-    delete[] a;
+    //delete[] a;
     
     return 0;
 }
@@ -769,67 +750,4 @@ int getSamples(dev_Scene* dev_scene, sycl::queue& q) {
     //i = a[0];
     //delete[] a;
     return 0;
-}
-
-void printHDRISampling(HDRI hdri, int samples) {
-    for (int i = 0; i < samples; i++) {
-        float r = ((float)i) / ((float)samples);
-
-        Vector3 sample = hdri.sample(r);
-
-        printf("%d, %d,", (int)sample.x, (int)sample.y);
-    }
-
-    float sum = 0;
-
-    for (int i = 0; i < 1024; i++) {
-        for (int j = 0; j < 2048; j++) {
-            sum += hdri.pdf(j, i);
-        }
-    }
-
-    printf("PDF TOTAL %f", sum);
-}
-
-void printBRDFMaterial(Material material, int samples) {
-    HitData hitdata;
-
-    hitdata.albedo = material.albedo;
-    hitdata.emission = material.emission;
-    hitdata.roughness = material.roughness;
-    hitdata.metallic = material.metallic;
-    hitdata.clearcoatGloss = material.clearcoatGloss;
-    hitdata.clearcoat = material.clearcoat;
-    hitdata.anisotropic = material.anisotropic;
-    hitdata.eta = material.eta;
-    hitdata.transmission = material.transmission;
-    hitdata.specular = material.specular;
-    hitdata.specularTint = material.specularTint;
-    hitdata.sheenTint = material.sheenTint;
-    hitdata.subsurface = material.subsurface;
-    hitdata.sheen = material.sheen;
-
-    createBasis(hitdata.normal, hitdata.tangent, hitdata.bitangent);
-
-    Vector3 inLight = Vector3(1, -1, 0).normalized();
-
-    for (int i = 0; i < sqrt(samples); i++) {
-        for (int j = 0; j < sqrt(samples); j++) {
-            float cosPhi = 2.0f * ((float)i / (float)sqrt(samples)) - 1.0f;
-            float sinPhi = std::sqrt(1.0f - cosPhi * cosPhi);
-            float theta = 2 * PI * ((float)j / (float)sqrt(samples));
-
-            float x = sinPhi * std::sinf(theta);
-            float y = cosPhi;
-            float z = sinPhi * std::cosf(theta);
-
-            Vector3 rndVector = Vector3(x, y, z).normalized();
-
-            Ray r = Ray(Vector3(0), inLight);
-
-            float brdf = DisneyEval(r, hitdata, rndVector).length();
-
-            printf("%f,%f,%f,%f;", rndVector.x, rndVector.y, rndVector.z, brdf);
-        }
-    }
 }

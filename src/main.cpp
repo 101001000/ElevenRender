@@ -15,7 +15,7 @@
 #include "Definitions.h"
 #include "PostProcessing.h"
 #include "Ray.h"
-#include "Scene.hpp"
+#include "Scene.h"
 #include "SceneLoader.hpp"
 #include "Texture.hpp"
 #include "kernel.h"
@@ -45,7 +45,6 @@ int keyPress() {
             currentPass %= PASSES_COUNT;
             break;
         }
-
     }
 
     return 0;
@@ -83,6 +82,7 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
     getBuffers(dev_scene, q, data, pathCountBuffer, width * height);
 
     clampPixels(data.passes[BEAUTY], width, height);
+
     // applysRGB(data.passes[BEAUTY], width, height);
 
     data.samples = getSamples(dev_scene, q);
@@ -97,15 +97,15 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
 }
 
 
-/*
 
-int main(int argc, char* argv[]) {
+
+int main1(int argc, char* argv[]) {
 
     CommandManager cm;
     cm.init();
 
     return 0;
-}*/
+}
 
 
 
@@ -130,7 +130,6 @@ int main(int argc, char* argv[]) {
     bool saved = false;
 
     Scene scene = loadScene(std::string(argv[1]));
-
 
     printf("%s\n", argv[1]);
     RenderData data;

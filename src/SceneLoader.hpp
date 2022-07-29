@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.hpp"
+#include "Scene.h"
 #include "libs/RSJparser.hpp"
 
 // TODO some cleaning

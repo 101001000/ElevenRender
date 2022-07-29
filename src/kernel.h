@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Camera.h"
-#include "Scene.hpp"
+#include "Scene.h"
 #include "HDRI.h"
 #include "sycl.h"
 

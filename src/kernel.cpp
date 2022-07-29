@@ -513,6 +513,10 @@ void renderingKernel(dev_Scene* scene, int idx) {
         scene->dev_samples[idx]++;
     }
     
+    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = 1;
+    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = 0;
+    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = 0;
+
     scene->dev_randstate[idx] = rnd;
     
 }
@@ -693,7 +697,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 4096; i++) {
-        printf("Sample %d...\n", i);
+        //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),
                 [=](sycl::id<1> i) {

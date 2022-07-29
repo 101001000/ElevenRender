@@ -12,6 +12,7 @@ public:
     std::shared_ptr<WindowManager> wm;
     std::shared_ptr<RenderingManager> rm;
     std::shared_ptr<DenoiseManager> dm;
+    std::shared_ptr<SceneManager> sm;
 
     std::thread im_t;
     std::thread wm_t;
@@ -23,12 +24,9 @@ public:
 
     // WindowManager commands
     void open_window();
-    void close_window();
-    void toggle_window();
 
     void change_preview(std::string pass);
-
-
+    void load_scene_fromobj(std::string pass);
 
     void run();
     void init();

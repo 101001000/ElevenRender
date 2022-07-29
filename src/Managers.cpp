@@ -145,12 +145,17 @@ RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
 
 float* RenderingManager::get_pass(std::string pass) {
     
+    //TODO just get one pass
+
     printf("\nRetrieving pass %d\n", parsePass(pass));
+
+    float* dev_passes;
 
     float* a = new float[rp.width * rp.height * 4 * PASSES_COUNT];
     float* pass_result = new float[rp.width * rp.height * 4];
 
-    q.memcpy(a, dev_scene->dev_passes, rp.width * rp.height * 4 * PASSES_COUNT).wait();
+    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
+    q.memcpy(a, dev_passes, rp.width * rp.height * 4 * PASSES_COUNT).wait();
 
     for (int j = 0; j < rp.width * rp.height; j++) {
         int n = parsePass(pass) * rp.width * rp.height * 4;
@@ -165,79 +170,6 @@ float* RenderingManager::get_pass(std::string pass) {
     return pass_result;
 }
 
-/*
-
-
-
-while (!glfwWindowShouldClose(window.window)) {
-
-    PixelBuffer pb;
-
-    pb.width = data.pars.width;
-    pb.height = data.pars.height;
-    pb.channels = 4;
-    pb.data = data.passes[currentPass];
-
-    window.previewBuffer = pb;
-
-    if (data.samples >= data.pars.sampleTarget - 1 && !saved) {
-        printf("Saving file %s...\n", argv[3]);
-
-        unsigned char* saveBuffer =
-            new unsigned char[data.pars.width * data.pars.height * 4];
-
-        for (int i = 0; i < data.pars.width * data.pars.height * 4; i++) {
-            saveBuffer[i] = sycl::pow((double)pb.data[i], (1.0 / 2.2)) * 255;
-        }
-
-        stbi_write_png(argv[3], data.pars.width, data.pars.height, 4,
-            saveBuffer, data.pars.width * 4);
-        saved = true;
-        delete (saveBuffer);
-
-        printf("Saved!\n");
-    }
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(
-        t2 - data.startTime);
-
-    printf(
-        "\rkPaths/s: %f, %fGB of a total of %fGB used, %d/%d samples. %f "
-        "seconds running, %d total paths",
-        ((float)data.pathCount / (float)ms_int.count()),
-        (float)(data.totalMemory - data.freeMemory) / (1024 * 1024 * 1024),
-        (float)data.totalMemory / (1024 * 1024 * 1024), data.samples,
-        data.pars.sampleTarget, ((float)(ms_int).count()) / 1000,
-        data.pathCount);
-
-    window.renderUpdate();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
-}
-
-terminateDenoise = true;
-window.stop();
-
-oidnReleaseDevice(device);
-
-denoise_thread.join();
-t.join();
-// cudaDeviceReset();
-
-return 0;
-*/
-
-/*
-
-void RenderingManager::init() {
-
-
-}
-
-
-*/
 
 Manager::Manager(CommandManager* _cm) {
     this->cm = _cm;

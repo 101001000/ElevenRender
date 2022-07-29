@@ -16,6 +16,7 @@
 #include "PointLight.h"
 #include "HDRI.h"
 #include "ObjLoader.h"
+#include "libs/RSJparser.hpp"
 
 class Scene {
 
@@ -62,6 +63,8 @@ public:
 	void addHDRI(Vector3 color);
 
 	BVH* buildBVH();
+
+	static Scene loadScene(std::string path);
 
 
 

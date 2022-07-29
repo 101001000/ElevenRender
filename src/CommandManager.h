@@ -26,7 +26,7 @@ public:
     void open_window();
 
     void change_preview(std::string pass);
-    void load_scene_fromobj(std::string pass);
+    void load_scene_from_obj(std::string pass);
 
     void run();
     void init();

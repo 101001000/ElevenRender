@@ -16,7 +16,6 @@
 #include "PostProcessing.h"
 #include "Ray.h"
 #include "Scene.h"
-#include "SceneLoader.hpp"
 #include "Texture.hpp"
 #include "kernel.h"
 #include "CommandManager.h"
@@ -129,7 +128,7 @@ int main(int argc, char* argv[]) {
 
     bool saved = false;
 
-    Scene scene = loadScene(std::string(argv[1]));
+    Scene scene = Scene::loadScene(std::string(argv[1]));
 
     printf("%s\n", argv[1]);
     RenderData data;

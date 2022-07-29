@@ -24,7 +24,6 @@ class SceneManager : Manager {
     
 public:
     Scene scene;
-    //SceneLoader sceneLoader;
 
     using Manager::Manager;
 };

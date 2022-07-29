@@ -1,6 +1,6 @@
 #pragma once
 
-#define SMOOTH_SHADING true
+#define SMOOTH_SHADING false
 #define USEBVH true
 #define HDRIIS true
 #define PASSES_COUNT 5

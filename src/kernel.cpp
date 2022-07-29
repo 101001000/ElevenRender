@@ -239,6 +239,7 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata,
         return brdfDisney * abs(Vector3::dot(newDir, hitdata.normal)) *
                hdriValue / (1.0 / (2.0 * PI));
     } else {
+
         Vector3 textCoordinate = scene->hdri->sample(r1);
 
         float nu = textCoordinate.x / (float)scene->hdri->texture.width;
@@ -513,9 +514,9 @@ void renderingKernel(dev_Scene* scene, int idx) {
         scene->dev_samples[idx]++;
     }
     
-    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = 1;
-    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = 0;
-    scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = 0;
+    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = tangent.x;
+    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = tangent.y;
+    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = tangent.z;
 
     scene->dev_randstate[idx] = rnd;
     

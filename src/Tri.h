@@ -12,6 +12,7 @@ public:
     Vector3 uv[3];
     Vector3 normals[3];
     Vector3 tangents[3];
+
     float tangentsSign;
 
     int objectID;

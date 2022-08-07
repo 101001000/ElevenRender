@@ -97,14 +97,6 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 				tri.uv[j] = Vector3(tu, tv, 0);
 			}
 
-			/*
-
-			std::cout << "Pushing back v " << tri.vertices[0].x << ", " << tri.vertices[0].y << ", " << tri.vertices[0].z << ", " << tri.vertices[1].x << ", " << tri.vertices[1].y << ", " << tri.vertices[2].z << ", " << tri.vertices[2].x << ", " << tri.vertices[2].y << ", " << tri.vertices[2].z << std::endl;
-			std::cout << "Pushing back n " << tri.normals[0].x << ", " << tri.normals[0].y << ", " << tri.normals[0].z << ", " << tri.normals[1].x << ", " << tri.normals[1].y << ", " << tri.normals[2].z << ", " << tri.normals[2].x << ", " << tri.normals[2].y << ", " << tri.normals[2].z << std::endl;
-			std::cout << "Pushing back t " << tri.uv[0].x << ", " << tri.uv[0].y << ", " << tri.uv[1].x << ", " << tri.uv[1].y << ", " << tri.uv[2].x << ", " << tri.uv[2].y << std::endl;
-
-			*/
-
 			tris->push_back(tri);
 		}
 
@@ -117,25 +109,6 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
 		CalcTangents calcTang = CalcTangents();
 		calcTang.calc(mo);
-
-		for (int i = 0; i < mo->triCount; i++) {
-
-			std::cout << "Vx0: " << mo->tris[i].vertices[0].x << ", y: " << mo->tris[i].vertices[0].y << ", z: " << mo->tris[i].vertices[0].z << std::endl;
-			std::cout << "Nx0: " << mo->tris[i].normals[0].x << ", y: " <<  mo->tris[i].normals[0].y << ", z: " <<  mo->tris[i].normals[0].z << std::endl;
-			std::cout << "Tx0: " << mo->tris[i].tangents[0].x << ", y: " << mo->tris[i].tangents[0].y << ", z: " << mo->tris[i].tangents[0].z << std::endl;
-			std::cout << std::endl;
-			std::cout << "Vx1: " << mo->tris[i].vertices[1].x << ", y: " << mo->tris[i].vertices[1].y << ", z: " << mo->tris[i].vertices[1].z << std::endl;
-			std::cout << "Nx1: " << mo->tris[i].normals[1].x << ", y: " <<  mo->tris[i].normals[1].y << ", z: " <<  mo->tris[i].normals[1].z << std::endl;
-			std::cout << "Tx1: " << mo->tris[i].tangents[1].x << ", y: " << mo->tris[i].tangents[1].y << ", z: " << mo->tris[i].tangents[1].z << std::endl;
-			std::cout << std::endl;
-			std::cout << "Vx2: " << mo->tris[i].vertices[2].x << ", y: " << mo->tris[i].vertices[2].y << ", z: " << mo->tris[i].vertices[2].z << std::endl;
-			std::cout << "Nx2: " << mo->tris[i].normals[2].x << ", y: " <<  mo->tris[i].normals[2].y << ", z: " <<  mo->tris[i].normals[2].z << std::endl;
-			std::cout << "Tx2: " << mo->tris[i].tangents[2].x << ", y: " << mo->tris[i].tangents[2].y << ", z: " << mo->tris[i].tangents[2].z << std::endl;
-			std::cout << std::endl;
-			std::cout << std::endl;
-
-		}
-
 		meshObjects.push_back(*mo);
     }
 }

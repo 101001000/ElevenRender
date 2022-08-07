@@ -514,12 +514,7 @@ void renderingKernel(dev_Scene* scene, int idx) {
         scene->dev_samples[idx]++;
     }
     
-    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = tangent.x;
-    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = tangent.y;
-    scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = tangent.z;
-
     scene->dev_randstate[idx] = rnd;
-    
 }
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
@@ -713,8 +708,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(
         t2 - t1);
-
-    std::cout << ms_int.count() << " LOOOL " << std::endl;
 
     return 0;
 }

@@ -98,7 +98,7 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
 
 
 
-int main1(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
     CommandManager cm;
     cm.init();
@@ -108,7 +108,7 @@ int main1(int argc, char* argv[]) {
 
 
 
-int main(int argc, char* argv[]) {
+int main1(int argc, char* argv[]) {
 
     class CUDASelector : public sycl::device_selector {
     public:

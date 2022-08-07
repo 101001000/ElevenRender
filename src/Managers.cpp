@@ -1,4 +1,5 @@
 #include "CommandManager.h"
+#include "Managers.h"
 
 void InputManager::run() {
 
@@ -51,7 +52,9 @@ void InputManager::run() {
             }
 
             if (vm.count("preview_pass")) {
-                cm->change_preview(vm["preview_pass"].as<std::string>());
+                std::cout << "adding preview_pass to the queue";
+                std::function <void()> f = std::bind(&CommandManager::change_preview, std::ref(cm), vm["preview_pass"].as<std::string>());
+                cm->command_queue.push(f);
             }
 
             for (const char* c : argv) {

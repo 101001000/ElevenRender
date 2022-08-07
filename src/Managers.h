@@ -3,6 +3,7 @@
 #include "CommandManager.h"
 #include "Window.h"
 #include "kernel.h"
+#include <functional>
 
 #include <iomanip>
 #include <OpenImageDenoise/oidn.hpp>

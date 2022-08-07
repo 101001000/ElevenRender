@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <thread>
+#include <queue>
 #include "Managers.h"
+
 
 class CommandManager {
 
@@ -15,9 +17,9 @@ public:
     std::shared_ptr<SceneManager> sm;
 
     std::thread im_t;
-    std::thread wm_t;
-    std::thread dm_t;
     std::thread cm_t;
+
+    std::queue <std::function<void()>> command_queue;
 
     CommandManager();
 
@@ -25,7 +27,7 @@ public:
     // WindowManager commands
     void open_window();
 
-    void change_preview(std::string pass);
+    void change_preview(std::string& pass);
     void load_scene_from_obj(std::string pass);
 
     void run();

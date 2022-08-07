@@ -34,8 +34,13 @@ class RenderingManager : Manager {
 public:
 
     dev_Scene* dev_scene;
-    RenderParameters rp;
+
+    //TODO: RenderData refactor
+    RenderData rd;
     sycl::queue q;
+
+    std::thread t_rend;
+    std::thread t_key;
 
     RenderingManager(CommandManager* _cm);
 

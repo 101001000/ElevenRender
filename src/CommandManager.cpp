@@ -15,11 +15,17 @@ void CommandManager::open_window() {
 }
 
 void CommandManager::change_preview(std::string& pass) {
-    std::cout << "Executing command " << std::endl;
-
     float* pass_data = rm->get_pass(pass);
 
-    //wm->set_preview_data();
+    wm->set_preview_data(pass_data);
+}
+
+void CommandManager::load_scene_from_obj(std::string& path) {
+    sm->scene = Scene::loadScene(path);
+}
+
+void CommandManager::start_render() {
+    rm->start_rendering(&(sm->scene));
 }
 
 void CommandManager::run() {

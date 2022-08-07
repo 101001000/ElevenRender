@@ -45,14 +45,14 @@ struct RenderParameters {
 	unsigned int width, height;
 	unsigned int sampleTarget;
 
-	bool passes[PASSES_COUNT];
+	bool passes_enabled[PASSES_COUNT];
 
 	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget) : width(width), height(height), sampleTarget(sampleTarget) {
-		passes[BEAUTY] = true;
-		passes[DENOISE] = true;
-		passes[NORMAL] = true;
-		passes[TANGENT] = true;
-		passes[BITANGENT] = true;
+		passes_enabled[BEAUTY] = true;
+		passes_enabled[DENOISE] = true;
+		passes_enabled[NORMAL] = true;
+		passes_enabled[TANGENT] = true;
+		passes_enabled[BITANGENT] = true;
 	};
 	RenderParameters() : width(1280), height(720), sampleTarget(100) {};
 };

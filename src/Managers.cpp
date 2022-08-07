@@ -1,5 +1,6 @@
 #include "CommandManager.h"
 #include "Managers.h"
+#include "kernel.h"
 
 void InputManager::run() {
 
@@ -54,6 +55,18 @@ void InputManager::run() {
             if (vm.count("preview_pass")) {
                 std::cout << "adding preview_pass to the queue";
                 std::function <void()> f = std::bind(&CommandManager::change_preview, std::ref(cm), vm["preview_pass"].as<std::string>());
+                cm->command_queue.push(f);
+            }
+
+            if (vm.count("load_obj")) {
+                std::cout << "adding load_obj to the queue";
+                std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
+                cm->command_queue.push(f);
+            }
+
+            if (vm.count("start")) {
+                std::cout << "adding start to the queue";
+                std::function <void()> f = std::bind(&CommandManager::start_render, std::ref(cm));
                 cm->command_queue.push(f);
             }
 
@@ -133,16 +146,35 @@ public:
     }
 };
 
-
 void RenderingManager::start_rendering(Scene* scene) {
 
-    //std::thread(renderSetup, std::ref(q), &scene, dev_scene);
+    rd.pars = RenderParameters(scene->camera.xRes, scene->camera.yRes, 50);
 
+    std::cout << "START RENDERING " << rd.pars.width << " and " << rd.pars.height << std::endl;
+
+    for (int i = 0; i < PASSES_COUNT; i++) {
+
+        if (rd.pars.passes_enabled[i]) {
+            rd.passes[i] = new float[rd.pars.width * rd.pars.height * 4];
+            memset(rd.passes[i], 0,
+                rd.pars.width * rd.pars.height * 4 * sizeof(float));
+        }
+    }
+
+    std::cout << "START RENDERING 2" << std::endl;
+
+    t_rend = std::thread(renderSetup, std::ref(q), std::ref(scene), std::ref(dev_scene));
+
+    std::cout << "START RENDERING 3" << std::endl;
+
+    //t_key = std::thread(key_press);
+
+    rd.startTime = std::chrono::high_resolution_clock::now();
 }
 
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     q = sycl::queue(CUDASelector());
-    dev_Scene* dev_scene = sycl::malloc_device<dev_Scene>(1, q);
+    dev_scene = sycl::malloc_device<dev_Scene>(1, q);
 }
 
 
@@ -154,14 +186,14 @@ float* RenderingManager::get_pass(std::string pass) {
 
     float* dev_passes;
 
-    float* a = new float[rp.width * rp.height * 4 * PASSES_COUNT];
-    float* pass_result = new float[rp.width * rp.height * 4];
+    float* a = new float[rd.pars.width * rd.pars.height * 4 * PASSES_COUNT];
+    float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
     q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
-    q.memcpy(a, dev_passes, rp.width * rp.height * 4 * PASSES_COUNT).wait();
+    q.memcpy(a, dev_passes, rd.pars.width * rd.pars.height * 4 * PASSES_COUNT).wait();
 
-    for (int j = 0; j < rp.width * rp.height; j++) {
-        int n = parsePass(pass) * rp.width * rp.height * 4;
+    for (int j = 0; j < rd.pars.width * rd.pars.height; j++) {
+        int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
         pass_result[j * 4 + 0] = a[n + j * 4 + 0];
         pass_result[j * 4 + 1] = a[n + j * 4 + 1];
         pass_result[j * 4 + 2] = a[n + j * 4 + 2];

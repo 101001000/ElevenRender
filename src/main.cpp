@@ -58,7 +58,7 @@ void startRender(sycl::queue& q, RenderData& data, Scene& scene, dev_Scene* devS
     RenderParameters pars = data.pars;
 
     for (int i = 0; i < PASSES_COUNT; i++) {
-        if (pars.passes[i]) {
+        if (pars.passes_enabled[i]) {
             data.passes[i] = new float[pars.width * pars.height * 4];
             memset(data.passes[i], 0,
                    pars.width * pars.height * 4 * sizeof(float));

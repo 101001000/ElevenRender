@@ -150,8 +150,6 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     rd.pars = RenderParameters(scene->camera.xRes, scene->camera.yRes, 50);
 
-    std::cout << "START RENDERING " << rd.pars.width << " and " << rd.pars.height << std::endl;
-
     for (int i = 0; i < PASSES_COUNT; i++) {
 
         if (rd.pars.passes_enabled[i]) {
@@ -161,11 +159,7 @@ void RenderingManager::start_rendering(Scene* scene) {
         }
     }
 
-    std::cout << "START RENDERING 2" << std::endl;
-
     t_rend = std::thread(renderSetup, std::ref(q), std::ref(scene), std::ref(dev_scene));
-
-    std::cout << "START RENDERING 3" << std::endl;
 
     //t_key = std::thread(key_press);
 

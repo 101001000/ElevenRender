@@ -33,22 +33,24 @@ float RngGenerator::next() {
     return ((float)seed / (float)UINT_MAX);
 }
 
-Passes parsePass(std::string pass) {
+Passes parsePass(std::string s_pass) {
 
-    std::transform(pass.begin(), pass.end(), pass.begin(), ::tolower);
+    std::transform(s_pass.begin(), s_pass.end(), s_pass.begin(), ::tolower);
 
-    if (pass.compare("beauty") == 0)
-        return BEAUTY;
-    if (pass.compare("denoise") == 0)
-        return BITANGENT;
-    if (pass.compare("normal") == 0)
-        return NORMAL;
-    if (pass.compare("tangent") == 0)
-        return TANGENT;
-    if (pass.compare("bitangent") == 0)
-        return BITANGENT;
+    Passes pass = BEAUTY;
 
-    return BEAUTY;
+    if (s_pass.compare("beauty") == 0)
+        pass = BEAUTY;
+    if (s_pass.compare("denoise") == 0)
+        pass = BITANGENT;
+    if (s_pass.compare("normal") == 0)
+        pass = NORMAL;
+    if (s_pass.compare("tangent") == 0)
+        pass = TANGENT;
+    if (s_pass.compare("bitangent") == 0)
+        pass = BITANGENT;
+
+    return pass;
 }
 
 unsigned long textureMemory = 0;

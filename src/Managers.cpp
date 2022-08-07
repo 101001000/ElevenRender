@@ -174,27 +174,15 @@ RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
 
 float* RenderingManager::get_pass(std::string pass) {
     
-    //TODO just get one pass
+    int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
 
-    printf("\nRetrieving pass %d\n", parsePass(pass));
+    printf("\nRetrieving pass %d ...\n", parsePass(pass));
 
     float* dev_passes;
-
-    float* a = new float[rd.pars.width * rd.pars.height * 4 * PASSES_COUNT];
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
     q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
-    q.memcpy(a, dev_passes, rd.pars.width * rd.pars.height * 4 * PASSES_COUNT).wait();
-
-    for (int j = 0; j < rd.pars.width * rd.pars.height; j++) {
-        int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
-        pass_result[j * 4 + 0] = a[n + j * 4 + 0];
-        pass_result[j * 4 + 1] = a[n + j * 4 + 1];
-        pass_result[j * 4 + 2] = a[n + j * 4 + 2];
-        pass_result[j * 4 + 3] = a[n + j * 4 + 3];
-    }
-
-    delete[] a;
+    q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float)).wait();
 
     return pass_result;
 }

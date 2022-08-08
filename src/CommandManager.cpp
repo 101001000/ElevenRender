@@ -28,7 +28,7 @@ void CommandManager::change_preview(std::string& pass) {
 
 void CommandManager::save_pass(std::string& pass, std::string& path) {
 
-    printf("Saving file %s...\n", path);
+    printf("Saving file %s...\n", path.c_str());
 
     float* pass_data = rm->get_pass(pass);
 

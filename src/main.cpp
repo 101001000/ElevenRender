@@ -1,3 +1,4 @@
+
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include "sycl.h"
 #include <conio.h>
 
+#include <boost/asio.hpp>
 
 
 #include "BVH.h"
@@ -95,8 +97,93 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
     delete (pathCountBuffer);*/
 }
 
+
+using boost::asio::ip::tcp;
+
+float data[1920 * 1080 * 4];
+
+
+
+void session(boost::asio::ip::tcp::socket sock)
+{
+    try
+    {
+        for (;;)
+        {
+
+            boost::system::error_code error;
+            boost::asio::read(sock, boost::asio::buffer(data), error);
+
+            if (error == boost::asio::error::eof)
+                break; // Connection closed cleanly by peer.
+            else if (error)
+                throw boost::system::system_error(error); // Some other error.
+
+            /*
+            for (int i = 0; i < 1920 * 1080; i++) {
+                std::cout
+                    << "I: " << i
+
+                    << " r " << data[i * 4 + 0]
+                    << " g " << data[i * 4 + 1]
+                    << " b " << data[i * 4 + 2]
+                    << " a " << data[i * 4 + 3]
+                    << std::endl;
+            }
+            */
+            std::cout << data[0];
+
+            boost::asio::write(sock, boost::asio::buffer("ok", 3));
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Exception in thread: " << e.what() << "\n";
+    }
+}
+
+
 int standalone() {
 
+    std::cout << "Standalone mode" << std::endl;
+
+    for (int i = 0; i < 1920 * 1080; i++) {
+        data[i * 4 + 0] = 0;
+        data[i * 4 + 1] = 0;
+        data[i * 4 + 2] = 0;
+        data[i * 4 + 3] = 1;
+    }
+
+    boost::asio::io_context io_context;
+
+    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), 5557));
+
+
+    std::thread(session, a.accept()).detach();
+
+    Window window(1920, 1080);
+
+    window.init();
+
+    printf("Entering loop");
+
+    while (!glfwWindowShouldClose(window.window)) {
+
+        PixelBuffer pb;
+
+        pb.width = 1920;
+        pb.height = 1080;
+
+        pb.channels = 4;
+        pb.data = data;
+
+        window.previewBuffer = pb;
+        window.renderUpdate();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    window.stop();
     return 0;
 }
 
@@ -107,13 +194,86 @@ int backend() {
     return 0;
 }
 
+
+
+
 int main(int argc, char* argv[]) {
+
     if (argc > 1) {
         if (strcmp(argv[1], "standalone") == 0) {
             standalone();
         }
         else {
-            backend();
+
+            std::cout << "Backend mode" << std::endl;
+
+            float* reddata = new float[1920 * 1080 * 4];
+            float* greendata = new float[1920 * 1080 * 4];
+            float* bluedata = new float[1920 * 1080 * 4];
+
+            for (int i = 0; i < 1920 * 1080; i++) {
+                reddata[i * 4 + 0] = 1;
+                reddata[i * 4 + 1] = 0;
+                reddata[i * 4 + 2] = 0;
+                reddata[i * 4 + 3] = 1;
+            }
+
+            for (int i = 0; i < 1920 * 1080; i++) {
+                greendata[i * 4 + 0] = 0;
+                greendata[i * 4 + 1] = 1;
+                greendata[i * 4 + 2] = 0;
+                greendata[i * 4 + 3] = 1;
+            }
+
+            for (int i = 0; i < 1920 * 1080; i++) {
+                bluedata[i * 4 + 0] = 0;
+                bluedata[i * 4 + 1] = 0;
+                bluedata[i * 4 + 2] = 1;
+                bluedata[i * 4 + 3] = 1;
+            }
+
+
+            boost::asio::io_context io_context;
+
+            tcp::socket s(io_context);
+            tcp::resolver resolver(io_context);
+
+            boost::asio::connect(s, resolver.resolve("127.0.0.1", "5557"));
+
+            for (;;) {
+
+                std::cout << "Enter message: ";
+
+                char request[1024];
+                std::cin.getline(request, 1024);
+
+
+                if (strcmp(request, "red") == 0) {
+                    std::cout << "ENVIANDO ROJO" << std::endl;
+                    boost::asio::write(s, boost::asio::buffer(reddata, 1920 * 1080 * 4 * sizeof(float)));
+                }
+
+                if (strcmp(request, "green") == 0) {
+                    std::cout << "ENVIANDO verde" << std::endl;
+                    boost::asio::write(s, boost::asio::buffer(greendata, 1920 * 1080 * 4 * sizeof(float)));
+                }
+
+                if (strcmp(request, "blue") == 0) {
+                    std::cout << "ENVIANDO azul" << std::endl;
+                    boost::asio::write(s, boost::asio::buffer(bluedata, 1920 * 1080 * 4 * sizeof(float)));
+                }
+
+
+
+                char reply[1024];
+                size_t reply_length = boost::asio::read(s,
+                    boost::asio::buffer(reply, 3));
+                std::cout << "Reply is: ";
+                std::cout.write(reply, reply_length);
+                std::cout << "\n";
+
+            }
+            //backend();
         }
     }
 }

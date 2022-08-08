@@ -9,7 +9,7 @@
 #include <conio.h>
 
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include "BVH.h"
 #include "Camera.h"
 #include "Definitions.h"
@@ -19,7 +19,7 @@
 #include "Texture.hpp"
 #include "kernel.h"
 #include "CommandManager.h"
-#include "libs/stb_image_write.h"
+
 
 
 int currentPass = 0;
@@ -95,17 +95,30 @@ void getRenderData(dev_Scene* dev_scene, sycl::queue& q, RenderData& data) {
     delete (pathCountBuffer);*/
 }
 
+int standalone() {
 
+    return 0;
+}
 
-
-int main(int argc, char* argv[]) {
-
+int backend() {
     CommandManager cm;
     cm.init();
 
     return 0;
 }
 
+int main(int argc, char* argv[]) {
+    if (argc > 1) {
+        if (strcmp(argv[1], "standalone") == 0) {
+            standalone();
+        }
+        else {
+            backend();
+        }
+    }
+}
+
+/*
 
 
 int main1(int argc, char* argv[]) {
@@ -215,3 +228,4 @@ int main1(int argc, char* argv[]) {
 }
 
 
+*/

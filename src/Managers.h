@@ -56,6 +56,7 @@ public:
     void run();
 };
 
+/*
 
 class WindowManager : Manager {
 
@@ -74,7 +75,7 @@ public:
     void set_preview_data(float* data);
 
 };
-
+*/
 class DenoiseManager : Manager {
 
     OIDNDevice device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);

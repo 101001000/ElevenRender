@@ -47,10 +47,7 @@ void InputManager::run() {
                 std::cout << desc << "\n";
             }
 
-            if (vm.count("window")) {
-                std::cout << "Opening preview window";
-                cm->open_window();
-            }
+            /*
 
             if (vm.count("preview_pass")) {
                 std::cout << "adding preview_pass to the queue";
@@ -58,9 +55,19 @@ void InputManager::run() {
                 cm->command_queue.push(f);
             }
 
+            */
+
             if (vm.count("load_obj")) {
                 std::cout << "adding load_obj to the queue";
                 std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
+                cm->command_queue.push(f);
+            }
+
+            if (vm.count("save_pass")) {
+                std::cout << "adding save_pass to the queue";
+                std::string pass = vm["save_pass"].as<std::vector<std::string>>()[0];
+                std::string path = vm["save_pass"].as<std::vector<std::string>>()[1];
+                std::function <void()> f = std::bind(&CommandManager::save_pass, std::ref(cm), pass, path);
                 cm->command_queue.push(f);
             }
 
@@ -84,6 +91,7 @@ void InputManager::run() {
     }
 }
 
+/*
 
 WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080) {
 
@@ -131,6 +139,8 @@ void WindowManager::start() {
 void WindowManager::set_preview_data(float* data) {
     pb.data = data;
 }
+
+*/
 
 
 class CUDASelector : public sycl::device_selector {

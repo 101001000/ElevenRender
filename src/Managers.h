@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 //Forward declaration
 class CommandManager;
@@ -54,6 +55,26 @@ class InputManager : Manager {
 public:
     using Manager::Manager;
     void run();
+    std::string execute_command(std::string);
+    void run_tcp();
+};
+
+
+#define TCP_MESSAGE_MAXSIZE 1024
+
+struct Message {
+
+    enum MsgType { COMMAND, RENDER_INFO };
+    enum DataType { NONE, FLOAT, JSON, STRING };
+    enum Status { OK, FAIL };
+
+    MsgType msg_type;
+    std::string msg;
+
+    DataType data_type;
+    unsigned int data_size;
+    void* data;
+
 };
 
 /*

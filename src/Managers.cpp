@@ -2,7 +2,10 @@
 #include "Managers.h"
 #include "kernel.h"
 
-void InputManager::run() {
+
+std::string InputManager::execute_command(std::string command) {
+
+    std::ostringstream response;
 
     namespace po = boost::program_options;
 
@@ -19,75 +22,128 @@ void InputManager::run() {
         ("load_config", po::value<std::string>(), "load rendering config from file path")
         ;
 
-    while (1) {
+    try {
 
-        try {
+        std::string s;
+        po::variables_map vm;
 
-            std::string sinput;
-            std::string s;
-            po::variables_map vm;
+        std::vector<const char*> argv;
 
-            std::vector<const char*> argv;
+        std::istringstream iss(command);
 
-            std::getline(std::cin, sinput);
-            std::istringstream iss(sinput);
+        argv.push_back("ElevenRender");
 
-            argv.push_back("ElevenRender");
-
-            while (iss >> std::quoted(s)) {
-                char* c = new char[s.size()];
-                strcpy(c, s.c_str());
-                argv.push_back(c);
-            }
-
-            po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
-            po::notify(vm);
-
-            if (vm.count("help")) {
-                std::cout << desc << "\n";
-            }
-
-            /*
-
-            if (vm.count("preview_pass")) {
-                std::cout << "adding preview_pass to the queue";
-                std::function <void()> f = std::bind(&CommandManager::change_preview, std::ref(cm), vm["preview_pass"].as<std::string>());
-                cm->command_queue.push(f);
-            }
-
-            */
-
-            if (vm.count("load_obj")) {
-                std::cout << "adding load_obj to the queue";
-                std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
-                cm->command_queue.push(f);
-            }
-
-            if (vm.count("save_pass")) {
-                std::cout << "adding save_pass to the queue";
-                std::string pass = vm["save_pass"].as<std::vector<std::string>>()[0];
-                std::string path = vm["save_pass"].as<std::vector<std::string>>()[1];
-                std::function <void()> f = std::bind(&CommandManager::save_pass, std::ref(cm), pass, path);
-                cm->command_queue.push(f);
-            }
-
-            if (vm.count("start")) {
-                std::cout << "adding start to the queue";
-                std::function <void()> f = std::bind(&CommandManager::start_render, std::ref(cm));
-                cm->command_queue.push(f);
-            }
-
-            for (const char* c : argv) {
-
-                if (strcmp(c, "ElevenRender") != 0) {
-                    delete[] c;
-                }
-            }
-
-        } catch (std::exception const& e) {
-            std::cerr << e.what() << "\n";
+        while (iss >> std::quoted(s)) {
+            char* c = new char[s.size()];
+            strcpy(c, s.c_str());
+            argv.push_back(c);
         }
 
+        po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
+        po::notify(vm);
+
+        if (vm.count("help")) {
+            response << desc;
+        }
+
+        if (vm.count("load_obj")) {
+            std::cout << "adding load_obj to the queue";
+            std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
+        if (vm.count("save_pass")) {
+            std::cout << "adding save_pass to the queue";
+            std::string pass = vm["save_pass"].as<std::vector<std::string>>()[0];
+            std::string path = vm["save_pass"].as<std::vector<std::string>>()[1];
+            std::function <void()> f = std::bind(&CommandManager::save_pass, std::ref(cm), pass, path);
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
+        if (vm.count("start")) {
+            std::cout << "adding start to the queue";
+            std::function <void()> f = std::bind(&CommandManager::start_render, std::ref(cm));
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
+        for (const char* c : argv) {
+
+            if (strcmp(c, "ElevenRender") != 0) {
+                delete[] c;
+            }
+        }
+        return response.str();
+    }
+    catch (std::exception const& e) {
+        std::cerr << e.what() << "\n";
+        return "Error";
+    }
+    
+    return "nothing";
+}
+
+
+Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_code& error) {
+
+    Message msg;
+
+    char input_data[TCP_MESSAGE_MAXSIZE];
+
+    sock.read_some(boost::asio::buffer(input_data), error);
+
+    RSJresource input_json(input_data);
+
+    msg.data_size = input_json["data_size"].as<int>();
+    msg.msg = input_json["msg"].as<std::string>();
+
+    if (strcmp(input_json["msg_type"].as<std::string>().c_str(), "COMMAND") == 0) {
+        msg.data_type == Message::MsgType::COMMAND;
+    }
+    else if (strcmp(input_json["msg_type"].as<std::string>().c_str(), "RENDER_INFO") == 0) {
+        msg.data_type == Message::MsgType::RENDER_INFO;
+    }
+
+    if (strcmp(input_json["data_type"].as<std::string>().c_str(), "FLOAT") == 0)
+        msg.data_type == Message::DataType::FLOAT;
+
+    if (msg.data_size != 0) {
+        msg.data = malloc(msg.data_size);
+        boost::asio::read(sock, boost::asio::buffer(msg.data, msg.data_size));
+    }
+
+    return msg;
+}
+
+void InputManager::run_tcp() {
+
+    using boost::asio::ip::tcp;
+ 
+    boost::asio::io_context io_context;
+    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), 5557));
+
+    while (1) {
+        std::cout << "Awaiting for a connection" << std::endl;
+        tcp::socket sock = a.accept();
+        std::cout << "Connected!" << std::endl;
+
+        boost::system::error_code error;
+        
+        while (!error) {
+
+            std::cout << "trying to read message " << std::endl;
+            Message msg = read_message(sock, error);
+            std::cout << "Message read " << msg.msg << std::endl;
+
+            if (msg.msg_type == Message::COMMAND) {
+                std::cout << "Executing command... " << msg.msg << std::endl;
+                std::string result = execute_command(msg.msg);
+            }
+        }
+
+        std::cout << "Disconnected!" << std::endl;
     }
 }
 

@@ -73,7 +73,8 @@ void CommandManager::run() {
 }
 
 void CommandManager::init() {
-    im_t = std::thread(&InputManager::run, this->im);
-    cm_t = std::thread(&CommandManager::run, this);
+    im_t = std::thread(&InputManager::run_tcp, this->im);
+    //cm_t = std::thread(&CommandManager::run, this);
     //wm->run();
+    run();
 }

@@ -10,7 +10,8 @@
 #include <conio.h>
 
 #include <boost/asio.hpp>
-
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
 #include "BVH.h"
 #include "Camera.h"
@@ -250,14 +251,17 @@ int backend() {
 
 int main(int argc, char* argv[]) {
 
+
+    boost::log::add_console_log(std::cout, boost::log::keywords::format = ">> %Message%");
+
     if (argc > 1) {
         if (strcmp(argv[1], "standalone") == 0) {
-            std::cout << "Standalone mode" << std::endl;
+            BOOST_LOG_TRIVIAL(info) << "Selected standalone mode";
             standalone();
         }
         else {
 
-            std::cout << "Backend mode" << std::endl;
+            BOOST_LOG_TRIVIAL(info) << "Selected backend mode";
             CommandManager cm;
             cm.init();
 

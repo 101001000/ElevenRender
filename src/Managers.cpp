@@ -94,7 +94,9 @@ Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_co
 
     sock.read_some(boost::asio::buffer(input_data), error);
 
-    RSJresource input_json(input_data);
+    std::string input_str(input_data);
+
+    RSJresource input_json(input_str);
 
     msg.data_size = input_json["data_size"].as<int>();
     msg.msg = input_json["msg"].as<std::string>();

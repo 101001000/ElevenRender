@@ -12,6 +12,9 @@
 #include <boost/asio.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
+
 
 #include "BVH.h"
 #include "Camera.h"
@@ -24,6 +27,7 @@
 #include "CommandManager.h"
 
 
+BOOST_LOG_ATTRIBUTE_KEYWORD(a_timestamp, "TimeStamp", boost::log::attributes::local_clock::value_type);
 
 int currentPass = 0;
 
@@ -246,13 +250,58 @@ int backend() {
     return 0;
 }
 
+void coloring_formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
+{
+    auto severity = rec[boost::log::trivial::severity];
+    if (severity)
+    {
+        // Set the color
+        switch (severity.get())
+        {
+        case boost::log::trivial::severity_level::info:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+            break;
+        case boost::log::trivial::severity_level::warning:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+            break;
+        case boost::log::trivial::severity_level::error:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
+            break;
+        case boost::log::trivial::severity_level::fatal:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
+            break;
+        default:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
+            break;
+        }
+    }
+
+    // TODO: add threadID
+    strm << rec[a_timestamp] << rec[boost::log::expressions::smessage];
+}
+
+
 
 
 
 int main(int argc, char* argv[]) {
 
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
 
-    boost::log::add_console_log(std::cout, boost::log::keywords::format = ">> %Message%");
+    typedef boost::log::sinks::synchronous_sink< boost::log::sinks::text_ostream_backend > text_sink;
+    boost::shared_ptr< text_sink > sink = boost::make_shared< text_sink >();
+
+    boost::shared_ptr< std::ostream > stream(&std::clog, boost::null_deleter());
+    sink->locked_backend()->add_stream(stream);
+    sink->set_formatter(&coloring_formatter);
+
+
+    // Register the sink in the logging core
+    boost::log::core::get()->add_sink(sink);
+
+    boost::log::add_common_attributes();
+
+    //boost::log::add_console_log(std::cout, boost::log::keywords::format = ">> %Message%");
 
     if (argc > 1) {
         if (strcmp(argv[1], "standalone") == 0) {
@@ -262,6 +311,9 @@ int main(int argc, char* argv[]) {
         else {
 
             BOOST_LOG_TRIVIAL(info) << "Selected backend mode";
+            BOOST_LOG_TRIVIAL(warning) << "Selected standalone mode";
+            BOOST_LOG_TRIVIAL(error) << "Selected standalone mode";
+            BOOST_LOG_TRIVIAL(trace) << "Selected standalone mode";
             CommandManager cm;
             cm.init();
 

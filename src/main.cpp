@@ -28,6 +28,8 @@
 
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(a_timestamp, "TimeStamp", boost::log::attributes::local_clock::value_type);
+BOOST_LOG_ATTRIBUTE_KEYWORD(a_thread_id, "ThreadID", boost::log::attributes::current_thread_id::value_type);
+
 
 int currentPass = 0;
 
@@ -276,8 +278,7 @@ void coloring_formatter(boost::log::record_view const& rec, boost::log::formatti
         }
     }
 
-    // TODO: add threadID
-    strm << rec[a_timestamp] << rec[boost::log::expressions::smessage];
+    strm << rec[a_timestamp] << " - [" << rec[a_thread_id] << "] [" << rec[boost::log::trivial::severity] << "]: " << rec[boost::log::expressions::smessage];
 }
 
 

@@ -129,14 +129,14 @@ std::string InputManager::execute_command(std::string command) {
         }
 
         if (vm.count("load_obj")) {
-            std::cout << "adding load_obj to the queue";
+            BOOST_LOG_TRIVIAL(debug) << "Adding load_obj to the queue";
             std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
             cm->command_queue.push(f);
             response << "ok";
         }
 
         if (vm.count("save_pass")) {
-            std::cout << "adding save_pass to the queue";
+            BOOST_LOG_TRIVIAL(debug) << "Adding save_pass to the queue";
             std::string pass = vm["save_pass"].as<std::vector<std::string>>()[0];
             std::string path = vm["save_pass"].as<std::vector<std::string>>()[1];
             std::function <void()> f = std::bind(&CommandManager::save_pass, std::ref(cm), pass, path);
@@ -145,7 +145,7 @@ std::string InputManager::execute_command(std::string command) {
         }
 
         if (vm.count("start")) {
-            std::cout << "adding start to the queue";
+            BOOST_LOG_TRIVIAL(debug) << "Adding start to the queue";
             std::function <void()> f = std::bind(&CommandManager::start_render, std::ref(cm));
             cm->command_queue.push(f);
             response << "ok";
@@ -210,25 +210,25 @@ void InputManager::run_tcp() {
     tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), 5557));
 
     while (1) {
-        std::cout << "Awaiting for a connection" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Awaiting for a connection";
         tcp::socket sock = a.accept();
-        std::cout << "Connected!" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Connected";
 
         boost::system::error_code error;
         
         while (!error) {
 
-            std::cout << "trying to read message " << std::endl;
+            BOOST_LOG_TRIVIAL(debug) << "Trying to read message";
             Message msg = read_message(sock, error);
-            std::cout << "Message read " << msg.msg << std::endl;
+            BOOST_LOG_TRIVIAL(debug) << "Message read";
 
             if (msg.type == Message::COMMAND) {
-                std::cout << "Executing command... " << msg.msg << std::endl;
+                BOOST_LOG_TRIVIAL(debug) << "Executing command " << msg.msg;
                 std::string result = execute_command(msg.msg);
             }
         }
 
-        std::cout << "Disconnected!" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Disconnected";
     }
 }
 
@@ -269,6 +269,10 @@ void RenderingManager::start_rendering(Scene* scene) {
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     BOOST_LOG_TRIVIAL(trace) << "RenderingManager::RenderingManager()";
     q = sycl::queue(CUDASelector());
+    sycl::device device = q.get_device();
+
+    BOOST_LOG_TRIVIAL(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
+
     dev_scene = sycl::malloc_device<dev_Scene>(1, q);
 }
 

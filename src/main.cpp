@@ -255,7 +255,7 @@ void coloring_formatter(boost::log::record_view const& rec, boost::log::formatti
         switch (severity.get())
         {
         case boost::log::trivial::severity_level::info:
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
             break;
         case boost::log::trivial::severity_level::warning:
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);

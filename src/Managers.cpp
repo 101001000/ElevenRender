@@ -47,7 +47,7 @@ std::string Message::parse_data_type(DataType data_type) {
 }
 
 RSJresource Message::parse_message(Message msg) {
-    BOOST_LOG_TRIVIAL(trace) << "Message::parse_message " << msg;
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_message " << Message::parse_message(msg).as_str();
     RSJresource json;
 
     json["message_type"] = Message::parse_type(msg.type);
@@ -69,7 +69,7 @@ RSJresource Message::parse_message(Message msg) {
 }
 
 Message Message::parse_json(RSJresource json) {
-    BOOST_LOG_TRIVIAL(trace) << "Message::parse_json " << json;
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_json " << json.as_str();
     Message msg;
 
     msg.type = type_map[json["message_type"].as_str()];
@@ -238,11 +238,9 @@ class CUDASelector : public sycl::device_selector {
 public:
     int operator()(const sycl::device& device) const override {
         if (device.get_platform().get_backend() == sycl::backend::ext_oneapi_cuda) {
-            BOOST_LOG_TRIVIAL(info) << "CUDA device found";
             return 1;
         }
         else {
-            BOOST_LOG_TRIVIAL(fatal) << "CUDA device not found";
             return -1;
         }
     }
@@ -269,6 +267,7 @@ void RenderingManager::start_rendering(Scene* scene) {
 }
 
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
+    BOOST_LOG_TRIVIAL(trace) << "RenderingManager::RenderingManager()";
     q = sycl::queue(CUDASelector());
     dev_scene = sycl::malloc_device<dev_Scene>(1, q);
 }

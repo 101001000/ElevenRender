@@ -9,11 +9,8 @@
 #include "sycl.h"
 #include <conio.h>
 
-#include <boost/asio.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/date_time/posix_time/posix_time_io.hpp>
+#include "Logging.h"
+
 
 
 #include "BVH.h"
@@ -26,9 +23,6 @@
 #include "kernel.h"
 #include "CommandManager.h"
 
-
-BOOST_LOG_ATTRIBUTE_KEYWORD(a_timestamp, "TimeStamp", boost::log::attributes::local_clock::value_type);
-BOOST_LOG_ATTRIBUTE_KEYWORD(a_thread_id, "ThreadID", boost::log::attributes::current_thread_id::value_type);
 
 
 int currentPass = 0;

@@ -5,12 +5,13 @@
 #include "kernel.h"
 #include <functional>
 
+#include "Logging.h"
+#include <boost/asio.hpp>
+
 #include <iomanip>
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>
-#include <boost/asio.hpp>
 #include <boost/assign.hpp>
-#include <boost/log/trivial.hpp>
 
 //Forward declaration
 class CommandManager;

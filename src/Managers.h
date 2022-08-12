@@ -65,8 +65,8 @@ public:
 
 struct Message {
 
-    enum Type { COMMAND, STATUS };
-    enum DataType { NONE, FLOAT, JSON, STRING };
+    enum Type {TYPE_NONE, TYPE_COMMAND, TYPE_STATUS };
+    enum DataType { DATA_TYPE_NONE, DATA_TYPE_FLOAT, DATA_TYPE_JSON, DATA_TYPE_STRING };
 
     static std::map<std::string, Type> type_map;
     static std::map<std::string, DataType> data_type_map;
@@ -78,11 +78,10 @@ struct Message {
     unsigned int data_size;
     void* data;
 
+    Message();
+
     static RSJresource parse_message(Message msg);
     static Message parse_json(RSJresource json);
-
-    static std::string parse_type(Type type);
-    static std::string parse_data_type(DataType data_type);
 };
 
 /*

@@ -2,59 +2,30 @@
 #include "Managers.h"
 #include "kernel.h"
 
-std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("command", COMMAND)("status", STATUS);
-std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", NONE)("float", FLOAT)("json", JSON)("string", STRING);
+std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("none", TYPE_NONE)("command", TYPE_COMMAND)("status", TYPE_STATUS);
+std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", DATA_TYPE_NONE)("float", DATA_TYPE_FLOAT)("json", DATA_TYPE_JSON)("string", DATA_TYPE_STRING);
 
-std::string Message::parse_type(Type type) {
-    BOOST_LOG_TRIVIAL(trace) << "Message::parse_type " << type;
-    std::string str;
-
-    switch (type) {
-    case Type::COMMAND:
-        str = "command";
-        break;
-    case Type::STATUS:
-        str = "status";
-        break;
-    default:
-        str = "none";
-        break;
-    }
-
-    return str;
+Message::Message() {
+    type = Type::TYPE_NONE;
+    msg = "";
+    data_type = DataType::DATA_TYPE_NONE;
+    data_size = 0;
+    //data = nullptr;
 }
 
-std::string Message::parse_data_type(DataType data_type) {
-    BOOST_LOG_TRIVIAL(trace) << "Message::parse_data_type " << data_type;
-    std::string str;
-
-    switch (data_type) {
-    case DataType::FLOAT:
-        str = "float";
-        break;
-    case DataType::STRING:
-        str = "string";
-        break;
-    case DataType::JSON:
-        str = "json";
-        break;
-    default:
-        str = "none";
-        break;
-    }
-
-    return str;
-}
 
 RSJresource Message::parse_message(Message msg) {
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_message " << Message::parse_message(msg).as_str();
     RSJresource json;
 
-    json["message_type"] = Message::parse_type(msg.type);
+    for (auto it = type_map.begin(); it != type_map.end(); ++it)
+        if (it->second == msg.type)
+            json["type"] = it->first;
+
     json["message"] = msg.msg;
 
     if (msg.data_size != 0 &&
-        msg.data_type != DataType::NONE &&
+        msg.data_type != DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
 
         RSJresource additional_data_json;
@@ -69,10 +40,10 @@ RSJresource Message::parse_message(Message msg) {
 }
 
 Message Message::parse_json(RSJresource json) {
-    BOOST_LOG_TRIVIAL(trace) << "Message::parse_json " << json.as_str();
+    BOOST_LOG_TRIVIAL(trace) << "Entering Message::parse_json " << json.as_str();
     Message msg;
 
-    msg.type = type_map[json["message_type"].as_str()];
+    msg.type = type_map[json["type"].as_str()];
     msg.msg = json["message"].as_str();
     
     if (json["additional_data"].exists()) {
@@ -82,6 +53,7 @@ Message Message::parse_json(RSJresource json) {
         msg.data = nullptr;
     }
 
+    BOOST_LOG_TRIVIAL(trace) << "Leaving Message::parse_json " << json.as_str();
     return msg;
 }
 
@@ -173,7 +145,7 @@ void write_message(boost::asio::ip::tcp::socket& sock, Message msg, boost::syste
     sock.write_some(boost::asio::buffer(str));
 
     if (msg.data_size != 0 &&
-        msg.data_type != Message::DataType::NONE &&
+        msg.data_type != Message::DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
 
         boost::asio::write(sock, boost::asio::buffer(msg.data, msg.data_size));
@@ -181,6 +153,7 @@ void write_message(boost::asio::ip::tcp::socket& sock, Message msg, boost::syste
 }
 
 Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_code& error) {
+    BOOST_LOG_TRIVIAL(trace) << "Entering read_message()";
 
     Message msg;
 
@@ -194,11 +167,13 @@ Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_co
 
     msg = Message::parse_json(input_json);
 
+    /*
     if (msg.data_size != 0) {
         msg.data = malloc(msg.data_size);
         boost::asio::read(sock, boost::asio::buffer(msg.data, msg.data_size));
-    }
+    }*/
 
+    BOOST_LOG_TRIVIAL(trace) << "Leaving read_message()";
     return msg;
 }
 
@@ -220,12 +195,14 @@ void InputManager::run_tcp() {
 
             BOOST_LOG_TRIVIAL(debug) << "Trying to read message";
             Message msg = read_message(sock, error);
-            BOOST_LOG_TRIVIAL(debug) << "Message read";
+            BOOST_LOG_TRIVIAL(debug) << "Message readed: " << Message::parse_message(msg).as_str();
 
-            if (msg.type == Message::COMMAND) {
+            /*
+
+            if (msg.type == Message::Type::TYPE_COMMAND) {
                 BOOST_LOG_TRIVIAL(debug) << "Executing command " << msg.msg;
                 std::string result = execute_command(msg.msg);
-            }
+            }*/
         }
 
         BOOST_LOG_TRIVIAL(info) << "Disconnected";

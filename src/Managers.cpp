@@ -2,6 +2,88 @@
 #include "Managers.h"
 #include "kernel.h"
 
+std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("command", COMMAND)("status", STATUS);
+std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", NONE)("float", FLOAT)("json", JSON)("string", STRING);
+
+std::string Message::parse_type(Type type) {
+
+    std::string str;
+
+    switch (type) {
+    case Type::COMMAND:
+        str = "command";
+        break;
+    case Type::STATUS:
+        str = "status";
+        break;
+    default:
+        str = "none";
+        break;
+    }
+
+    return str;
+}
+
+std::string Message::parse_data_type(DataType data_type) {
+
+    std::string str;
+
+    switch (data_type) {
+    case DataType::FLOAT:
+        str = "float";
+        break;
+    case DataType::STRING:
+        str = "string";
+        break;
+    case DataType::JSON:
+        str = "json";
+        break;
+    default:
+        str = "none";
+        break;
+    }
+
+    return str;
+}
+
+RSJresource Message::parse_message(Message msg) {
+
+    RSJresource json;
+
+    json["message_type"] = Message::parse_type(msg.type);
+    json["message"] = msg.msg;
+
+    if (msg.data_size != 0 &&
+        msg.data_type != DataType::NONE &&
+        msg.data != nullptr) {
+
+        RSJresource additional_data_json;
+
+        additional_data_json["data_size"] = msg.data_size;
+        additional_data_json["data_type"] = msg.data_type;
+
+        json["additional_data"] = additional_data_json;
+    }
+  
+    return json;
+}
+
+Message Message::parse_json(RSJresource json) {
+
+    Message msg;
+
+    msg.type = type_map[json["message_type"].as_str()];
+    msg.msg = json["message"].as_str();
+    
+    if (json["additional_data"].exists()) {
+        RSJresource additional_data_json = json["additional_data"];
+        msg.data_size = additional_data_json["data_size"].as<int>();
+        msg.data_type = data_type_map[additional_data_json["data_type"].as_str()];
+        msg.data = nullptr;
+    }
+
+    return msg;
+}
 
 std::string InputManager::execute_command(std::string command) {
 
@@ -85,6 +167,18 @@ std::string InputManager::execute_command(std::string command) {
     return "nothing";
 }
 
+void write_message(boost::asio::ip::tcp::socket& sock, Message msg, boost::system::error_code& error) {
+
+    std::string str = Message::parse_message(msg).as_str();
+    sock.write_some(boost::asio::buffer(str));
+
+    if (msg.data_size != 0 &&
+        msg.data_type != Message::DataType::NONE &&
+        msg.data != nullptr) {
+
+        boost::asio::write(sock, boost::asio::buffer(msg.data, msg.data_size));
+    }
+}
 
 Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_code& error) {
 
@@ -98,18 +192,7 @@ Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_co
 
     RSJresource input_json(input_str);
 
-    msg.data_size = input_json["data_size"].as<int>();
-    msg.msg = input_json["msg"].as<std::string>();
-
-    if (strcmp(input_json["msg_type"].as<std::string>().c_str(), "COMMAND") == 0) {
-        msg.data_type == Message::MsgType::COMMAND;
-    }
-    else if (strcmp(input_json["msg_type"].as<std::string>().c_str(), "RENDER_INFO") == 0) {
-        msg.data_type == Message::MsgType::RENDER_INFO;
-    }
-
-    if (strcmp(input_json["data_type"].as<std::string>().c_str(), "FLOAT") == 0)
-        msg.data_type == Message::DataType::FLOAT;
+    msg = Message::parse_json(input_json);
 
     if (msg.data_size != 0) {
         msg.data = malloc(msg.data_size);
@@ -139,7 +222,7 @@ void InputManager::run_tcp() {
             Message msg = read_message(sock, error);
             std::cout << "Message read " << msg.msg << std::endl;
 
-            if (msg.msg_type == Message::COMMAND) {
+            if (msg.type == Message::COMMAND) {
                 std::cout << "Executing command... " << msg.msg << std::endl;
                 std::string result = execute_command(msg.msg);
             }
@@ -149,56 +232,6 @@ void InputManager::run_tcp() {
     }
 }
 
-/*
-
-WindowManager::WindowManager(CommandManager* _cm) : Manager(_cm), window(1920, 1080) {
-
-    // PARAMETRIZE PX SIZE FOR THIS MANAGER
-
-    pb.width = 1920;
-    pb.height = 1080;
-    pb.channels = 4;
-    pb.data = new float[1920 * 1080 * 4];
-
-    for (int i = 0; i < 1920 * 1080; i++) {
-        pb.data[i * 4 + 0] = 0;
-        pb.data[i * 4 + 1] = 0;
-        pb.data[i * 4 + 2] = 1;
-        pb.data[i * 4 + 3] = 1;
-    }
-
-    window.previewBuffer = pb;
-};
-
-void WindowManager::run() {
-
-    while (1) {
-        if (start_window) {
-            start();
-            start_window_mutex.lock();
-            start_window = false;
-            start_window_mutex.unlock();
-        }     
-        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
-    }
-}
-
-void WindowManager::start() {
-    window.init();
-    while (!glfwWindowShouldClose(window.window)) {
-        // TODO make this a reference
-        window.previewBuffer = pb;
-        window.renderUpdate();
-        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL));
-    }
-    window.stop();
-}
-
-void WindowManager::set_preview_data(float* data) {
-    pb.data = data;
-}
-
-*/
 
 
 class CUDASelector : public sycl::device_selector {

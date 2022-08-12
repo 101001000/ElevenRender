@@ -9,6 +9,7 @@
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#include <boost/assign.hpp>
 
 //Forward declaration
 class CommandManager;
@@ -60,21 +61,26 @@ public:
 };
 
 
-#define TCP_MESSAGE_MAXSIZE 1024
-
 struct Message {
 
-    enum MsgType { COMMAND, RENDER_INFO };
+    enum Type { COMMAND, STATUS };
     enum DataType { NONE, FLOAT, JSON, STRING };
-    enum Status { OK, FAIL };
 
-    MsgType msg_type;
+    static std::map<std::string, Type> type_map;
+    static std::map<std::string, DataType> data_type_map;
+
+    Type type;
     std::string msg;
 
     DataType data_type;
     unsigned int data_size;
     void* data;
 
+    static RSJresource parse_message(Message msg);
+    static Message parse_json(RSJresource json);
+
+    static std::string parse_type(Type type);
+    static std::string parse_data_type(DataType data_type);
 };
 
 /*

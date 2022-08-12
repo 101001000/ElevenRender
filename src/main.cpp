@@ -312,9 +312,7 @@ int main(int argc, char* argv[]) {
         else {
 
             BOOST_LOG_TRIVIAL(info) << "Selected backend mode";
-            BOOST_LOG_TRIVIAL(warning) << "Selected standalone mode";
-            BOOST_LOG_TRIVIAL(error) << "Selected standalone mode";
-            BOOST_LOG_TRIVIAL(trace) << "Selected standalone mode";
+  
             CommandManager cm;
             cm.init();
 

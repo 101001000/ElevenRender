@@ -6,7 +6,7 @@ std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list
 std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", NONE)("float", FLOAT)("json", JSON)("string", STRING);
 
 std::string Message::parse_type(Type type) {
-
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_type " << type;
     std::string str;
 
     switch (type) {
@@ -25,7 +25,7 @@ std::string Message::parse_type(Type type) {
 }
 
 std::string Message::parse_data_type(DataType data_type) {
-
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_data_type " << data_type;
     std::string str;
 
     switch (data_type) {
@@ -47,7 +47,7 @@ std::string Message::parse_data_type(DataType data_type) {
 }
 
 RSJresource Message::parse_message(Message msg) {
-
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_message " << msg;
     RSJresource json;
 
     json["message_type"] = Message::parse_type(msg.type);
@@ -69,7 +69,7 @@ RSJresource Message::parse_message(Message msg) {
 }
 
 Message Message::parse_json(RSJresource json) {
-
+    BOOST_LOG_TRIVIAL(trace) << "Message::parse_json " << json;
     Message msg;
 
     msg.type = type_map[json["message_type"].as_str()];
@@ -86,7 +86,7 @@ Message Message::parse_json(RSJresource json) {
 }
 
 std::string InputManager::execute_command(std::string command) {
-
+    BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command " << command;
     std::ostringstream response;
 
     namespace po = boost::program_options;
@@ -238,10 +238,11 @@ class CUDASelector : public sycl::device_selector {
 public:
     int operator()(const sycl::device& device) const override {
         if (device.get_platform().get_backend() == sycl::backend::ext_oneapi_cuda) {
-            std::cout << " CUDA device found " << std::endl;
+            BOOST_LOG_TRIVIAL(info) << "CUDA device found";
             return 1;
         }
         else {
+            BOOST_LOG_TRIVIAL(fatal) << "CUDA device not found";
             return -1;
         }
     }
@@ -277,7 +278,7 @@ float* RenderingManager::get_pass(std::string pass) {
     
     int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
 
-    printf("\nRetrieving pass %d ...\n", parsePass(pass));
+    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass: " << pass;
 
     float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];

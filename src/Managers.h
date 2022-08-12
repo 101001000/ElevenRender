@@ -10,6 +10,7 @@
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include <boost/assign.hpp>
+#include <boost/log/trivial.hpp>
 
 //Forward declaration
 class CommandManager;

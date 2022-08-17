@@ -50,6 +50,13 @@ void CommandManager::save_pass(std::string& pass, std::string& path) {
 
 void CommandManager::load_scene_from_obj(std::string& path) {
     sm->scene = Scene::loadScene(path);
+
+    Message ok_message;
+
+    ok_message.msg = "ok";
+    ok_message.type = Message::TYPE_STATUS;
+
+    im->write_message(ok_message);
 }
 
 void CommandManager::start_render() {

@@ -12,6 +12,7 @@
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>
 #include <boost/assign.hpp>
+#include <boost/json.hpp>
 
 //Forward declaration
 class CommandManager;
@@ -53,19 +54,11 @@ public:
 
 };
 
-class InputManager : Manager {
-
-public:
-    using Manager::Manager;
-    void run();
-    std::string execute_command(std::string);
-    void run_tcp();
-};
 
 
 struct Message {
 
-    enum Type {TYPE_NONE, TYPE_COMMAND, TYPE_STATUS };
+    enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS };
     enum DataType { DATA_TYPE_NONE, DATA_TYPE_FLOAT, DATA_TYPE_JSON, DATA_TYPE_STRING };
 
     static std::map<std::string, Type> type_map;
@@ -80,9 +73,27 @@ struct Message {
 
     Message();
 
-    static RSJresource parse_message(Message msg);
-    static Message parse_json(RSJresource json);
+    static boost::json::object parse_message(Message msg);
+    static Message parse_json(boost::json::object json);
 };
+
+class InputManager : Manager {
+
+public:
+
+    std::unique_ptr<boost::asio::ip::tcp::socket> sock;
+    boost::system::error_code error;
+    boost::asio::io_context io_context;
+
+    using Manager::Manager;
+
+    void run();
+    std::string execute_command(std::string);
+    void run_tcp();
+    Message read_message();
+    void write_message(Message msg);
+};
+
 
 /*
 

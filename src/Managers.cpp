@@ -14,42 +14,43 @@ Message::Message() {
 }
 
 
-RSJresource Message::parse_message(Message msg) {
+boost::json::object Message::parse_message(Message msg) {
+
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_message()";
-    RSJresource json;
+    boost::json::object json;
 
     for (auto it = type_map.begin(); it != type_map.end(); ++it)
         if (it->second == msg.type)
             json["type"] = it->first;
 
-    json["message"] = msg.msg;
+    json["msg"] = msg.msg;
 
     if (msg.data_size != 0 &&
         msg.data_type != DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
 
-        RSJresource additional_data_json;
+        boost::json::object additional_data_json;
 
         additional_data_json["data_size"] = msg.data_size;
         additional_data_json["data_type"] = msg.data_type;
 
         json["additional_data"] = additional_data_json;
     }
-  
+
     return json;
 }
 
-Message Message::parse_json(RSJresource json) {
+Message Message::parse_json(boost::json::object json) {
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_json()";
     Message msg;
 
-    msg.type = type_map[json["type"].as<std::string>()];
-    msg.msg = json["msg"].as<std::string>();
+    msg.type = type_map[json["type"].as_string().c_str()];
+    msg.msg = json["msg"].as_string();
 
-    if (json["additional_data"].exists()) {
-        RSJresource additional_data_json = json["additional_data"];
-        msg.data_size = additional_data_json["data_size"].as<int>();
-        msg.data_type = data_type_map[additional_data_json["data_type"].as<std::string>()];
+    if (json.if_contains("additional_data")) {
+        boost::json::object additional_data_json = json["additional_data"].as_object();
+        msg.data_size = additional_data_json["data_size"].as_int64();
+        msg.data_type = data_type_map[additional_data_json["data_type"].as_string().c_str()];
         msg.data = nullptr;
     }
 
@@ -138,38 +139,45 @@ std::string InputManager::execute_command(std::string command) {
     return "nothing";
 }
 
-void write_message(boost::asio::ip::tcp::socket& sock, Message msg, boost::system::error_code& error) {
+void InputManager::write_message(Message msg) {
     BOOST_LOG_TRIVIAL(trace) << "write_message()";
 
-    std::string str = Message::parse_message(msg).as<std::string>();
-    sock.write_some(boost::asio::buffer(str));
+    std::string str = serialize(Message::parse_message(msg));
+    size_t a = sock.get()->write_some(boost::asio::buffer(str));
+
+    BOOST_LOG_TRIVIAL(debug) << "Message: " << str;
 
     if (msg.data_size != 0 &&
         msg.data_type != Message::DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
-
-        boost::asio::write(sock, boost::asio::buffer(msg.data, msg.data_size));
+        BOOST_LOG_TRIVIAL(trace) << "writting additional data";
+        boost::asio::write(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
     }
+    BOOST_LOG_TRIVIAL(trace) << "leaving write_message()";
 }
 
-Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_code& error) {
+Message InputManager::read_message() {
     BOOST_LOG_TRIVIAL(trace) << "read_message()";
 
     char input_data[TCP_MESSAGE_MAXSIZE];
 
-    sock.read_some(boost::asio::buffer(input_data), error);
+    sock.get()->read_some(boost::asio::buffer(input_data), error);
 
     std::string input_str(input_data);
 
-    RSJresource input_json(input_str);
+    BOOST_LOG_TRIVIAL(debug) << "input_str " << input_str;
 
-    Message msg = Message::parse_json(input_json);
+    boost::json::value input_json = boost::json::parse(input_str);
+
+    BOOST_LOG_TRIVIAL(debug) << "input parsed ";
+
+    Message msg = Message::parse_json(input_json.as_object());
 
     
     if (msg.data_size != 0) {
         BOOST_LOG_TRIVIAL(trace) << "reading additional data";
         msg.data = malloc(msg.data_size);
-        boost::asio::read(sock, boost::asio::buffer(msg.data, msg.data_size));
+        boost::asio::read(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
     }
 
     return msg;
@@ -178,22 +186,20 @@ Message read_message(boost::asio::ip::tcp::socket& sock, boost::system::error_co
 void InputManager::run_tcp() {
 
     using boost::asio::ip::tcp;
- 
-    boost::asio::io_context io_context;
-    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), 5557));
 
+    tcp::acceptor a = tcp::acceptor(io_context, tcp::endpoint(tcp::v4(), 5557));
+
+ 
     while (1) {
         BOOST_LOG_TRIVIAL(info) << "Awaiting for a connection";
-        tcp::socket sock = a.accept();
+        sock = std::make_unique<boost::asio::ip::tcp::socket>(a.accept());
         BOOST_LOG_TRIVIAL(info) << "Connected";
-
-        boost::system::error_code error;
         
         while (!error) {
 
             BOOST_LOG_TRIVIAL(debug) << "Trying to read message";
-            Message msg = read_message(sock, error);
-            BOOST_LOG_TRIVIAL(debug) << "Message readed ";
+            Message msg = read_message();
+            BOOST_LOG_TRIVIAL(debug) << "Message readed";
                         
 
             if (msg.type == Message::Type::TYPE_COMMAND) {
@@ -219,6 +225,9 @@ public:
         }
     }
 };
+
+
+
 
 void RenderingManager::start_rendering(Scene* scene) {
 

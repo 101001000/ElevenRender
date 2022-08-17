@@ -41,6 +41,9 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
         case boost::log::trivial::severity_level::fatal:
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
             break;
+        case boost::log::trivial::severity_level::debug:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
+            break;
         default:
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
             break;

@@ -58,7 +58,7 @@ public:
 
 struct Message {
 
-    enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS };
+    enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS, TYPE_BUFFER };
     enum DataType { DATA_TYPE_NONE, DATA_TYPE_FLOAT, DATA_TYPE_JSON, DATA_TYPE_STRING };
 
     static std::map<std::string, Type> type_map;
@@ -75,6 +75,10 @@ struct Message {
 
     static boost::json::object parse_message(Message msg);
     static Message parse_json(boost::json::object json);
+    static std::string type2str(Type type);
+    static Type str2type(std::string str);
+    static std::string data_type2str(DataType data_type);
+    static DataType str2data_type(std::string str);
 };
 
 class InputManager : Manager {

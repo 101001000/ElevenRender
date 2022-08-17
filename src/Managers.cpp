@@ -2,7 +2,10 @@
 #include "Managers.h"
 #include "kernel.h"
 
-std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("none", TYPE_NONE)("command", TYPE_COMMAND)("status", TYPE_STATUS);
+std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("none", TYPE_NONE)
+                                                                                   ("command", TYPE_COMMAND)
+                                                                                   ("status", TYPE_STATUS)
+                                                                                   ("buffer", TYPE_BUFFER);
 std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", DATA_TYPE_NONE)("float", DATA_TYPE_FLOAT)("json", DATA_TYPE_JSON)("string", DATA_TYPE_STRING);
 
 Message::Message() {
@@ -13,16 +16,36 @@ Message::Message() {
     data = nullptr;
 }
 
+std::string Message::type2str(Type type) {
+    std::string str = "";
+
+    for (auto it = type_map.begin(); it != type_map.end(); ++it)
+        if (it->second == type)
+            str = it->first;
+    return str;
+}
+Message::Type Message::str2type(std::string str) {
+    return type_map[str];
+}
+std::string Message::data_type2str(DataType data_type) {
+    std::string str = "";
+
+    for (auto it = data_type_map.begin(); it != data_type_map.end(); ++it)
+        if (it->second == data_type)
+            str = it->first;
+    return str;
+}
+Message::DataType Message::str2data_type(std::string str) {
+    return data_type_map[str];
+}
+
 
 boost::json::object Message::parse_message(Message msg) {
 
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_message()";
     boost::json::object json;
 
-    for (auto it = type_map.begin(); it != type_map.end(); ++it)
-        if (it->second == msg.type)
-            json["type"] = it->first;
-
+    json["type"] = Message::type2str(msg.type);
     json["msg"] = msg.msg;
 
     if (msg.data_size != 0 &&
@@ -44,7 +67,7 @@ Message Message::parse_json(boost::json::object json) {
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_json()";
     Message msg;
 
-    msg.type = type_map[json["type"].as_string().c_str()];
+    msg.type = Message::str2type(json["type"].as_string().c_str());
     msg.msg = json["msg"].as_string();
 
     if (json.if_contains("additional_data")) {
@@ -67,12 +90,11 @@ std::string InputManager::execute_command(std::string command) {
 
     desc.add_options()
         ("help", "produce help message")
-        ("window", "open a preview window")
-        ("preview_pass", po::value<std::string>(), "preview some pass")
+        ("save_pass", po::value<std::vector<std::string>>()->multitoken(), "save some pass")
+        ("get_pass", po::value<std::string>(), "get some pass")
         ("start", "start rendering")
         ("stop", "stop rendering")
         ("load_obj", po::value<std::string>(), "load wavefront obj from file path")
-        ("save_pass", po::value<std::vector<std::string>>()->multitoken(), "save rendering pass")
         ("load_config", po::value<std::string>(), "load rendering config from file path")
         ;
 
@@ -103,6 +125,14 @@ std::string InputManager::execute_command(std::string command) {
         if (vm.count("load_obj")) {
             BOOST_LOG_TRIVIAL(debug) << "Adding load_obj to the queue";
             std::function <void()> f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["load_obj"].as<std::string>());
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
+        if (vm.count("get_pass")) {
+            BOOST_LOG_TRIVIAL(debug) << "Adding get_pass to the queue";
+            std::string pass = vm["get_pass"].as<std::string>();
+            std::function <void()> f = std::bind(&CommandManager::get_pass, std::ref(cm), pass);
             cm->command_queue.push(f);
             response << "ok";
         }
@@ -151,7 +181,7 @@ void InputManager::write_message(Message msg) {
         msg.data_type != Message::DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
         BOOST_LOG_TRIVIAL(trace) << "writting additional data";
-        boost::asio::write(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
+        boost::asio::write(*(sock.get()), boost::asio::buffer((float*) msg.data, msg.data_size));
     }
     BOOST_LOG_TRIVIAL(trace) << "leaving write_message()";
 }
@@ -165,15 +195,10 @@ Message InputManager::read_message() {
 
     std::string input_str(input_data);
 
-    BOOST_LOG_TRIVIAL(debug) << "input_str " << input_str;
-
     boost::json::value input_json = boost::json::parse(input_str);
 
-    BOOST_LOG_TRIVIAL(debug) << "input parsed ";
-
     Message msg = Message::parse_json(input_json.as_object());
-
-    
+        
     if (msg.data_size != 0) {
         BOOST_LOG_TRIVIAL(trace) << "reading additional data";
         msg.data = malloc(msg.data_size);
@@ -231,6 +256,7 @@ public:
 
 void RenderingManager::start_rendering(Scene* scene) {
 
+    BOOST_LOG_TRIVIAL(trace) << "RenderingManager::start_rendering()";
     rd.pars = RenderParameters(scene->camera.xRes, scene->camera.yRes, 50);
 
     for (int i = 0; i < PASSES_COUNT; i++) {
@@ -245,6 +271,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     t_rend = std::thread(renderSetup, std::ref(q), std::ref(scene), std::ref(dev_scene));
 
     rd.startTime = std::chrono::high_resolution_clock::now();
+    BOOST_LOG_TRIVIAL(trace) << "LEAVING RenderingManager::start_rendering()";
 }
 
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
@@ -262,13 +289,20 @@ float* RenderingManager::get_pass(std::string pass) {
     
     int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
 
-    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass: " << pass;
+    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass9: " << pass;
 
     float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
+    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass1: " << pass;
+
     q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
+
+    BOOST_LOG_TRIVIAL(debug) << "Retrieving pas2: " << pass;
+
     q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float)).wait();
+
+    BOOST_LOG_TRIVIAL(debug) << "Pass retrieved!";
 
     return pass_result;
 }

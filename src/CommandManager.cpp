@@ -26,6 +26,22 @@ void CommandManager::change_preview(std::string& pass) {
 }
 */
 
+
+void CommandManager::get_pass(std::string& pass) {
+
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::get_pass(" << pass << ")";
+
+    Message pass_data_msg;
+
+    pass_data_msg.msg = "beauty_data";
+    pass_data_msg.type = Message::TYPE_BUFFER;
+    pass_data_msg.data_size = rm->rd.pars.width * rm->rd.pars.height * 4 * sizeof(float);
+    pass_data_msg.data_type = Message::DATA_TYPE_FLOAT;
+    pass_data_msg.data = rm->get_pass(pass);
+
+    im->write_message(pass_data_msg);
+}
+
 void CommandManager::save_pass(std::string& pass, std::string& path) {
 
     printf("Saving file %s...\n", path.c_str());
@@ -45,8 +61,8 @@ void CommandManager::save_pass(std::string& pass, std::string& path) {
     delete[](saveBuffer);
 
     printf("Saved!\n");
-
 }
+
 
 void CommandManager::load_scene_from_obj(std::string& path) {
     sm->scene = Scene::loadScene(path);
@@ -60,6 +76,7 @@ void CommandManager::load_scene_from_obj(std::string& path) {
 }
 
 void CommandManager::start_render() {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::start_render";
     rm->start_rendering(&(sm->scene));
 }
 

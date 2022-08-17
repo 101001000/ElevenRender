@@ -694,7 +694,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < 4096; i++) {
+    for (int i = 0; i < 6400; i++) {
         //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),
@@ -704,13 +704,17 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
             });
     }
 
+    printf("end \n");
+
+    /*
+
     q.wait();
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(
         t2 - t1);
-
+        */
     return 0;
 }
 

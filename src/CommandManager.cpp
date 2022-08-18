@@ -39,6 +39,11 @@ void CommandManager::get_pass(std::string& pass) {
     pass_data_msg.data_type = Message::DATA_TYPE_FLOAT;
     pass_data_msg.data = rm->get_pass(pass);
 
+    /*
+    for (int i = 0; i < rm->rd.pars.width * rm->rd.pars.height * 4; i++) {
+        ((float*)pass_data_msg.data)[i] = pow((double)((float*)pass_data_msg.data)[i], (1.0 / 2.2));
+    }*/
+
     im->write_message(pass_data_msg);
 }
 

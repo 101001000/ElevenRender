@@ -55,11 +55,17 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
 	for (const auto& mat : result.materials) {
 
-		std::cout << "loading mat " << mat.name << " with albedo " << mat.diffuse[0] << " - " << mat.diffuse[1] << " - " << mat.diffuse[2] << std::endl;
+		std::cout << "loading mat " << mat.name << " with albedo "
+			<< mat.diffuse[0] << " - " << mat.diffuse[1] << " - " << mat.diffuse[2] <<
+			" with roughness " << mat.roughness <<
+			" with metallic " << mat.metallic << std::endl;
 
 		UnloadedMaterial umtl;
 		umtl.mat.name = mat.name;
 		umtl.mat.albedo = Vector3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+		umtl.mat.metallic = 0;
+		umtl.mat.roughness = 1;
+		umtl.mat.specular = mat.specular[0];
 
 		materials.push_back(umtl);
 	}

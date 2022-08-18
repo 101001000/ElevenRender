@@ -31,12 +31,12 @@
 // Limitado solo a BRDF sin BSDF
 
 
-
+/*
 void createBasis(Vector3 normal, Vector3 &tangent, Vector3 &bitangent) {
     Vector3 UpVector = Vector3(0, 1, 0);
     tangent = Vector3::cross(UpVector, normal).normalized();
     bitangent = Vector3::cross(normal, tangent).normalized();
-}
+}*/
 
 float SchlickFresnel(float u) {
     float m = clamp(1.0 - u, 0.0, 1.0);
@@ -105,9 +105,9 @@ float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L) {
     Vector3 V = -1 * ray.direction;
     Vector3 H = (L + V).normalized();
 
-    Vector3 T, B;
+    Vector3 T = hitdata.tangent;
+    Vector3 B = hitdata.bitangent;
 
-    createBasis(hitdata.normal, T, B);
 
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
@@ -146,10 +146,8 @@ Vector3 DisneySample(Ray ray, HitData& hitdata, float r1, float r2, float r3) {
     Vector3 N = hitdata.normal;
     Vector3 V = -1 * ray.direction;
 
-    Vector3 T;
-    Vector3 B;
-
-    createBasis(hitdata.normal, T, B);
+    Vector3 T = hitdata.tangent;
+    Vector3 B = hitdata.bitangent;
 
     Vector3 dir;
 
@@ -174,10 +172,10 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
 
     Vector3 V = -1 * ray.direction;
     Vector3 H;
-    Vector3 T = Vector3();
-    Vector3 B = Vector3();
+    Vector3 T = hitdata.tangent;
+    Vector3 B = hitdata.bitangent;
 
-    createBasis(hitdata.normal, T, B);
+    //createBasis(hitdata.normal, T, B);
 
     H = (L + V).normalized();
 

@@ -4,11 +4,11 @@
 
 #define SMOOTH_SHADING false
 #define USEBVH true
-#define HDRIIS true
+#define HDRIIS false
 #define PASSES_COUNT 5
 
 #define THREADSIZE 8
-#define MAXBOUNCES 5
+#define MAXBOUNCES 1
 
 #define UPDATE_INTERVAL 1000
 

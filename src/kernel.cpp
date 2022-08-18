@@ -226,20 +226,19 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata,
 
         Texture::sphericalMapping(Vector3(), -1 * newDir, 1, u, v);
 
-        Ray shadowRay(point + newDir * 0.001, newDir);
+        Ray shadowRay(point + hitdata.normal * 0.001, newDir);
 
         Hit shadowHit = throwRay(shadowRay, scene);
 
         if (shadowHit.valid) return Vector3();
 
         Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
-
         Vector3 brdfDisney = DisneyEval(ray, hitdata, newDir);
 
-        pdf = (1.0 / (2.0 * PI * PI));
+        pdf = 1 / (2.0 * 2.0 * PI);
 
-        return brdfDisney * abs(Vector3::dot(newDir, hitdata.normal)) *
-               hdriValue / (1.0 / (2.0 * PI));
+        return  (hdriValue / pdf) * brdfDisney * abs(Vector3::dot(newDir, hitdata.normal));
+
     } else {
 
         Vector3 textCoordinate = scene->hdri->sample(r1);
@@ -363,7 +362,7 @@ void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
            Vector3& newDir, float r1, float r2, float r3, Vector3& hitLight,
            Vector3& reduction, int idx) {
 
-
+  
     Vector3 brdfDisney = DisneyEval(ray, hitdata, newDir);
 
     float brdfPdf = DisneyPdf(ray, hitdata, newDir);
@@ -382,14 +381,16 @@ void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
     float w2 = pointPdf / (hdriPdf + pointPdf + brdfPdf);
     float w3 = brdfPdf / (hdriPdf + pointPdf + brdfPdf);
 
-    reduction = Vector3::One();
+    hitLight = reduction * hdriLightCalc;
+
+    /*
 
     hitLight = reduction *
-               (w1 * hdriLightCalc + w2 * pointLightCalc + 1 * brdfLightCalc);
+               (w1 * hdriLightCalc + w2 * pointLightCalc + w3 * brdfLightCalc);*/
 
     reduction *=
         (brdfDisney * abs(Vector3::dot(newDir, hitdata.normal))) / brdfPdf;
-        
+
 }
 
 void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
@@ -512,7 +513,7 @@ void renderingKernel(dev_Scene* scene, int idx) {
             bitangent.y / ((float)sa + 1);
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             bitangent.z / ((float)sa + 1);
-    
+
         scene->dev_samples[idx]++;
     }
     
@@ -694,7 +695,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < 6400; i++) {
+    for (int i = 0; i < 4096*2; i++) {
         //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),

@@ -336,11 +336,11 @@ float* RenderingManager::get_pass(std::string pass) {
 
     BOOST_LOG_TRIVIAL(debug) << "Retrieving pass1: " << pass;
 
-    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
+    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
 
     BOOST_LOG_TRIVIAL(debug) << "Retrieving pas2: " << pass;
 
-    q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float)).wait();
+    q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
 
     BOOST_LOG_TRIVIAL(debug) << "Pass retrieved!";
 

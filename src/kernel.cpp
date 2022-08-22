@@ -381,12 +381,7 @@ void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
     float w2 = pointPdf / (hdriPdf + pointPdf + brdfPdf);
     float w3 = brdfPdf / (hdriPdf + pointPdf + brdfPdf);
 
-    hitLight = reduction * hdriLightCalc;
-
-    /*
-
-    hitLight = reduction *
-               (w1 * hdriLightCalc + w2 * pointLightCalc + w3 * brdfLightCalc);*/
+    hitLight = reduction * (w1 * hdriLightCalc + w2 * pointLightCalc + w3 * brdfLightCalc);
 
     reduction *=
         (brdfDisney * abs(Vector3::dot(newDir, hitdata.normal))) / brdfPdf;
@@ -406,8 +401,8 @@ void renderingKernel(dev_Scene* scene, int idx) {
     
     Ray ray;
     
-    int x = idx % scene->camera->xRes;
-    int y = scene->camera->yRes - (idx / scene->camera->xRes);
+    int x = (idx % scene->camera->xRes);
+    int y = (idx / scene->camera->xRes);
     
     
     calculateCameraRay(x, y, *scene->camera, ray, rnd.next(), rnd.next(),

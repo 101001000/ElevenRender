@@ -60,6 +60,24 @@ void Scene::addMeshObject(MeshObject meshObject) {
 void Scene::addHDRI(std::string filepath) { hdri = HDRI(filepath); }
 void Scene::addHDRI(Vector3 color) { hdri = HDRI(color); }
 
+void Scene::pair_materials() {
+
+	for (int i = 0; i < meshObjects.size(); i++) {
+
+		meshObjects[i].materialID = 0;
+
+		for (int j = 0; j < materials.size(); j++) {
+
+			if (materials[j].name == meshObjects[i].matName) {
+				meshObjects[i].materialID = j;
+			}
+		}
+	}
+
+	printf("Materials paired\n");
+
+}
+
 BVH* Scene::buildBVH() {
 
 	printf("\nBuilding BVH with DEPTH=%d and SAHBINS=%d \n", BVH_DEPTH, BVH_SAHBINS);
@@ -195,28 +213,19 @@ Scene Scene::loadScene(std::string path) {
 				scene.addTexture(Texture(mapPath, colorSpace));
 		}
 		*/
-		scene.addMaterial(umtls[i].mat);
+		//scene.addMaterial(umtls[i].mat);
 	}
 
 
 	printf("%d materials loaded.\n", scene.materialCount());
 
 	for (int i = 0; i < objects.size(); i++) {
-
-		objects[i].materialID = 0;
-
-		for (int j = 0; j < scene.materials.size(); j++) {
-
-			if (scene.materials[j].name == objects[i].matName) {
-				std::cout << "Object " << objects[i].name << " paired with material " << objects[i].matName << std::endl;
-				objects[i].materialID = j;
-			}
-		}
-
-		scene.addMeshObject(objects[i]);
+		scene.addMeshObject(objects[i]);	
 	}
 
 	printf("%d objects loaded.\n", scene.meshObjectCount());
+
+	scene.pair_materials();
 
 	// PointLights
 

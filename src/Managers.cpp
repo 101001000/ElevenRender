@@ -39,6 +39,20 @@ Message::DataType Message::str2data_type(std::string str) {
     return data_type_map[str];
 }
 
+boost::json::object Message::get_json_data() {
+    BOOST_LOG_TRIVIAL(trace) << "Message::get_json_data";
+    boost::json::value json;
+
+    try {
+        json = boost::json::parse((char*) data);
+    }
+    catch (std::exception const& e) {
+        BOOST_LOG_TRIVIAL(error) << e.what() << ((char*)data);
+    }
+
+    return json.as_object();
+}
+
 
 boost::json::object Message::parse_message(Message msg) {
 
@@ -63,6 +77,13 @@ boost::json::object Message::parse_message(Message msg) {
     return json;
 }
 
+void InputManager::execute_message(Message msg) {
+    if (msg.type == Message::Type::TYPE_COMMAND) {
+        BOOST_LOG_TRIVIAL(debug) << "Executing command " << msg.msg;
+        std::string result = execute_command(msg);
+    }
+}
+
 Message Message::parse_json(boost::json::object json) {
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_json()";
     Message msg;
@@ -73,14 +94,17 @@ Message Message::parse_json(boost::json::object json) {
     if (json.if_contains("additional_data")) {
         boost::json::object additional_data_json = json["additional_data"].as_object();
         msg.data_size = additional_data_json["data_size"].as_int64();
-        msg.data_type = data_type_map[additional_data_json["data_type"].as_string().c_str()];
+        msg.data_type = str2data_type(additional_data_json["data_type"].as_string().c_str());
         msg.data = nullptr;
     }
 
     return msg;
 }
 
-std::string InputManager::execute_command(std::string command) {
+std::string InputManager::execute_command(Message msg) {
+
+    std::string command = msg.msg;
+
     BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command " << command;
     std::ostringstream response;
 
@@ -96,6 +120,7 @@ std::string InputManager::execute_command(std::string command) {
         ("stop", "stop rendering")
         ("load_obj", po::value<std::string>(), "load wavefront obj from file path")
         ("load_config", po::value<std::string>(), "load rendering config from file path")
+        ("load_material", "load material from tcp")
         ;
 
     try {
@@ -153,6 +178,14 @@ std::string InputManager::execute_command(std::string command) {
             response << "ok";
         }
 
+        if (vm.count("load_material")) {
+            BOOST_LOG_TRIVIAL(debug) << "Adding load material to the queue";
+
+            std::function <void()> f = std::bind(&CommandManager::load_material_from_json, std::ref(cm), msg.get_json_data());
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
         for (const char* c : argv) {
 
             if (strcmp(c, "ElevenRender") != 0) {
@@ -195,10 +228,19 @@ Message InputManager::read_message() {
 
     std::string input_str(input_data);
 
-    boost::json::value input_json = boost::json::parse(input_str);
+    boost::json::value input_json;
+
+    try {
+
+        input_json = boost::json::parse(input_str);
+
+    }
+    catch (std::exception const& e) {
+        std::cerr << e.what() << "\n";
+    }
 
     Message msg = Message::parse_json(input_json.as_object());
-        
+
     if (msg.data_size != 0) {
         BOOST_LOG_TRIVIAL(trace) << "reading additional data";
         msg.data = malloc(msg.data_size);
@@ -222,14 +264,12 @@ void InputManager::run_tcp() {
         
         while (!error) {
 
-            BOOST_LOG_TRIVIAL(debug) << "Trying to read message";
             Message msg = read_message();
-            BOOST_LOG_TRIVIAL(debug) << "Message readed";
-                        
+            BOOST_LOG_TRIVIAL(debug) << "Message readed " << msg.msg;
 
             if (msg.type == Message::Type::TYPE_COMMAND) {
                 BOOST_LOG_TRIVIAL(debug) << "Executing command " << msg.msg;
-                std::string result = execute_command(msg.msg);
+                std::string result = execute_command(msg);
             }
         }
 

@@ -62,6 +62,8 @@ public:
 	void addHDRI(std::string filepath);
 	void addHDRI(Vector3 color);
 
+	void pair_materials();
+
 	BVH* buildBVH();
 
 	static Scene loadScene(std::string path);

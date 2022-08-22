@@ -79,6 +79,8 @@ struct Message {
     static Type str2type(std::string str);
     static std::string data_type2str(DataType data_type);
     static DataType str2data_type(std::string str);
+
+    boost::json::object get_json_data();
 };
 
 class InputManager : Manager {
@@ -92,7 +94,8 @@ public:
     using Manager::Manager;
 
     void run();
-    std::string execute_command(std::string);
+    std::string execute_command(Message msg);
+    void execute_message(Message msg);
     void run_tcp();
     Message read_message();
     void write_message(Message msg);

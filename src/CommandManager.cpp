@@ -68,8 +68,55 @@ void CommandManager::save_pass(std::string& pass, std::string& path) {
     printf("Saved!\n");
 }
 
+Vector3 parse_vector3(boost::json::object json) {
+    return Vector3(json["r"].as_double(), json["g"].as_double(), json["b"].as_double());
+}
+
+void CommandManager::load_material_from_json(boost::json::object json_mat) {
+
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_material_from_json()" << json_mat;
+
+    Material mtl;
+
+    if (json_mat.if_contains("name"))
+        mtl.name = json_mat["name"].as_string();
+
+    if (json_mat.if_contains("albedo"))
+        mtl.albedo = parse_vector3(json_mat["albedo"].as_object());
+
+    if (json_mat.if_contains("emission"))
+        mtl.emission = parse_vector3(json_mat["emission"].as_object());
+
+    if (json_mat.if_contains("roughness"))
+        mtl.roughness = json_mat["roughness"].as_double();
+
+    if (json_mat.if_contains("metalness"))
+        mtl.metallic = json_mat["metalness"].as_double();
+
+    if (json_mat.if_contains("specular"))
+        mtl.specular = json_mat["specular"].as_double();
+
+
+    BOOST_LOG_TRIVIAL(debug) << "Material parsed: " << mtl.name <<
+        " Albedo: " << mtl.albedo.x << ", " << mtl.albedo.y << ", " << mtl.albedo.z << ", " <<
+        " Emission: " << mtl.emission.x << ", " << mtl.emission.y << ", " << mtl.emission.z << ", " << 
+        " Metalness: " << mtl.metallic <<
+        " Roughness: " << mtl.roughness <<
+        " Specular: " << mtl.specular;
+
+    sm->scene.addMaterial(mtl);
+    sm->scene.pair_materials();
+
+    Message ok_message;
+
+    ok_message.msg = "ok";
+    ok_message.type = Message::TYPE_STATUS;
+
+    im->write_message(ok_message);
+}
 
 void CommandManager::load_scene_from_obj(std::string& path) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_scene_from_obj(" << path << ")";
     sm->scene = Scene::loadScene(path);
 
     Message ok_message;

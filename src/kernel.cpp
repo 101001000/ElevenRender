@@ -690,7 +690,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < 4096*2; i++) {
+    for (int i = 0; i < 100; i++) {
         //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),
@@ -714,33 +714,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     return 0;
 }
 
-int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData, int* pathcountBuffer,
-               int size) {
 
-    //TODO size ambiguity
-
-    float* a = new float[renderData.pars.width * renderData.pars.height * 4 * PASSES_COUNT];
-
-    float* dev_passes;
-
-    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
-    q.memcpy(a, dev_passes, renderData.pars.width * renderData.pars.height * 4  * PASSES_COUNT).wait();
-
-    for (int i = 0; i < PASSES_COUNT; i++) {
-        printf("\nRetrieving pass %d\n", i);
-        for (int j = 0; j < size; j++) {
-            int n = i * size * 4;
-            renderData.passes[i][j * 4 + 0] = a[n + j * 4 + 0];
-            renderData.passes[i][j * 4 + 1] = a[n + j * 4 + 1];
-            renderData.passes[i][j * 4 + 2] = a[n + j * 4 + 2];
-            renderData.passes[i][j * 4 + 3] = a[n + j * 4 + 3];
-        }
-    }
-    
-    //delete[] a;
-    
-    return 0;
-}
 
 int getSamples(dev_Scene* dev_scene, sycl::queue& q) {
     // TODO, clean this, maybe remove samples if i'm not implementing adaptive sampling yet.

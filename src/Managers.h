@@ -81,6 +81,7 @@ struct Message {
     static DataType str2data_type(std::string str);
 
     boost::json::object get_json_data();
+    float* get_float_data();
 };
 
 class InputManager : Manager {

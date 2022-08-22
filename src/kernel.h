@@ -106,9 +106,5 @@ struct HitData {
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene);
 
-int getBuffers(dev_Scene* dev_scene, sycl::queue& q, RenderData& renderData,
-               int* pathcountBuffer,
-               int size);
-
 int getSamples(dev_Scene* dev_scene, sycl::queue& q);
 

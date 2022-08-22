@@ -40,7 +40,7 @@ Message::DataType Message::str2data_type(std::string str) {
 }
 
 boost::json::object Message::get_json_data() {
-    BOOST_LOG_TRIVIAL(trace) << "Message::get_json_data";
+    BOOST_LOG_TRIVIAL(trace) << "Message::get_json_data()";
     boost::json::value json;
 
     try {
@@ -52,6 +52,12 @@ boost::json::object Message::get_json_data() {
 
     return json.as_object();
 }
+
+float* Message::get_float_data() {
+    BOOST_LOG_TRIVIAL(trace) << "Message::get_float_data()";
+    return (float*) data;
+}
+
 
 
 boost::json::object Message::parse_message(Message msg) {
@@ -121,6 +127,7 @@ std::string InputManager::execute_command(Message msg) {
         ("load_obj", po::value<std::string>(), "load wavefront obj from file path")
         ("load_config", po::value<std::string>(), "load rendering config from file path")
         ("load_material", "load material from tcp")
+        ("load_texture", po::value<std::vector<int>>()->multitoken(), "load texture from tcp")
         ;
 
     try {
@@ -182,6 +189,21 @@ std::string InputManager::execute_command(Message msg) {
             BOOST_LOG_TRIVIAL(debug) << "Adding load material to the queue";
 
             std::function <void()> f = std::bind(&CommandManager::load_material_from_json, std::ref(cm), msg.get_json_data());
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
+
+        if (vm.count("load_texture")) {
+            BOOST_LOG_TRIVIAL(debug) << "Adding load texture to the queue";
+
+            int width = vm["load_texture"].as<std::vector<int>>()[0];
+            int height= vm["load_texture"].as<std::vector<int>>()[1];
+
+            Texture tex;
+
+
+            std::function <void()> f = std::bind(&CommandManager::load_texture, std::ref(cm), msg.get_float_data());
             cm->command_queue.push(f);
             response << "ok";
         }

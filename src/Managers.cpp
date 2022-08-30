@@ -142,7 +142,7 @@ std::string InputManager::execute_command(Message msg) {
         argv.push_back("ElevenRender");
 
         while (iss >> std::quoted(s)) {
-            char* c = new char[s.size()];
+            char* c = new char[s.size() + 1];
             strcpy(c, s.c_str());
             argv.push_back(c);
         }
@@ -227,6 +227,7 @@ std::string InputManager::execute_command(Message msg) {
             catch (std::exception const& e) {
                 BOOST_LOG_TRIVIAL(error) << e.what() << metadata;
                 response << "error";
+                return response.str();
             }
 
         }

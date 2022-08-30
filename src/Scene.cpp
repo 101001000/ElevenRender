@@ -36,7 +36,9 @@ Texture* Scene::getTextures() {
 void Scene::addPointLight(PointLight pointLight) {	pointLights.push_back(pointLight); }
 
 void Scene::addTexture(Texture texture) {
-	if (!textureIDs.count(texture.name)) {
+	std::cout << "ADDING TEXTURE" << std::endl;
+	if (textureIDs.count(texture.name) == 0) {
+		std::cout << "Texture not in the scene, adding to the scene" << std::endl;
 		textureIDs[texture.name] = textures.size();
 		textures.push_back(texture);
 	}

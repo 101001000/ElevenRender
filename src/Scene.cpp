@@ -60,6 +60,29 @@ void Scene::addMeshObject(MeshObject meshObject) {
 void Scene::addHDRI(std::string filepath) { hdri = HDRI(filepath); }
 void Scene::addHDRI(Vector3 color) { hdri = HDRI(color); }
 
+void Scene::pair_textures() {
+
+	for (int i = 0; i < materials.size(); i++) {
+
+		for (int j = 0; j < textures.size(); j++) {
+
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].albedoTextureID = j;
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].emissionTextureID = j;
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].roughnessTextureID = j;
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].metallicTextureID = j;
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].opacityTextureID = j;
+			if (textures[j].path == materials[i].albedo_map)
+				materials[i].normalTextureID = j;
+		}
+	}
+
+}
+
 void Scene::pair_materials() {
 
 	for (int i = 0; i < meshObjects.size(); i++) {
@@ -121,6 +144,8 @@ Scene Scene::loadScene(std::string path) {
 
 	RSJresource scene_json(str);
 
+	printf("Loading camera...\n");
+
 	// Camera
 	RSJresource camera_json = scene_json["camera"].as<RSJresource>();
 	RSJresource camera_pos_json = camera_json["position"].as<RSJresource>();
@@ -146,6 +171,8 @@ Scene Scene::loadScene(std::string path) {
 	scene.camera.bokeh = bokeh;
 
 
+	printf("Loading HDRI...\n");
+
 	// HDRI
 
 	RSJresource hdri_json = scene_json["hdri"].as<RSJresource>();
@@ -166,6 +193,8 @@ Scene Scene::loadScene(std::string path) {
 	if (hdri_json["yOffset"].exists())
 		scene.hdri.texture.xOffset = hdri_json["yOffset"].as<double>();
 
+	printf("Loading objs...\n");
+
 	std::vector<UnloadedMaterial> umtls(0);
 	std::vector<MeshObject> objects(0);
 
@@ -174,9 +203,10 @@ Scene Scene::loadScene(std::string path) {
 	//Materials v2
 	//std::vector<UnloadedMaterial> umtls = objLoader.loadMtls(path + "scene.mtl");
 
+	/*
 	for (int i = 0; i < umtls.size(); i++) {
 
-		/*
+		
 
 		for (const auto& map : umtls[i].maps) {
 
@@ -212,12 +242,10 @@ Scene Scene::loadScene(std::string path) {
 			if(!dupTex)
 				scene.addTexture(Texture(mapPath, colorSpace));
 		}
-		*/
+		
 		//scene.addMaterial(umtls[i].mat);
 	}
-
-
-	printf("%d materials loaded.\n", scene.materialCount());
+	*/
 
 	for (int i = 0; i < objects.size(); i++) {
 		scene.addMeshObject(objects[i]);	

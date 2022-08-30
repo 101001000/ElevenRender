@@ -358,6 +358,8 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
     }
 }
 
+
+
 void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
            Vector3& newDir, float r1, float r2, float r3, Vector3& hitLight,
            Vector3& reduction, int idx) {
@@ -392,6 +394,8 @@ void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
                      float r1, float r2, float r3) {
     bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
 }
+
+
 
 void renderingKernel(dev_Scene* scene, int idx) {
 
@@ -448,7 +452,11 @@ void renderingKernel(dev_Scene* scene, int idx) {
         calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
             rnd.next());
     
-        shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, idx);
+        
+        std::function<float(float)> f = [](float f) { return 0.5; };
+
+
+        shade(*scene, ray, hitdata, nearestHit, bouncedDir, f(rnd.next()), rnd.next(), rnd.next(), hitLight, reduction, idx);
     
         light += hitLight;
     

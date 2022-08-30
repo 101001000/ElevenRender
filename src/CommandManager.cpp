@@ -47,6 +47,19 @@ void CommandManager::get_pass(std::string& pass) {
     im->write_message(pass_data_msg);
 }
 
+void CommandManager::load_texture(Texture texture) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_texture(" << texture.path << ")";
+    sm->scene.addTexture(texture);
+    sm->scene.pair_textures();
+
+    Message ok_message;
+
+    ok_message.msg = "ok";
+    ok_message.type = Message::TYPE_STATUS;
+
+    im->write_message(ok_message);
+}
+
 void CommandManager::save_pass(std::string& pass, std::string& path) {
 
     printf("Saving file %s...\n", path.c_str());
@@ -97,15 +110,35 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         mtl.specular = json_mat["specular"].as_double();
 
 
+    if (json_mat.if_contains("albedo_map"))
+        mtl.albedo_map = json_mat["albedo_map"].as_string();
+
+    if (json_mat.if_contains("emission_map"))
+        mtl.emission_map = json_mat["emission_map"].as_string();
+
+    if (json_mat.if_contains("roughness_map"))
+        mtl.roughness_map = json_mat["roughness_map"].as_string();
+
+    if (json_mat.if_contains("metallic_map"))
+        mtl.metallic_map = json_mat["metallic_map"].as_string();
+
+    if (json_mat.if_contains("normal_map"))
+        mtl.normal_map = json_mat["normal_map"].as_string();
+
+    if (json_mat.if_contains("opacity_map"))
+        mtl.opacity_map = json_mat["opacity_map"].as_string();
+
     BOOST_LOG_TRIVIAL(debug) << "Material parsed: " << mtl.name <<
         " Albedo: " << mtl.albedo.x << ", " << mtl.albedo.y << ", " << mtl.albedo.z << ", " <<
         " Emission: " << mtl.emission.x << ", " << mtl.emission.y << ", " << mtl.emission.z << ", " << 
         " Metalness: " << mtl.metallic <<
         " Roughness: " << mtl.roughness <<
-        " Specular: " << mtl.specular;
+        " Specular: " << mtl.specular <<
+        " Albedo Path: " << mtl.albedo_map;
 
     sm->scene.addMaterial(mtl);
     sm->scene.pair_materials();
+    sm->scene.pair_textures();
 
     Message ok_message;
 

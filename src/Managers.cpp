@@ -127,7 +127,7 @@ std::string InputManager::execute_command(Message msg) {
         ("load_obj", po::value<std::string>(), "load wavefront obj from file path")
         ("load_config", po::value<std::string>(), "load rendering config from file path")
         ("load_material", "load material from tcp")
-        ("load_texture", po::value<std::vector<int>>()->multitoken(), "load texture from tcp")
+        ("load_texture", po::value<std::vector<std::string>>()->multitoken(), "load texture from tcp")
         ;
 
     try {
@@ -197,15 +197,43 @@ std::string InputManager::execute_command(Message msg) {
         if (vm.count("load_texture")) {
             BOOST_LOG_TRIVIAL(debug) << "Adding load texture to the queue";
 
-            int width = vm["load_texture"].as<std::vector<int>>()[0];
-            int height= vm["load_texture"].as<std::vector<int>>()[1];
+            std::vector<std::string> split_metadata = vm["load_texture"].as<std::vector<std::string>>();
+            std::string metadata;
 
-            Texture tex;
+            for (std::string str : split_metadata) {
+                metadata += str + " ";
+            }
+
+            BOOST_LOG_TRIVIAL(debug) << metadata;
+
+            boost::json::object json;
+
+            try {
+
+                json = boost::json::parse(metadata).as_object();
+
+                Texture tex;
+
+                tex.path = json["name"].as_string();
+                tex.width = json["width"].as_int64();
+                tex.height = json["height"].as_int64();
+                //tex.filter = json["filter"].as_int64();
+                tex.data = msg.get_float_data();
 
 
-            std::function <void()> f = std::bind(&CommandManager::load_texture, std::ref(cm), msg.get_float_data());
-            cm->command_queue.push(f);
-            response << "ok";
+                for (int i = 0; i < 100; i++) {
+                    printf("%f, ", tex.data[i]);
+                }
+
+                std::function <void()> f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
+                cm->command_queue.push(f);
+                response << "ok";
+            }
+            catch (std::exception const& e) {
+                BOOST_LOG_TRIVIAL(error) << e.what() << metadata;
+                response << "error";
+            }
+
         }
 
         for (const char* c : argv) {

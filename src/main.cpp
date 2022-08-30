@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     sink->locked_backend()->add_stream(stream);
     sink->set_formatter(&coloring_formatter);
 
-    // Register the sink in the logging core
+ 
     boost::log::core::get()->add_sink(sink);
     boost::log::add_common_attributes();
 

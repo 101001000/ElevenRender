@@ -53,6 +53,8 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
     bool success = rapidobj::Triangulate(result);
 
+	/*
+
 	for (const auto& mat : result.materials) {
 
 		std::cout << "loading mat " << mat.name << " with albedo "
@@ -69,53 +71,59 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
 		materials.push_back(umtl);
 	}
-
+	*/
     for (const auto& shape : result.shapes) {
 
-		std::vector<Tri>* tris = new std::vector<Tri>();
-		MeshObject* mo = new MeshObject();
+		if (shape.lines.indices.size() == 0) {
 
-		for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
+			std::vector<Tri>* tris = new std::vector<Tri>();
+			MeshObject* mo = new MeshObject();
 
-			Tri tri;
+			std::cout << "SHAPE: " << shape.name;
 
-			for (int j = 0; j < 3; j++) {
+			for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
 
-				rapidobj::Index index = shape.mesh.indices[i + j];
+				Tri tri;
 
-				int p_idx = index.position_index;
-				int n_idx = index.normal_index;
-				int t_idx = index.texcoord_index;
+				for (int j = 0; j < 3; j++) {
 
-				float px = result.attributes.positions[3 * p_idx + 0];
-				float py = result.attributes.positions[3 * p_idx + 1];
-				float pz = result.attributes.positions[3 * p_idx + 2];
+					rapidobj::Index index = shape.mesh.indices[i + j];
 
-				float nx = result.attributes.normals[3 * n_idx + 0];
-				float ny = result.attributes.normals[3 * n_idx + 1];
-				float nz = result.attributes.normals[3 * n_idx + 2];
+					int p_idx = index.position_index;
+					int n_idx = index.normal_index;
+					int t_idx = index.texcoord_index;
 
-				float tu = result.attributes.texcoords[2 * t_idx + 0];
-				float tv = result.attributes.texcoords[2 * t_idx + 1];
+					float px = result.attributes.positions[3 * p_idx + 0];
+					float py = result.attributes.positions[3 * p_idx + 1];
+					float pz = result.attributes.positions[3 * p_idx + 2];
 
-				tri.vertices[j] = Vector3(px, py, -pz);
-				tri.normals[j] = Vector3(nx, ny, -nz).normalized();
-				tri.uv[j] = Vector3(tu, tv, 0);
+					float nx = result.attributes.normals[3 * n_idx + 0];
+					float ny = result.attributes.normals[3 * n_idx + 1];
+					float nz = result.attributes.normals[3 * n_idx + 2];
+
+					float tu = result.attributes.texcoords[2 * t_idx + 0];
+					float tv = result.attributes.texcoords[2 * t_idx + 1];
+
+					tri.vertices[j] = Vector3(px, py, -pz);
+					tri.normals[j] = Vector3(nx, ny, -nz).normalized();
+					tri.uv[j] = Vector3(tu, tv, 0);
+				}
+
+				tris->push_back(tri);
 			}
 
-			tris->push_back(tri);
+			mo->name = shape.name;
+			mo->tris = tris->data();
+			mo->triCount = tris->size();
+
+			if (shape.mesh.material_ids[0] >= 0)
+				mo->matName = result.materials[shape.mesh.material_ids[0]].name;
+
+			CalcTangents calcTang = CalcTangents();
+			calcTang.calc(mo);
+			meshObjects.push_back(*mo);
+
 		}
-
-		mo->name = shape.name;
-		mo->tris = tris->data();
-		mo->triCount = tris->size();
-
-		if (shape.mesh.material_ids[0] >= 0)
-			mo->matName = result.materials[shape.mesh.material_ids[0]].name;
-
-		CalcTangents calcTang = CalcTangents();
-		calcTang.calc(mo);
-		meshObjects.push_back(*mo);
     }
 }
 

@@ -9,6 +9,13 @@ public:
 
 	std::string name;
 
+	std::string albedo_map;
+	std::string emission_map;
+	std::string roughness_map;
+	std::string metallic_map;
+	std::string normal_map;
+	std::string opacity_map;
+
 	int albedoTextureID = -1;
 	int emissionTextureID = -1;
 	int roughnessTextureID = -1;

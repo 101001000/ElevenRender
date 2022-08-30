@@ -63,6 +63,7 @@ public:
 	void addHDRI(Vector3 color);
 
 	void pair_materials();
+	void pair_textures();
 
 	BVH* buildBVH();
 

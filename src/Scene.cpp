@@ -187,7 +187,8 @@ Scene Scene::loadScene(std::string path) {
 	RSJresource hdri_json = scene_json["hdri"].as<RSJresource>();
 
 	if (hdri_json["name"].exists()) {
-		scene.addHDRI(path + "HDRI\\" + hdri_json["name"].as<std::string>() + ".hdr");
+		std::cout << "loading hdri from " << hdri_json["name"].as<std::string>() << std::endl;
+		scene.addHDRI(hdri_json["name"].as<std::string>());
 	}
 	else if (hdri_json["color"].exists()) {
 		Vector3 color = Vector3(hdri_json["color"]["r"].as<double>(), hdri_json["color"]["g"].as<double>(), hdri_json["color"]["b"].as<double>());

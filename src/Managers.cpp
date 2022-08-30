@@ -217,7 +217,6 @@ std::string InputManager::execute_command(Message msg) {
                 tex.name = json["name"].as_string();
                 tex.width = json["width"].as_int64();
                 tex.height = json["height"].as_int64();
-                //tex.filter = json["filter"].as_int64();
                 tex.data = msg.get_float_data();
 
                 std::function <void()> f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);

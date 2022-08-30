@@ -124,7 +124,8 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         " Metalness: " << mtl.metallic <<
         " Roughness: " << mtl.roughness <<
         " Specular: " << mtl.specular <<
-        " Albedo Path: " << mtl.albedo_map;
+        " Albedo Path: " << mtl.albedo_map <<
+        " Normal Path: " << mtl.albedo_map;
 
     sm->scene.addMaterial(mtl);
     sm->scene.pair_materials();

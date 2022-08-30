@@ -72,6 +72,13 @@ public:
     }
        
 #endif
+
+
+    void applyGamma(float gamma) {
+        for (int i = 0; i < width * height * 3; i++) {
+            data[i] = pow(data[i], gamma);
+        }
+    }
  
     Texture(Vector3 _color) {
 

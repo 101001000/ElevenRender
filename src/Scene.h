@@ -16,7 +16,8 @@
 #include "PointLight.h"
 #include "HDRI.h"
 #include "ObjLoader.h"
-#include "libs/RSJparser.hpp"
+#include <boost/json.hpp>
+#include "Logging.h"
 
 class Scene {
 

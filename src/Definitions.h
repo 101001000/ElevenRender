@@ -4,7 +4,7 @@
 
 #define SMOOTH_SHADING true
 #define USEBVH true
-#define HDRIIS false
+#define HDRIIS true
 #define PASSES_COUNT 5
 
 #define THREADSIZE 8

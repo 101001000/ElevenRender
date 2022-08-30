@@ -135,6 +135,8 @@ BVH* Scene::buildBVH() {
 
 Scene Scene::loadScene(std::string path) {
 
+	try {
+
 	ObjLoader objLoader;
 
 	path += "\\";
@@ -151,25 +153,25 @@ Scene Scene::loadScene(std::string path) {
 		std::istreambuf_iterator<char>());
 
 
-	RSJresource scene_json(str);
+	boost::json::object scene_json = boost::json::parse(str).as_object();
 
 	printf("Loading camera...\n");
 
 	// Camera
-	RSJresource camera_json = scene_json["camera"].as<RSJresource>();
-	RSJresource camera_pos_json = camera_json["position"].as<RSJresource>();
-	RSJresource camera_rot_json = camera_json["rotation"].as<RSJresource>();
+	boost::json::object camera_json = scene_json["camera"].as_object();
+	boost::json::object camera_pos_json = camera_json["position"].as_object();
+	boost::json::object camera_rot_json = camera_json["rotation"].as_object();
 
-	int xRes = camera_json["xRes"].as<int>();
-	int yRes = camera_json["yRes"].as<int>();
+	int xRes = camera_json["xRes"].as_int64();
+	int yRes = camera_json["yRes"].as_int64();
 
-	float focalLength = camera_json["focalLength"].as<double>();
-	float focusDistance = camera_json["focusDistance"].as<double>();
-	float aperture = camera_json["aperture"].as<double>();
-	float bokeh = camera_json["bokeh"].as<bool>();
+	float focalLength = camera_json["focalLength"].as_double();
+	float focusDistance = camera_json["focusDistance"].as_double();
+	float aperture = camera_json["aperture"].as_double();
+	bool bokeh = camera_json["bokeh"].as_bool();
 
-	Vector3 cameraPosition = Vector3(camera_pos_json["x"].as<double>(), camera_pos_json["y"].as<double>(), camera_pos_json["z"].as<double>());
-	Vector3 cameraRotation = Vector3(camera_rot_json["x"].as<double>(), camera_rot_json["y"].as<double>(), camera_rot_json["z"].as<double>());
+	Vector3 cameraPosition = Vector3(camera_pos_json["x"].as_double(), camera_pos_json["y"].as_double(), camera_pos_json["z"].as_double());
+	Vector3 cameraRotation = Vector3(camera_rot_json["x"].as_double(), camera_rot_json["y"].as_double(), camera_rot_json["z"].as_double());
 
 	scene.camera = Camera(xRes, yRes);
 	scene.camera.focalLength = focalLength;
@@ -179,29 +181,28 @@ Scene Scene::loadScene(std::string path) {
 	scene.camera.rotation = cameraRotation;
 	scene.camera.bokeh = bokeh;
 
-
 	printf("Loading HDRI...\n");
 
 	// HDRI
 
-	RSJresource hdri_json = scene_json["hdri"].as<RSJresource>();
+	boost::json::object hdri_json = scene_json["hdri"].as_object();
 
-	if (hdri_json["name"].exists()) {
-		std::cout << "loading hdri from " << hdri_json["name"].as<std::string>() << std::endl;
-		scene.addHDRI(hdri_json["name"].as<std::string>());
+	if (hdri_json.if_contains("name")) {
+		std::cout << "loading hdri from " << hdri_json["name"].as_string() << std::endl;
+		scene.addHDRI(hdri_json["name"].as_string().c_str());
 	}
-	else if (hdri_json["color"].exists()) {
-		Vector3 color = Vector3(hdri_json["color"]["r"].as<double>(), hdri_json["color"]["g"].as<double>(), hdri_json["color"]["b"].as<double>());
+	else if (hdri_json.if_contains("color")) {
+		Vector3 color = Vector3(hdri_json["color"].as_object()["r"].as_double(), hdri_json["color"].as_object()["g"].as_double(), hdri_json["color"].as_object()["b"].as_double());
 		//Vector3 gc_color = Vector3(sycl::pow(color.x, 2.2f), sycl::pow(color.y, 2.2f), sycl::pow(color.z, 2.2f));
 		scene.addHDRI(color);
 	}
 
 
-	if (hdri_json["xOffset"].exists())
-		scene.hdri.texture.xOffset = hdri_json["xOffset"].as<double>();
+	if (hdri_json.if_contains("xOffset"))
+		scene.hdri.texture.xOffset = hdri_json["xOffset"].as_double();
 
-	if (hdri_json["yOffset"].exists())
-		scene.hdri.texture.xOffset = hdri_json["yOffset"].as<double>();
+	if (hdri_json.if_contains("yOffset"))
+		scene.hdri.texture.xOffset = hdri_json["yOffset"].as_double();
 
 	printf("Loading objs...\n");
 
@@ -209,54 +210,7 @@ Scene Scene::loadScene(std::string path) {
 	std::vector<MeshObject> objects(0);
 
 	objLoader.loadObjsRapid(path + "scene.obj", objects, umtls);
-
-	//Materials v2
-	//std::vector<UnloadedMaterial> umtls = objLoader.loadMtls(path + "scene.mtl");
-
-	/*
-	for (int i = 0; i < umtls.size(); i++) {
-
 		
-
-		for (const auto& map : umtls[i].maps) {
-
-			std::string key = map.first;
-			std::string mapPath = umtls[i].maps[key];
-
-			CS colorSpace = CS::LINEAR;
-
-			int textureId = scene.textureCount();
-			bool dupTex = false;
-
-			for (int j = 0; j < scene.textures.size(); j++) {
-				if (scene.textures[j].path == mapPath) {
-					textureId = j;
-					dupTex = true;
-				}
-			}
-
-			if (key == "map_Kd") {
-				umtls[i].mat.albedoTextureID = textureId;
-				colorSpace = CS::sRGB;
-			}
-
-			if (key == "map_Ns")
-				umtls[i].mat.roughnessTextureID = textureId;
-
-			if (key == "refl")
-				umtls[i].mat.metallicTextureID = textureId;
-
-			if (key == "map_Bump")
-				umtls[i].mat.normalTextureID = textureId;
-
-			if(!dupTex)
-				scene.addTexture(Texture(mapPath, colorSpace));
-		}
-		
-		//scene.addMaterial(umtls[i].mat);
-	}
-	*/
-
 	for (int i = 0; i < objects.size(); i++) {
 		scene.addMeshObject(objects[i]);	
 	}
@@ -266,6 +220,8 @@ Scene Scene::loadScene(std::string path) {
 	scene.pair_materials();
 
 	// PointLights
+
+	/*
 
 	RSJarray pointLight_json = scene_json["pointLights"].as<RSJarray>();
 
@@ -282,6 +238,12 @@ Scene Scene::loadScene(std::string path) {
 		radiance.print();
 		printf("\n");
 	}
-
+	*/
 	return scene;
+	}
+	catch (std::exception const& e) {
+		BOOST_LOG_TRIVIAL(error) << e.what();
+	}
+
+
 }

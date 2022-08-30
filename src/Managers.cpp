@@ -219,6 +219,9 @@ std::string InputManager::execute_command(Message msg) {
                 tex.height = json["height"].as_int64();
                 tex.data = msg.get_float_data();
 
+                if (json["color_space"] == "sRGB")
+                    tex.applyGamma(2.2);
+
                 std::function <void()> f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
                 cm->command_queue.push(f);
                 response << "ok";

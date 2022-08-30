@@ -33,8 +33,12 @@ HDRI::HDRI(std::string filepath) {
 
 	texture.data = new float[texture.width * texture.height * 3];
 
+	//std::cout << texture.width << " . " << texture.height << std::endl;
+
 	for (int i = 0; i < texture.width * texture.height * 3; i++)
-		texture.data[i] = ((float)tmp_data[i]);
+		texture.data[i] = tmp_data[i];
+
+	texture.xOffset = 0.5;
 
 	stbi_image_free(tmp_data);
 

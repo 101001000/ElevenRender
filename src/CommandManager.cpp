@@ -47,12 +47,7 @@ void CommandManager::load_texture(Texture texture) {
     sm->scene.addTexture(texture);
     sm->scene.pair_textures();
 
-    Message ok_message;
-
-    ok_message.msg = "ok";
-    ok_message.type = Message::TYPE_STATUS;
-
-    im->write_message(ok_message);
+    im->write_message(Message::OK());
 }
 
 void CommandManager::save_pass(std::string& pass, std::string& path) {
@@ -135,24 +130,14 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
     sm->scene.pair_materials();
     sm->scene.pair_textures();
 
-    Message ok_message;
-
-    ok_message.msg = "ok";
-    ok_message.type = Message::TYPE_STATUS;
-
-    im->write_message(ok_message);
+    im->write_message(Message::OK());
 }
 
 void CommandManager::load_scene_from_obj(std::string& path) {
     BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_scene_from_obj(" << path << ")";
     sm->scene = Scene::loadScene(path);
 
-    Message ok_message;
-
-    ok_message.msg = "ok";
-    ok_message.type = Message::TYPE_STATUS;
-
-    im->write_message(ok_message);
+    im->write_message(Message::OK());
 }
 
 void CommandManager::start_render() {

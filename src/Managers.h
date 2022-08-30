@@ -80,6 +80,13 @@ struct Message {
     static std::string data_type2str(DataType data_type);
     static DataType str2data_type(std::string str);
 
+    inline static Message OK() { 
+        Message ok_message;
+        ok_message.msg = "ok";
+        ok_message.type = Message::TYPE_STATUS;
+        return ok_message;
+    }
+
     boost::json::object get_json_data();
     float* get_float_data();
 };

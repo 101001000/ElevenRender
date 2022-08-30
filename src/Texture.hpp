@@ -21,7 +21,7 @@ public:
     Filter filter = NO_FILTER;
     Vector3 color;
 
-    std::string path;
+    std::string name;
 
     int width;
     int height;
@@ -50,7 +50,7 @@ public:
 
         printf("Loading texture from %s... ", filepath.c_str());
 
-        path = filepath;
+        name = filepath;
 
         int channels;
         float* tmp_data = stbi_loadf(filepath.c_str(), &width, &height, &channels, 0);

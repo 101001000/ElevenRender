@@ -34,7 +34,13 @@ Texture* Scene::getTextures() {
 }
 
 void Scene::addPointLight(PointLight pointLight) {	pointLights.push_back(pointLight); }
-void Scene::addTexture(Texture texture) { textures.push_back(texture); }
+
+void Scene::addTexture(Texture texture) {
+	if (!textureIDs.count(texture.name)) {
+		textureIDs[texture.name] = textures.size();
+		textures.push_back(texture);
+	}
+}
 void Scene::addMaterial(Material material) { materials.push_back(material); }
 
 void Scene::addMeshObject(MeshObject meshObject) {
@@ -62,21 +68,22 @@ void Scene::addHDRI(Vector3 color) { hdri = HDRI(color); }
 
 void Scene::pair_textures() {
 
+	//TODO cleanup with hashmap.
 	for (int i = 0; i < materials.size(); i++) {
 
 		for (int j = 0; j < textures.size(); j++) {
 
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].albedo_map)
 				materials[i].albedoTextureID = j;
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].emission_map)
 				materials[i].emissionTextureID = j;
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].roughness_map)
 				materials[i].roughnessTextureID = j;
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].metallic_map)
 				materials[i].metallicTextureID = j;
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].opacity_map)
 				materials[i].opacityTextureID = j;
-			if (textures[j].path == materials[i].albedo_map)
+			if (textures[j].name == materials[i].normal_map)
 				materials[i].normalTextureID = j;
 		}
 	}

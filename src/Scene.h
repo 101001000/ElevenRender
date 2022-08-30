@@ -28,6 +28,8 @@ public:
 	std::vector<Tri> tris;
 	std::vector<PointLight> pointLights;
 
+	std::map<std::string, unsigned int> textureIDs;
+
 	HDRI hdri;
 	Camera camera;
 

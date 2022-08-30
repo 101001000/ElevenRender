@@ -1,25 +1,5 @@
-#include <chrono>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <vector>
-#include "sycl.h"
-#include <conio.h>
-
-#include "Logging.h"
-
-#include "BVH.h"
-#include "Camera.h"
-#include "Definitions.h"
-#include "PostProcessing.h"
-#include "Ray.h"
-#include "Scene.h"
-#include "Texture.hpp"
-#include "kernel.h"
 #include "CommandManager.h"
-
+#include "Logging.h"
 
 inline void coloring_formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
 {

@@ -452,11 +452,7 @@ void renderingKernel(dev_Scene* scene, int idx) {
         calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
             rnd.next());
     
-        
-        std::function<float(float)> f = [](float f) { return 0.5; };
-
-
-        shade(*scene, ray, hitdata, nearestHit, bouncedDir, f(rnd.next()), rnd.next(), rnd.next(), hitLight, reduction, idx);
+        shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, idx);
     
         light += hitLight;
     

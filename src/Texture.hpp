@@ -9,12 +9,12 @@
 #include "Math.hpp"
 #include "sycl.h"
 
-enum Filter { NO_FILTER, BILINEAR };
-enum CS { LINEAR, sRGB };
 
 class Texture {
-
 public:
+
+    enum Filter { NO_FILTER, BILINEAR };
+    enum CS { LINEAR, sRGB };
 
 	float* data;
 
@@ -31,8 +31,6 @@ public:
 
     float xOffset = 0;
     float yOffset = 0;
-
-public:
 
     Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
 

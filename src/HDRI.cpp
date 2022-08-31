@@ -32,6 +32,7 @@ HDRI::HDRI(std::string filepath) {
 	float* tmp_data = stbi_loadf(filepath.c_str(), &texture.width, &texture.height, &channels, 0);
 
 	texture.data = new float[texture.width * texture.height * 3];
+	texture.filter = Texture::Filter::BILINEAR;
 
 	//std::cout << texture.width << " . " << texture.height << std::endl;
 

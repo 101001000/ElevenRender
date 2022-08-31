@@ -20,7 +20,20 @@ void CommandManager::get_pass(std::string& pass) {
     pass_data_msg.type = Message::TYPE_BUFFER;
     pass_data_msg.data_size = rm->rd.pars.width * rm->rd.pars.height * 4 * sizeof(float);
     pass_data_msg.data_type = Message::DATA_TYPE_FLOAT;
-    pass_data_msg.data = rm->get_pass(pass);
+    
+    float* raw_pass = rm->get_pass(pass);
+    
+    if (pass == BEAUTY) {
+        float* denoise_pass = (float*) malloc(rm->rd.pars.width * rm->rd.pars.height * sizeof(float) * 4);
+        dm->denoise(rm->rd.pars.width, rm->rd.pars.height, raw_pass, denoise_pass);
+        for (int i = 3; i < rm->rd.pars.width * rm->rd.pars.height * 4; i+=4) {
+            denoise_pass[i] = 1;
+        }
+        pass_data_msg.data = denoise_pass;
+    }
+    else {
+        pass_data_msg.data = raw_pass;
+    }
 
     im->write_message(pass_data_msg);
 }

@@ -38,8 +38,6 @@ class RenderingManager : Manager {
     
 public:
 
-    bool running = false;
-
     struct RenderInfo {
         unsigned int samples = 0;
     };

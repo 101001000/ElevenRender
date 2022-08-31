@@ -425,6 +425,11 @@ Manager::Manager(CommandManager* _cm) {
 }
 
 void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
+
+    BOOST_LOG_TRIVIAL(trace) << "DenoiseManager::denoise";
+
+    oidnCommitDevice(device);
+
     OIDNFilter filter =
         oidnNewFilter(device, "RT");  // generic ray tracing filter
     oidnSetSharedFilterImage(filter, "color", raw,
@@ -440,9 +445,11 @@ void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
 
     const char* errorMessage;
     if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
-        printf("Error: %s\n", errorMessage);
+        BOOST_LOG_TRIVIAL(error) << errorMessage;
 
     // Cleanup
     oidnReleaseFilter(filter);
+
+    oidnReleaseDevice(device);
 }
 

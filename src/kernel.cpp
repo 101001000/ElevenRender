@@ -42,7 +42,7 @@ Passes parsePass(std::string s_pass) {
     if (s_pass.compare("beauty") == 0)
         pass = BEAUTY;
     if (s_pass.compare("denoise") == 0)
-        pass = BITANGENT;
+        pass = DENOISE;
     if (s_pass.compare("normal") == 0)
         pass = NORMAL;
     if (s_pass.compare("tangent") == 0)

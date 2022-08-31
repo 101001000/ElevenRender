@@ -38,6 +38,12 @@ class RenderingManager : Manager {
     
 public:
 
+    bool running = false;
+
+    struct RenderInfo {
+        unsigned int samples = 0;
+    };
+
     dev_Scene* dev_scene;
 
     //TODO: RenderData refactor
@@ -51,6 +57,7 @@ public:
 
     void start_rendering(Scene* scene);
     float* get_pass(std::string pass);
+    RenderInfo get_render_info();
 
 };
 
@@ -58,7 +65,7 @@ public:
 
 struct Message {
 
-    enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS, TYPE_BUFFER };
+    enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS, TYPE_BUFFER, TYPE_RENDER_INFO };
     enum DataType { DATA_TYPE_NONE, DATA_TYPE_FLOAT, DATA_TYPE_JSON, DATA_TYPE_STRING };
 
     static std::map<std::string, Type> type_map;
@@ -109,27 +116,6 @@ public:
     void write_message(Message msg);
 };
 
-
-/*
-
-class WindowManager : Manager {
-
-    Window window;
-    PixelBuffer pb;
-
-public:
-
-    std::mutex start_window_mutex;
-    bool start_window = false;
-
-    WindowManager(CommandManager* _cm);
-
-    void run();
-    void start();
-    void set_preview_data(float* data);
-
-};
-*/
 class DenoiseManager : Manager {
 
     OIDNDevice device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);

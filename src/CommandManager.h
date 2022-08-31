@@ -30,6 +30,7 @@ public:
     //void change_preview(std::string& pass);
     void load_scene_from_obj(std::string& pass);
     void load_texture(Texture texture);
+    void get_render_info();
     void load_material_from_json(boost::json::object json_mat);
     void save_pass(std::string& pass, std::string& path);
     void get_pass(std::string& pass);

@@ -5,7 +5,8 @@
 std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("none", TYPE_NONE)
                                                                                    ("command", TYPE_COMMAND)
                                                                                    ("status", TYPE_STATUS)
-                                                                                   ("buffer", TYPE_BUFFER);
+                                                                                   ("buffer", TYPE_BUFFER)
+                                                                                   ("render_info", TYPE_RENDER_INFO);
 std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", DATA_TYPE_NONE)("float", DATA_TYPE_FLOAT)("json", DATA_TYPE_JSON)("string", DATA_TYPE_STRING);
 
 Message::Message() {
@@ -128,6 +129,7 @@ std::string InputManager::execute_command(Message msg) {
         ("load_config", po::value<std::string>(), "load rendering config from file path")
         ("load_material", "load material from tcp")
         ("load_texture", po::value<std::vector<std::string>>()->multitoken(), "load texture from tcp")
+        ("get_render_info", "get render info")
         ;
 
     try {
@@ -192,6 +194,15 @@ std::string InputManager::execute_command(Message msg) {
             cm->command_queue.push(f);
             response << "ok";
         }
+
+        if (vm.count("get_render_info")) {
+            BOOST_LOG_TRIVIAL(debug) << "Adding get render info to the queue";
+
+            std::function <void()> f = std::bind(&CommandManager::get_render_info, std::ref(cm));
+            cm->command_queue.push(f);
+            response << "ok";
+        }
+
 
 
         if (vm.count("load_texture")) {
@@ -340,7 +351,24 @@ public:
 };
 
 
+RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
+    BOOST_LOG_TRIVIAL(debug) << "Getting render info";
+
+    float* dev_samples;
+    unsigned int sample_count = 0;
+
+    q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
+
+    q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
+
+    RenderInfo render_info;
+    render_info.samples = sample_count;
+
+    BOOST_LOG_TRIVIAL(debug) << "Rendering info retrieved";
+
+    return render_info;
+}
 
 void RenderingManager::start_rendering(Scene* scene) {
 
@@ -377,16 +405,12 @@ float* RenderingManager::get_pass(std::string pass) {
     
     int n = parsePass(pass) * rd.pars.width * rd.pars.height * 4;
 
-    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass9: " << pass;
+    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass: " << pass;
 
     float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
-    BOOST_LOG_TRIVIAL(debug) << "Retrieving pass1: " << pass;
-
     q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
-
-    BOOST_LOG_TRIVIAL(debug) << "Retrieving pas2: " << pass;
 
     q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
 

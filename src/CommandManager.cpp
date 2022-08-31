@@ -5,27 +5,10 @@
 
 CommandManager::CommandManager() {
     im = std::make_shared<InputManager>(this);
-    //wm = std::make_shared<WindowManager>(this);
     rm = std::make_shared<RenderingManager>(this);
     dm = std::make_shared<DenoiseManager>(this);
     sm = std::make_shared<SceneManager>(this);
 }
-
-
-/*
-void CommandManager::open_window() {
-    this->wm->start_window_mutex.lock();
-    this->wm->start_window = true;
-    this->wm->start_window_mutex.unlock();
-}
-
-void CommandManager::change_preview(std::string& pass) {
-    float* pass_data = rm->get_pass(pass);
-
-    wm->set_preview_data(pass_data);
-}
-*/
-
 
 void CommandManager::get_pass(std::string& pass) {
 
@@ -40,6 +23,21 @@ void CommandManager::get_pass(std::string& pass) {
     pass_data_msg.data = rm->get_pass(pass);
 
     im->write_message(pass_data_msg);
+}
+
+void CommandManager::get_render_info() {
+
+    RenderingManager::RenderInfo render_info = rm->get_render_info();
+
+    Message render_info_msg;
+
+    boost::json::object json_info;
+
+    json_info["samples"] = render_info.samples;
+
+    render_info_msg.msg = boost::json::serialize(json_info);
+    render_info_msg.type = Message::TYPE_RENDER_INFO;
+    im->write_message(render_info_msg);
 }
 
 void CommandManager::load_texture(Texture texture) {

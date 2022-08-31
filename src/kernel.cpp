@@ -694,7 +694,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10000; i++) {
         //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),

@@ -449,7 +449,6 @@ void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
 
     // Cleanup
     oidnReleaseFilter(filter);
-
     oidnReleaseDevice(device);
 }
 

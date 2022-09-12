@@ -33,6 +33,7 @@ float RngGenerator::next() {
     return ((float)seed / (float)UINT_MAX);
 }
 
+//TODO move this function
 Passes parsePass(std::string s_pass) {
 
     std::transform(s_pass.begin(), s_pass.end(), s_pass.begin(), ::tolower);
@@ -110,6 +111,7 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     }
 
     // Convert linear to sRGB
+    // TODO: move to texture loading
     hitdata.roughness = sycl::pow(hitdata.roughness, 2.2f);
     hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
 
@@ -129,7 +131,6 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 }
 
 void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
-
 
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
 
@@ -157,7 +158,6 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
             triSum += dev_scene_g->meshObjects[i].triCount;
         }
     }
-
 }
 
 Hit throwRay(Ray ray, dev_Scene* scene) {
@@ -466,8 +466,7 @@ void renderingKernel(dev_Scene* scene, int idx) {
         ray = Ray(nearestHit.position + bouncedDir * 0.001, bouncedDir);
     }
     
-    // dev_pathcount[idx] += i;
-    
+    // TODO: parametrize light clamp
     light = clamp(light, 0, 10);
     
     if (!sycl::isnan(light.x) && !sycl::isnan(light.y) &&
@@ -520,8 +519,8 @@ void renderingKernel(dev_Scene* scene, int idx) {
 }
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
-    printf("Initializing rendering... \n");
 
+    BOOST_LOG_TRIVIAL(info) << "Initializing rendering";
 
     unsigned int meshObjectCount = scene->meshObjectCount();
     unsigned int triCount = scene->triCount();
@@ -532,10 +531,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     Tri* tris = scene->getTris();
     BVH* bvh = scene->buildBVH();
-
-    printf("End building BVH");
-
-    printf("Allocating GPU memory");
 
     Camera* dev_camera = sycl::malloc_device<Camera>(1, q);
     MeshObject* dev_meshObjects =
@@ -553,9 +548,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
                       sizeof(Tri) * triCount + sizeof(BVH) +
                       sizeof(int) * triCount + sizeof(BVH);
 
-
-    printf("Copying to GPU");
-
     q.memcpy(&(dev_scene->meshObjectCount), &meshObjectCount,
              sizeof(unsigned int))
         .wait();
@@ -572,7 +564,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
         q.memcpy(&(dev_meshObjects[i].tris), &dev_tris, sizeof(Tri*)).wait();
     }
 
-    printf("Pointer binding...\n");
+    BOOST_LOG_TRIVIAL(debug) << "Binding pointers";
 
     q.memcpy(&(dev_scene->meshObjects), &(dev_meshObjects), sizeof(MeshObject*))
         .wait();
@@ -589,6 +581,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     // POINTLIGHT SETUP
 
     unsigned int pointLightCount = scene->pointLightCount();
+    BOOST_LOG_TRIVIAL(debug) << "Copying " << pointLightCount << " lightpoints to GPU";
 
     PointLight* dev_pointLights =
         sycl::malloc_device<PointLight>(pointLightCount, q);
@@ -606,6 +599,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     // MATERIAL SETUP
 
     unsigned int materialCount = scene->materialCount();
+    BOOST_LOG_TRIVIAL(debug) << "Copying " << materialCount << " materials to GPU";
 
     q.memcpy(&dev_scene->materialCount, &materialCount, sizeof(unsigned int))
         .wait();
@@ -622,6 +616,8 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     // TEXTURES
 
     unsigned int textureCount = scene->textureCount();
+
+    BOOST_LOG_TRIVIAL(debug) << "Copying " << textureCount << " textures to GPU";
 
     Texture* textures = scene->getTextures();
 
@@ -644,14 +640,13 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
                  sizeof(float) * textures[i].width * textures[i].height * 3)
             .wait();
         q.memcpy(&(dev_textures[i].data), &textureData, sizeof(float*)).wait();
-
-        std::cout << "Texture " << i << " copied, " << textures[i].width << "px x  " << textures[i].height << "px\n";
-
     }
 
     q.memcpy(&(dev_scene->textures), &(dev_textures), sizeof(Texture*)).wait();
 
     // HDRI
+
+    BOOST_LOG_TRIVIAL(debug) << "Copying HDRI to GPU";
 
     HDRI* hdri = &scene->hdri;
 
@@ -677,10 +672,9 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     q.memcpy(&(dev_hdri->cdf), &(dev_cdf), sizeof(float*)).wait();
     q.memcpy(&(dev_scene->hdri), &(dev_hdri), sizeof(float*)).wait();
 
-    printf("%luMB of geometry data copied\n",
-           (geometryMemory / (1024L * 1024L)));
+    BOOST_LOG_TRIVIAL(info) << (geometryMemory / (1024L * 1024L)) << " of geometry data copied";
 
-    printf("Running setup kernel... \n");
+    BOOST_LOG_TRIVIAL(debug) << "Starting setup kernels";
 
     q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(1024, 256, h);
@@ -690,12 +684,10 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
             });
     }).wait();
 
-    printf("Running rendering kernel... \n");
+    BOOST_LOG_TRIVIAL(info) << "Setup finished";
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-
+    //TODO: figure out how to manage max samples (noise cutoff?)
     for (int i = 0; i < 10000; i++) {
-        //printf("Sample %d...\n", i);
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::range(camera->xRes * camera->yRes),
                 [=](sycl::id<1> i) {
@@ -704,28 +696,8 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
             });
     }
 
-    printf("end \n");
+    BOOST_LOG_TRIVIAL(info) << "All samples added to the queue";
 
-    /*
-
-    q.wait();
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(
-        t2 - t1);
-        */
     return 0;
 }
 
-
-
-int getSamples(dev_Scene* dev_scene, sycl::queue& q) {
-    // TODO, clean this, maybe remove samples if i'm not implementing adaptive sampling yet.
-    //unsigned int i;
-    //unsigned int* a = new unsigned int[3840*2160];
-    //q.memcpy(a, dev_scene->dev_samples, 3840 * 2160).wait();
-    //i = a[0];
-    //delete[] a;
-    return 0;
-}

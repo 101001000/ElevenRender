@@ -93,6 +93,7 @@ struct HitData {
 	float sheenTint;
 	float subsurface;
 	float sheen;
+	float opacity;
 
     Vector3 emission;
     Vector3 albedo;

@@ -25,8 +25,8 @@ public:
 
 	Vector3 albedo = Vector3(0.5,0.5,0.5);
 	Vector3 emission = Vector3::Zero();
-	Vector3 opacity = Vector3::One();
 
+	float opacity = 1;
 	float roughness = 1;
 	float metallic = 0;
 	float clearcoatGloss = 0;

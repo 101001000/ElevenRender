@@ -110,6 +110,9 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
     if (json_mat.if_contains("specular"))
         mtl.specular = json_mat["specular"].as_double();
 
+    if (json_mat.if_contains("opacity"))
+        mtl.opacity = json_mat["opacity"].as_double();
+
 
     if (json_mat.if_contains("albedo_map"))
         mtl.albedo_map = json_mat["albedo_map"].as_string();

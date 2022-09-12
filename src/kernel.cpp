@@ -72,6 +72,14 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
                              .getValueFromUVFiltered(hit.tu, hit.tv);
     }
 
+    if (material->opacityTextureID < 0) {
+        hitdata.opacity = material->opacity;
+    }
+    else {
+        hitdata.opacity = dev_scene_g->textures[material->opacityTextureID]
+            .getValueFromUVFiltered(hit.tu, hit.tv).x;
+    }
+
     if (material->emissionTextureID < 0) {
         hitdata.emission = material->emission;
     } else {
@@ -449,21 +457,26 @@ void renderingKernel(dev_Scene* scene, int idx) {
     
         generateHitData(scene, material, hitdata, nearestHit);
     
-        calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
-            rnd.next());
-    
-        shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, idx);
-    
-        light += hitLight;
-    
-        // First hit
-        if (i == 0) {
-            normal = nearestHit.normal;
-            tangent = nearestHit.tangent;
-            bitangent = nearestHit.bitangent;
+        if (rnd.next() <= hitdata.opacity) {
+            calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
+                rnd.next());
+
+            shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd.next(), rnd.next(), rnd.next(), hitLight, reduction, idx);
+
+            light += hitLight;
+
+            // First hit
+            if (i == 0) {
+                normal = nearestHit.normal;
+                tangent = nearestHit.tangent;
+                bitangent = nearestHit.bitangent;
+            }
+
+            ray = Ray(nearestHit.position + bouncedDir * 0.001, bouncedDir);
         }
-    
-        ray = Ray(nearestHit.position + bouncedDir * 0.001, bouncedDir);
+        else {
+            ray = Ray(nearestHit.position + ray.direction * 0.001, ray.direction);
+        }
     }
     
     // TODO: parametrize light clamp

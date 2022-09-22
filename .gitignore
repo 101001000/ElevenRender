@@ -26,3 +26,9 @@ x64
 src/libs/stb_image.h
 src/libs/stb_image_write.h
 src/libs/tiny_obj_loader.h
+test.osl
+src/lan/calc.tab.cpp
+src/lan/calc.tab.hpp
+src/lan/FlexLexer.h
+src/lan/lex.yy.cpp
+src/lan/calc.output

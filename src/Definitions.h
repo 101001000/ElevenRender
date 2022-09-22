@@ -2,9 +2,9 @@
 
 #define TCP_MESSAGE_MAXSIZE 1024
 
-#define SMOOTH_SHADING true
+#define SMOOTH_SHADING false
 #define USEBVH true
-#define HDRIIS true
+#define HDRIIS false
 #define PASSES_COUNT 5
 
 #define THREADSIZE 8

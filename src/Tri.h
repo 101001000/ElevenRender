@@ -77,28 +77,38 @@ public:
         Vector3 shadingNormal = normals[0] + (normals[1] - normals[0]) * u + (normals[2] - normals[0]) * v;
         Vector3 shadingTangent = tangents[0] + (tangents[1] - tangents[0]) * u + (tangents[2] - tangents[0]) * v;
 
-        Vector3 p0 = projectOnPlane(geomPosition, vertices[0], normals[0]);
-        Vector3 p1 = projectOnPlane(geomPosition, vertices[1], normals[1]);
-        Vector3 p2 = projectOnPlane(geomPosition, vertices[2], normals[2]);
+        Vector3 n0 = normals[0];
+        Vector3 n1 = normals[1];
+        Vector3 n2 = normals[2];
+
+        if (Vector3::dot(shadingNormal, ray.direction) > 0) {
+            shadingNormal *= -1;
+            shadingTangent *= -1;
+            n0 *= -1;
+            n1 *= -1;
+            n2 *= -1;
+        }
+
+        Vector3 p0 = projectOnPlane(geomPosition, vertices[0], n0);
+        Vector3 p1 = projectOnPlane(geomPosition, vertices[1], n1);
+        Vector3 p2 = projectOnPlane(geomPosition, vertices[2], n2);
 
         Vector3 shadingPosition = p0 + (p1 - p0) * u + (p2 - p0) * v;
 
         bool convex = Vector3::dot(shadingPosition - geomPosition, shadingNormal) > 0.0f;
 
         hit.tangent = shadingTangent;
-
         hit.position = convex ? shadingPosition : geomPosition;
         hit.normal = shadingNormal;
+
 #else
         Vector3 geomNormal = Vector3::cross(edge1, edge2).normalized();
 
-        if (Vector3::dot(geomNormal, ray.direction) < 1.0) {
+        if (Vector3::dot(geomNormal, ray.direction) > 0) {
             geomNormal *= -1;
-            //Quizá hay que invertir también la tangente
         }
 
-        //printf("%f\n", geomNormal.z);
-
+ 
         // tangents[0], tangents[1], tangents[2] are the same when smoothshading is off
         hit.tangent = tangents[0];
         hit.normal = geomNormal;

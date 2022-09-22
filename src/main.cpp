@@ -1,5 +1,7 @@
 #include "CommandManager.h"
 #include "Logging.h"
+#include "OslMaterial.hpp"
+#include "lan/calc.tab.hpp"
 
 inline void coloring_formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
 {
@@ -42,13 +44,35 @@ int main(int argc, char* argv[]) {
     sink->locked_backend()->add_stream(stream);
     sink->set_formatter(&coloring_formatter);
 
- 
+
     boost::log::core::get()->add_sink(sink);
     boost::log::add_common_attributes();
 
 
-    CommandManager cm;
-    cm.init();
+    if (argc > 1) {
+        CommandManager cm;
+        cm.init();
+    }
+    else {
+        BOOST_LOG_TRIVIAL(info) << "Mode debug";
+
+        Statement* start = generate_statement();
+
+        Map map;
+
+        start->print();
+        start->execute(map);
+
+        map.print();
+
+        BOOST_LOG_TRIVIAL(info) << "Parsed!";
+
+        int a;
+
+        std::cin >> a;
+    }
+
+   
 
     BOOST_LOG_TRIVIAL(info) << "Quitting";
 

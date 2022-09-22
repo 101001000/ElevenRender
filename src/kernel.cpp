@@ -234,7 +234,7 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata,
 
         Texture::sphericalMapping(Vector3(), -1 * newDir, 1, u, v);
 
-        Ray shadowRay(point + hitdata.normal * 0.001, newDir);
+        Ray shadowRay(point + hitdata.normal * 0.0001, newDir);
 
         Hit shadowHit = throwRay(shadowRay, scene);
 
@@ -260,7 +260,7 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata,
         Vector3 newDir =
             -scene->hdri->texture.reverseSphericalMapping(iu, iv).normalized();
 
-        Ray shadowRay(point + newDir * 0.001, newDir);
+        Ray shadowRay(point + newDir * 0.0001, newDir);
         Hit shadowHit = throwRay(shadowRay, scene);
         if (shadowHit.valid) return Vector3();
 
@@ -383,6 +383,7 @@ void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
                                       r1, r2, r3, hdriPdf);
     Vector3 pointLightCalc =
         pointLight(ray, hitdata, &scene, nearestHit.position, pointPdf, r1);
+
     Vector3 brdfLightCalc =
         hitdata.emission *
         (brdfDisney * abs(Vector3::dot(newDir, hitdata.normal))) / brdfPdf;
@@ -456,7 +457,7 @@ void renderingKernel(dev_Scene* scene, int idx) {
         Material* material = &scene->materials[materialID];
     
         generateHitData(scene, material, hitdata, nearestHit);
-    
+
         if (rnd.next() <= hitdata.opacity) {
             calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
                 rnd.next());
@@ -467,15 +468,15 @@ void renderingKernel(dev_Scene* scene, int idx) {
 
             // First hit
             if (i == 0) {
-                normal = nearestHit.normal;
-                tangent = nearestHit.tangent;
-                bitangent = nearestHit.bitangent;
+                normal = hitdata.normal;
+                tangent = hitdata.tangent;
+                bitangent = hitdata.bitangent;
             }
 
-            ray = Ray(nearestHit.position + bouncedDir * 0.001, bouncedDir);
+            ray = Ray(nearestHit.position + bouncedDir * 0.0001, bouncedDir);
         }
         else {
-            ray = Ray(nearestHit.position + ray.direction * 0.001, ray.direction);
+            ray = Ray(nearestHit.position + ray.direction * 0.0001, ray.direction);
         }
     }
     

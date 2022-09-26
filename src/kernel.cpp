@@ -16,6 +16,8 @@
 #include "Material.h"
 #include "Math.hpp"
 #include "PointLight.h"
+#include "OslMaterial.hpp"
+#include "lan/calc.tab.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"
@@ -138,7 +140,7 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     hitdata.bitangent = bitangent;
 }
 
-void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
+void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial* dev_osl) {
 
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
 
@@ -160,6 +162,21 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
     dev_scene_g->dev_samples[idx] = 0;
 
     if (idx == 0) {
+
+        out << "PRINTING EMPTY\n";
+
+        dev_osl->program->print(out);
+
+        out << "COMPUTING\n";
+
+        dev_osl->compute_ci(out);
+
+        out << "PRINTING FULL\n";
+
+        //dev_osl->program->print(out);
+
+        dev_osl->vars.print(out);
+
         int triSum = 0;
         for (int i = 0; i < dev_scene_g->meshObjectCount; i++) {
             dev_scene_g->meshObjects[i].tris += triSum;
@@ -532,6 +549,161 @@ void renderingKernel(dev_Scene* scene, int idx) {
     scene->dev_randstate[idx] = rnd;
 }
 
+void copy_exp(Exp* exp, Exp* dev_exp, sycl::queue& q) {
+
+    Exp* dev_exp1;
+    Exp* dev_exp2;
+    Exp* dev_exp3;
+
+    q.memcpy(&(dev_exp->type), &(exp->type), sizeof(Exp::Type)).wait();
+    //q.memcpy(&(dev_exp->Atemp_val), &(exp->Atemp_val), sizeof(Var)).wait();
+    q.memcpy(&(dev_exp->Vtemp_val), &(exp->Vtemp_val), sizeof(Var)).wait();
+    //q.memcpy(&(dev_exp->Avisited), &(exp->Avisited), sizeof(bool)).wait();
+    //q.memcpy(&(dev_exp->At_visited), &(exp->At_visited), sizeof(bool)).wait();
+    q.memcpy(&(dev_exp->idx), &(exp->idx), sizeof(int)).wait();
+    q.memcpy(&(dev_exp->Vvisited), &(exp->Vvisited), sizeof(bool)).wait();
+    q.memcpy(&(dev_exp->Vt_visited), &(exp->Vt_visited), sizeof(bool)).wait();
+
+    switch (exp->type) {
+    case Exp::NUM:
+        q.memcpy(&(dev_exp->n), &(exp->n), sizeof(float)).wait();
+        break;
+    case Exp::VEC:
+        dev_exp1 = sycl::malloc_device<Exp>(1, q);
+        dev_exp2 = sycl::malloc_device<Exp>(1, q);
+        dev_exp3 = sycl::malloc_device<Exp>(1, q);
+        copy_exp(exp->e1, dev_exp1, q);
+        copy_exp(exp->e2, dev_exp2, q);
+        copy_exp(exp->e3, dev_exp3, q);
+        q.memcpy(&(dev_exp->e1), &dev_exp1, sizeof(Exp*)).wait();
+        q.memcpy(&(dev_exp->e2), &dev_exp2, sizeof(Exp*)).wait();
+        q.memcpy(&(dev_exp->e3), &dev_exp3, sizeof(Exp*)).wait();
+        break;
+    case Exp::VAR:
+        q.memcpy(&(dev_exp->x), &(exp->x), sizeof(strlen(exp->x) + 1)).wait();
+        break;
+    case Exp::SUM:
+        dev_exp1 = sycl::malloc_device<Exp>(1, q);
+        dev_exp2 = sycl::malloc_device<Exp>(1, q);
+        copy_exp(exp->e1, dev_exp1, q);
+        copy_exp(exp->e2, dev_exp2, q);
+        q.memcpy(&(dev_exp->e1), &dev_exp1, sizeof(Exp*)).wait();
+        q.memcpy(&(dev_exp->e2), &dev_exp2, sizeof(Exp*)).wait();
+        break;
+    }
+}
+
+void copy_statement(Statement* sta, Statement* dev_sta, sycl::queue& q) {
+
+    q.memcpy(&(dev_sta->type), &(sta->type), sizeof(Statement::Type)).wait();
+
+    Exp* dev_exp;
+    char* dev_var;
+    Statement* dev_sta1;
+    Statement* dev_sta2;
+
+    switch (sta->type) {
+    case Statement::SEQ:
+        dev_sta1 = sycl::malloc_device<Statement>(1, q);
+        dev_sta2 = sycl::malloc_device<Statement>(1, q);
+        copy_statement(sta->s1, dev_sta1, q);
+        copy_statement(sta->s2, dev_sta2, q);
+        q.memcpy(&(dev_sta->s1), &dev_sta1, sizeof(Statement*)).wait();
+        q.memcpy(&(dev_sta->s2), &dev_sta2, sizeof(Statement*)).wait();
+        break;
+    case Statement::ASS:
+        dev_exp = sycl::malloc_device<Exp>(1, q);
+        copy_exp(sta->e, dev_exp, q);
+        q.memcpy(&(dev_sta->e), &dev_exp, sizeof(Exp*)).wait();
+        q.memcpy(&(dev_sta->x), &(sta->x), sizeof(strlen(sta->x) + 1)).wait();
+        break;
+    case Statement::SKIP:
+        break;
+    case Statement::IF:
+        dev_exp = sycl::malloc_device<Exp>(1, q);
+        copy_exp(sta->e, dev_exp, q);
+        Statement* dev_sta1 = sycl::malloc_device<Statement>(1, q);
+        Statement* dev_sta2 = sycl::malloc_device<Statement>(1, q);
+        copy_statement(sta->s1, dev_sta1, q);
+        copy_statement(sta->s2, dev_sta2, q);
+        q.memcpy(&(dev_sta->e), &dev_exp, sizeof(Exp*)).wait();
+        q.memcpy(&(dev_sta->s1), &dev_sta1, sizeof(Statement*)).wait();
+        q.memcpy(&(dev_sta->s2), &dev_sta2, sizeof(Statement*)).wait();
+        break;
+    }
+}
+
+void copy_osl_material(OslMaterial* mat, OslMaterial* dev_mat, sycl::queue& q) {
+
+    Statement* dev_sta = sycl::malloc_device<Statement>(1, q);
+
+    copy_statement(mat->program, dev_sta, q);
+
+    q.memcpy(&(dev_mat->program), &dev_sta, sizeof(Statement*)).wait();
+}
+
+
+void printExp(Exp exp) {
+    switch (exp.type) {
+    case Exp::NUL:
+        std::cout << "EXP(" << exp.idx << "): NUL";
+        break;
+    case Exp::NUM:
+        std::cout << "EXP(" << exp.idx << "): N(" << exp.n << ")";
+        break;
+    case Exp::VAR:
+        std::cout << "EXP(" << exp.idx << "): VAR(" << exp.x << ")";
+        break;
+    case Exp::VEC:
+        std::cout << "EXP(" << exp.idx << "): VEC(";
+        printExp(*exp.e1);
+        std::cout << ", ";
+        printExp(*exp.e2);
+        std::cout << ", ";
+        printExp(*exp.e3);
+        std::cout << ")";
+        break;
+    case Exp::SUM:
+        std::cout << "EXP(" << exp.idx << "): SUM(";
+        printExp(*exp.e1);
+        std::cout << " + ";
+        printExp(*exp.e2);
+        std::cout << ")";
+        break;
+    }
+}
+
+void printStatement(Statement sta) {
+    switch (sta.type) {
+    case Statement::NUL:
+        std::cout << "STATEMENT: NUL";
+        break;
+    case Statement::SKIP:
+        std::cout << "STATEMENT: SKIP";
+        break;
+    case Statement::SEQ:
+        std::cout << "STATEMENT: SEQ (";
+        printStatement(*sta.s1);
+        std::cout << ", ";
+        printStatement(*sta.s2);
+        std::cout << ")";
+        break;
+    case Statement::ASS:
+        std::cout << "STATEMENT: ASS(" << sta.x << " = ";
+        printExp(*sta.e);
+        std::cout << ")";
+        break;
+    case Statement::IF:
+        std::cout << "STATEMENT: IF (";
+        printStatement(*sta.s1);
+        std::cout << ", ";
+        printStatement(*sta.s2);
+        std::cout << ")";
+        break;
+    }
+}
+
+
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     BOOST_LOG_TRIVIAL(info) << "Initializing rendering";
@@ -688,13 +860,33 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     BOOST_LOG_TRIVIAL(info) << (geometryMemory / (1024L * 1024L)) << " of geometry data copied";
 
+    BOOST_LOG_TRIVIAL(info) << "OSL MATERIAL TEST";
+
+    OslMaterial* osl = new OslMaterial();
+
+    osl->program = generate_statement();
+
+    BOOST_LOG_TRIVIAL(info) << "PARSED";
+
+    printStatement(*osl->program);
+
+    //osl->program->print(std::cout);
+
+    OslMaterial* dev_osl = sycl::malloc_device<OslMaterial>(1, q);;
+
+    BOOST_LOG_TRIVIAL(info) << "COPYING";
+
+    copy_osl_material(osl, dev_osl, q);
+
+    BOOST_LOG_TRIVIAL(info) << "COPIED";
+
     BOOST_LOG_TRIVIAL(debug) << "Starting setup kernels";
 
     q.submit([&](cl::sycl::handler& h) {
-        sycl::stream out = sycl::stream(1024, 256, h);
+        sycl::stream out = sycl::stream(2048, 1024, h);
         h.parallel_for(sycl::range(camera->xRes * camera->yRes),
             [=](sycl::id<1> i) {
-                setupKernel(dev_scene, i, out);
+                setupKernel(dev_scene, i, out, dev_osl);
             });
     }).wait();
 

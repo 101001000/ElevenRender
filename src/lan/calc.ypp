@@ -104,8 +104,9 @@ LS:
 
 S:
       T_SEMICOLON {$$ = new Statement(Statement::SKIP);}
-	| T_FLOAT_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4);}
-	| T_COLOR_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4);}
+	| T_FLOAT_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4); $4->rec_setidx(0);}
+	| T_COLOR_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4); $4->rec_setidx(0);}
+	| T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $1, $3); $3->rec_setidx(0);}
 	| if_statement {$$ = $1;}
 ;
 
@@ -125,7 +126,7 @@ Statement* generate_statement(){
 	char ch;
 	 
 	// Opening file in reading mode
-	ptr = fopen("test.osl", "r");
+	ptr = fopen("C:\\Users\\Kike\\Desktop\\TFM\\repos\\ElevenRender\\test.osl", "r");
 	 
 	if (NULL == ptr) {
 		printf("file can't be opened \n");

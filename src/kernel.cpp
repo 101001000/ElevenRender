@@ -704,7 +704,47 @@ void printStatement(Statement sta) {
 }
 
 
+// TODO: abstracting SYCL copy
+/*
+
+template <typename T>
+struct SYCLObject {
+
+    std::vector<std::tuple<void* T::*, int>> fields;
+    std::vector<std::tuple<void* T::*, int>> ptrs;
+
+    template<typename D>
+    void register_field(D T::* field) {
+        fields.push_back(std::tuple<void* T::*, int>((void* T::*)field, sizeof(D)));
+    }
+
+    template<typename D>
+    void register_ptr(D T::* field) {
+        fields.push_back(std::tuple<void* T::*, int>((void* T::*)field, sizeof(D)));
+    }
+
+    void copy(T& obj, T& dev_obj, sycl::queue& q) {
+
+        for (std::tuple<T::*, int> field_tuple : fields) {
+            T::* field_ptr  = std::get<0>(field_tuple);
+            int  field_size = std::get<1>(field_tuple);
+
+            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, field_size).wait();
+        }
+
+        for (std::tuple<T::*, int> field_tuple : ptrs) {
+            T::* field_ptr = std::get<0>(field_tuple);
+            int  field_size = std::get<1>(field_tuple);
+
+            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, field_size).wait();
+        }
+    }
+
+};*/
+
+
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
+
 
     BOOST_LOG_TRIVIAL(info) << "Initializing rendering";
 

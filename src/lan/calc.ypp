@@ -79,12 +79,12 @@ statement_block:
 ;
 
 if_statement:
-	  T_IF_KEYWORD T_PAR_LEFT exp T_PAR_RIGHT statement_block {$$ = new Statement(Statement::IF, $3, $5, new Statement(Statement::SKIP));}
-	| T_IF_KEYWORD T_PAR_LEFT exp T_PAR_RIGHT statement_block T_ELSE_KEYWORD statement_block {$$ = new Statement(Statement::IF, $3, $5, $7);}
+	  T_IF_KEYWORD T_PAR_LEFT exp T_PAR_RIGHT statement_block {$$ = new Statement(Statement::Type::IF, $3, $5, new Statement(Statement::Type::SKIP));}
+	| T_IF_KEYWORD T_PAR_LEFT exp T_PAR_RIGHT statement_block T_ELSE_KEYWORD statement_block {$$ = new Statement(Statement::Type::IF, $3, $5, $7);}
 ;
 
 color_declaration:
-	  T_COLOR_KEYWORD T_PAR_LEFT exp T_COLON exp T_COLON exp T_PAR_RIGHT {$$ = new Exp(Exp::VEC, $3, $5, $7);}
+	  T_COLOR_KEYWORD T_PAR_LEFT exp T_COLON exp T_COLON exp T_PAR_RIGHT {$$ = new Exp(Exp::Type::VEC, $3, $5, $7);}
 ;
 
 v:
@@ -92,21 +92,21 @@ v:
 ;
 
 exp:
-	  T_NUMBER {$$ = new Exp(Exp::NUM, $1);}
-	| T_IDENTIFIER {$$ = new Exp(Exp::VAR, $1);}
+	  T_NUMBER {$$ = new Exp(Exp::Type::NUM, $1);}
+	| T_IDENTIFIER {$$ = new Exp(Exp::Type::VAR, $1);}
 	| v {$$ = $1;} 
-	| exp T_PLUS exp {$$ = new Exp(Exp::SUM, $1, $3);}
+	| exp T_PLUS exp {$$ = new Exp(Exp::Type::SUM, $1, $3);}
 
 LS:
-	  LS S {$$ = new Statement(Statement::SEQ, $1, $2);}
+	  LS S {$$ = new Statement(Statement::Type::SEQ, $1, $2);}
 	| S T_SEMICOLON {$$ = $1;}
 ;
 
 S:
-      T_SEMICOLON {$$ = new Statement(Statement::SKIP);}
-	| T_FLOAT_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4); $4->rec_setidx(0);}
-	| T_COLOR_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $2, $4); $4->rec_setidx(0);}
-	| T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::ASS, $1, $3); $3->rec_setidx(0);}
+      T_SEMICOLON {$$ = new Statement(Statement::Type::SKIP);}
+	| T_FLOAT_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::Type::ASS, $2, $4); $4->rec_setidx(0);}
+	| T_COLOR_KEYWORD T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::Type::ASS, $2, $4); $4->rec_setidx(0);}
+	| T_IDENTIFIER T_EQUAL exp {$$ = new Statement(Statement::Type::ASS, $1, $3); $3->rec_setidx(0);}
 	| if_statement {$$ = $1;}
 ;
 

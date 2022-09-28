@@ -358,9 +358,9 @@ RenderingManager::RenderInfo RenderingManager::get_render_info() {
     float* dev_samples;
     unsigned int sample_count = 0;
 
-    q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
+    d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
 
-    q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
+    d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
 
     RenderInfo render_info;
     render_info.samples = sample_count;
@@ -384,7 +384,7 @@ void RenderingManager::start_rendering(Scene* scene) {
         }
     }
 
-    t_rend = std::thread(renderSetup, std::ref(q), std::ref(scene), std::ref(dev_scene));
+    t_rend = std::thread(renderSetup, std::ref(k_q), std::ref(scene), std::ref(dev_scene));
 
     rd.startTime = std::chrono::high_resolution_clock::now();
     BOOST_LOG_TRIVIAL(trace) << "LEAVING RenderingManager::start_rendering()";
@@ -392,12 +392,14 @@ void RenderingManager::start_rendering(Scene* scene) {
 
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     BOOST_LOG_TRIVIAL(trace) << "RenderingManager::RenderingManager()";
-    q = sycl::queue(CUDASelector());
-    sycl::device device = q.get_device();
+    k_q = sycl::queue(CUDASelector());
+    d_q = sycl::queue(CUDASelector());
+
+    sycl::device device = k_q.get_device();
 
     BOOST_LOG_TRIVIAL(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
 
-    dev_scene = sycl::malloc_device<dev_Scene>(1, q);
+    dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
 }
 
 
@@ -410,9 +412,9 @@ float* RenderingManager::get_pass(std::string pass) {
     float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
-    q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
+    d_q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
 
-    q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
+    d_q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
 
     BOOST_LOG_TRIVIAL(debug) << "Pass retrieved!";
 

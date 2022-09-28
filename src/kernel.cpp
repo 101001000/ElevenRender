@@ -423,7 +423,7 @@ void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
 
 
 
-void renderingKernel(dev_Scene* scene, int idx) {
+void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     RngGenerator rnd = scene->dev_randstate[idx];
     
@@ -433,8 +433,8 @@ void renderingKernel(dev_Scene* scene, int idx) {
     
     int x = (idx % scene->camera->xRes);
     int y = (idx / scene->camera->xRes);
-    
-    
+
+
     calculateCameraRay(x, y, *scene->camera, ray, rnd.next(), rnd.next(),
         rnd.next(), rnd.next(), rnd.next());
     
@@ -546,6 +546,33 @@ void renderingKernel(dev_Scene* scene, int idx) {
         scene->dev_samples[idx]++;
     }
     
+    Vector3 c;
+
+    if (s == 0)
+        c = Vector3(1, 0, 0);
+    if (s == 1)
+        c = Vector3(1, 1, 0);
+    if (s == 2)
+        c = Vector3(0, 1, 0);
+    if (s == 3)
+        c = Vector3(0, 1, 1);
+    if (s == 4)
+        c = Vector3(0, 0, 1);
+    if (s == 5)
+        c = Vector3(1, 0, 1);
+    if (s == 6)
+        c = Vector3(1, 1, 1);
+    if (s == 7)
+        c = Vector3(0, 0, 0);
+
+    if (x < 8) {
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = c.x;
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = c.y;
+        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = c.z;
+    }
+
+
+
     scene->dev_randstate[idx] = rnd;
 }
 
@@ -565,10 +592,10 @@ void copy_exp(Exp* exp, Exp* dev_exp, sycl::queue& q) {
     q.memcpy(&(dev_exp->Vt_visited), &(exp->Vt_visited), sizeof(bool)).wait();
 
     switch (exp->type) {
-    case Exp::NUM:
+    case Exp::Type::NUM:
         q.memcpy(&(dev_exp->n), &(exp->n), sizeof(float)).wait();
         break;
-    case Exp::VEC:
+    case Exp::Type::VEC:
         dev_exp1 = sycl::malloc_device<Exp>(1, q);
         dev_exp2 = sycl::malloc_device<Exp>(1, q);
         dev_exp3 = sycl::malloc_device<Exp>(1, q);
@@ -579,10 +606,10 @@ void copy_exp(Exp* exp, Exp* dev_exp, sycl::queue& q) {
         q.memcpy(&(dev_exp->e2), &dev_exp2, sizeof(Exp*)).wait();
         q.memcpy(&(dev_exp->e3), &dev_exp3, sizeof(Exp*)).wait();
         break;
-    case Exp::VAR:
+    case Exp::Type::VAR:
         q.memcpy(&(dev_exp->x), &(exp->x), sizeof(strlen(exp->x) + 1)).wait();
         break;
-    case Exp::SUM:
+    case Exp::Type::SUM:
         dev_exp1 = sycl::malloc_device<Exp>(1, q);
         dev_exp2 = sycl::malloc_device<Exp>(1, q);
         copy_exp(exp->e1, dev_exp1, q);
@@ -603,7 +630,7 @@ void copy_statement(Statement* sta, Statement* dev_sta, sycl::queue& q) {
     Statement* dev_sta2;
 
     switch (sta->type) {
-    case Statement::SEQ:
+    case Statement::Type::SEQ:
         dev_sta1 = sycl::malloc_device<Statement>(1, q);
         dev_sta2 = sycl::malloc_device<Statement>(1, q);
         copy_statement(sta->s1, dev_sta1, q);
@@ -611,15 +638,15 @@ void copy_statement(Statement* sta, Statement* dev_sta, sycl::queue& q) {
         q.memcpy(&(dev_sta->s1), &dev_sta1, sizeof(Statement*)).wait();
         q.memcpy(&(dev_sta->s2), &dev_sta2, sizeof(Statement*)).wait();
         break;
-    case Statement::ASS:
+    case Statement::Type::ASS:
         dev_exp = sycl::malloc_device<Exp>(1, q);
         copy_exp(sta->e, dev_exp, q);
         q.memcpy(&(dev_sta->e), &dev_exp, sizeof(Exp*)).wait();
         q.memcpy(&(dev_sta->x), &(sta->x), sizeof(strlen(sta->x) + 1)).wait();
         break;
-    case Statement::SKIP:
+    case Statement::Type::SKIP:
         break;
-    case Statement::IF:
+    case Statement::Type::IF:
         dev_exp = sycl::malloc_device<Exp>(1, q);
         copy_exp(sta->e, dev_exp, q);
         Statement* dev_sta1 = sycl::malloc_device<Statement>(1, q);
@@ -645,16 +672,16 @@ void copy_osl_material(OslMaterial* mat, OslMaterial* dev_mat, sycl::queue& q) {
 
 void printExp(Exp exp) {
     switch (exp.type) {
-    case Exp::NUL:
+    case Exp::Type::NUL:
         std::cout << "EXP(" << exp.idx << "): NUL";
         break;
-    case Exp::NUM:
+    case Exp::Type::NUM:
         std::cout << "EXP(" << exp.idx << "): N(" << exp.n << ")";
         break;
-    case Exp::VAR:
+    case Exp::Type::VAR:
         std::cout << "EXP(" << exp.idx << "): VAR(" << exp.x << ")";
         break;
-    case Exp::VEC:
+    case Exp::Type::VEC:
         std::cout << "EXP(" << exp.idx << "): VEC(";
         printExp(*exp.e1);
         std::cout << ", ";
@@ -663,7 +690,7 @@ void printExp(Exp exp) {
         printExp(*exp.e3);
         std::cout << ")";
         break;
-    case Exp::SUM:
+    case Exp::Type::SUM:
         std::cout << "EXP(" << exp.idx << "): SUM(";
         printExp(*exp.e1);
         std::cout << " + ";
@@ -675,25 +702,25 @@ void printExp(Exp exp) {
 
 void printStatement(Statement sta) {
     switch (sta.type) {
-    case Statement::NUL:
+    case Statement::Type::NUL:
         std::cout << "STATEMENT: NUL";
         break;
-    case Statement::SKIP:
+    case Statement::Type::SKIP:
         std::cout << "STATEMENT: SKIP";
         break;
-    case Statement::SEQ:
+    case Statement::Type::SEQ:
         std::cout << "STATEMENT: SEQ (";
         printStatement(*sta.s1);
         std::cout << ", ";
         printStatement(*sta.s2);
         std::cout << ")";
         break;
-    case Statement::ASS:
+    case Statement::Type::ASS:
         std::cout << "STATEMENT: ASS(" << sta.x << " = ";
         printExp(*sta.e);
         std::cout << ")";
         break;
-    case Statement::IF:
+    case Statement::Type::IF:
         std::cout << "STATEMENT: IF (";
         printStatement(*sta.s1);
         std::cout << ", ";
@@ -933,11 +960,16 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     BOOST_LOG_TRIVIAL(info) << "Setup finished";
 
     //TODO: figure out how to manage max samples (noise cutoff?)
-    for (int i = 0; i < 10000; i++) {
+
+
+    sycl::range global{ 1920,1080 };
+    sycl::range local{8,8};
+
+    for (int s = 0; s < 1; s++) {
         q.submit([&](cl::sycl::handler& h) {
-            h.parallel_for(sycl::range(camera->xRes * camera->yRes),
-                [=](sycl::id<1> i) {
-                    renderingKernel(dev_scene, i);
+            h.parallel_for(sycl::nd_range{global, local},
+                [=](sycl::nd_item<2> it) {
+                    renderingKernel(dev_scene, it.get_global_id(0) * 1080 + it.get_global_id(1), s);
                 });
             });
     }

@@ -13,12 +13,12 @@
 class Texture {
 public:
 
-    enum Filter { NO_FILTER, BILINEAR };
-    enum CS { LINEAR, sRGB };
+    enum class Filter { NO_FILTER, BILINEAR };
+    enum class CS { LINEAR, sRGB };
 
 	float* data;
 
-    Filter filter = NO_FILTER;
+    Filter filter = Filter::NO_FILTER;
     Vector3 color;
 
     std::string name;
@@ -38,10 +38,10 @@ public:
 #if !defined(__CUDACC__)
     Texture(std::string filepath, CS colorSpace) {
 
-        if(colorSpace == sRGB)
+        if(colorSpace == CS::sRGB)
             stbi_ldr_to_hdr_gamma(2.2f);
 
-        if(colorSpace == LINEAR)
+        if(colorSpace == CS::LINEAR)
             stbi_ldr_to_hdr_gamma(1.0f);
  
         stbi_set_flip_vertically_on_load(true);
@@ -140,7 +140,7 @@ public:
 	}
 
     Vector3 getValueFromUVFiltered(float u, float v) {
-        if (filter == BILINEAR)
+        if (filter == Filter::BILINEAR)
             return getValueBilinear(u, v);
         else
             return getValueFromUV(u, v);

@@ -46,7 +46,8 @@ public:
 
     //TODO: RenderData refactor
     RenderData rd;
-    sycl::queue q;
+    sycl::queue k_q;
+    sycl::queue d_q;
 
     std::thread t_rend;
     std::thread t_key;

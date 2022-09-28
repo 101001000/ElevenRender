@@ -153,7 +153,7 @@ public:
 
 struct Exp {
 
-    enum Type {
+    enum class Type {
         NUL, NUM, VEC, VAR, SUM
     };
 
@@ -179,7 +179,7 @@ struct Exp {
     //bool Pt_visited = false;
 
     Exp() {
-        type = NUL;
+        type = Type::NUL;
     }
 
     Exp(Type _type, float _n) {
@@ -215,13 +215,13 @@ struct Exp {
     }
 
     void process_A_base(Exp* node, Map& vars, Var* temp_vals) {
-        if (node->type == NUM) {
+        if (node->type == Type::NUM) {
             temp_vals[node->idx] = Var(node->n);
         }
-        else if (node->type == VEC) {
+        else if (node->type == Type::VEC) {
             temp_vals[node->idx] = Var(Var::Type::UND);
         }
-        else if (node->type == VAR) {
+        else if (node->type == Type::VAR) {
             if (vars[node->x].type == Var::Type::FLO) {
                 temp_vals[node->idx] = Var(vars[node->x].f);
             }
@@ -229,7 +229,7 @@ struct Exp {
                 temp_vals[node->idx] = Var(Var::Type::UND);
             }
         }
-        else if (node->type == SUM) {
+        else if (node->type == Type::SUM) {
             if (temp_vals[node->e1->idx].type == Var::Type::FLO && temp_vals[node->e2->idx].type == Var::Type::FLO) {
                 temp_vals[node->idx] = Var(temp_vals[node->e1->idx].f + temp_vals[node->e2->idx].f);
             }
@@ -252,9 +252,9 @@ struct Exp {
             Exp* current = S.top();
             if (prev == NULL || prev->e1 == current
                 || prev->e2 == current) {
-                if (current->e1 && current->type == SUM)
+                if (current->e1 && current->type == Type::SUM)
                     S.push(current->e1);
-                else if (current->e2 && current->type == SUM)
+                else if (current->e2 && current->type == Type::SUM)
                     S.push(current->e2);
                 else {
                     S.pop();
@@ -262,7 +262,7 @@ struct Exp {
                 }
             }
             else if (current->e1 == prev) {
-                if (current->e2 && current->type == SUM)
+                if (current->e2 && current->type == Type::SUM)
                     S.push(current->e2);
                 else {
                     S.pop();
@@ -329,17 +329,17 @@ struct Exp {
 
         while (temp && temp->Vvisited == Vt_visited) {
 
-            if (temp->e1 && temp->e1->Vvisited == Vt_visited && temp->type == SUM)
+            if (temp->e1 && temp->e1->Vvisited == Vt_visited && temp->type == Type::SUM)
                 temp = temp->e1;
 
-            else if (temp->e2 && temp->e2->Vvisited == Vt_visited && temp->type == SUM)
+            else if (temp->e2 && temp->e2->Vvisited == Vt_visited && temp->type == Type::SUM)
                 temp = temp->e2;
 
             else {
 
-                if (temp->type == NUM) {
+                if (temp->type == Type::NUM) {
                     temp->Vtemp_val = Var(Vector3(temp->n, temp->n, temp->n));
-                } else if (temp->type == VEC) {
+                } else if (temp->type == Type::VEC) {
                     Var Ae1 = temp->e1->A(vars, out);
                     Var Ae2 = temp->e2->A(vars, out);
                     Var Ae3 = temp->e3->A(vars, out);
@@ -349,7 +349,7 @@ struct Exp {
                     else {
                         temp->Vtemp_val = Var(Var::Type::UND);
                     }
-                } else if (temp->type == VAR) {
+                } else if (temp->type == Type::VAR) {
                     if (vars[temp->x].type == Var::Type::VEC) {
                         temp->Vtemp_val = Var(vars[temp->x].v);
                     }
@@ -359,7 +359,7 @@ struct Exp {
                     else {
                         temp->Vtemp_val = Var(Var::Type::UND);
                     }
-                } else if (temp->type == SUM) {
+                } else if (temp->type == Type::SUM) {
                     Var Ve1 = temp->e1->Vtemp_val;
                     Var Ve2 = temp->e2->Vtemp_val;
                     if (Ve1.type == Var::Type::VEC && Ve2.type == Var::Type::VEC) {
@@ -474,7 +474,7 @@ struct Exp {
 
 struct Statement {
 
-    enum Type {
+    enum class Type {
         NUL, SEQ, ASS, SKIP, IF
     };
 
@@ -523,21 +523,21 @@ struct Statement {
 
             else {
                 switch (temp->type) {
-                case Statement::NUL:
+                case Statement::Type::NUL:
                     out << "NUL ";
                     break;
-                case Statement::SKIP:
+                case Statement::Type::SKIP:
                     out << "SKIP ";
                     break;
-                case Statement::SEQ:
+                case Statement::Type::SEQ:
                     out << "SEQ ";
                     break;
-                case Statement::ASS:
+                case Statement::Type::ASS:
                     out << "ASS(" << temp->x << "=";
                     //temp->e->print(out);
                     out << ") ";
                     break;
-                case Statement::IF:
+                case Statement::Type::IF:
                     out << "IF ";
                     break;
                 }
@@ -557,24 +557,24 @@ struct Statement {
 
         while (temp && temp->visited == t_visited) {
 
-            if (temp->type == IF)
+            if (temp->type == Type::IF)
                 if_result = (temp->e->A(vars, out).f != 0);
 
-            if (temp->s1 && temp->s1->visited == t_visited && (!(temp->type == IF) || if_result))
+            if (temp->s1 && temp->s1->visited == t_visited && (!(temp->type == Type::IF) || if_result))
                 temp = temp->s1;
 
-            else if (temp->s2 && temp->s2->visited == t_visited && (!(temp->type == IF) || !if_result))
+            else if (temp->s2 && temp->s2->visited == t_visited && (!(temp->type == Type::IF) || !if_result))
                 temp = temp->s2;
 
             else {
                 switch (temp->type) {
-                case Statement::NUL:
+                case Statement::Type::NUL:
                     break;
-                case Statement::SKIP:
+                case Statement::Type::SKIP:
                     break;
-                case Statement::SEQ:
+                case Statement::Type::SEQ:
                     break;
-                case Statement::ASS:
+                case Statement::Type::ASS:
 
                     if (temp->e->A(vars, out).type != Var::Type::UND) {
                         vars[temp->x] = temp->e->A(vars, out);
@@ -586,7 +586,7 @@ struct Statement {
                         vars[temp->x] = Var(Var::Type::UND);
                     }
                     break;
-                case Statement::IF:
+                case Statement::Type::IF:
                     break;
                 }
 

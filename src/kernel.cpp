@@ -18,6 +18,7 @@
 #include "PointLight.h"
 #include "OslMaterial.hpp"
 #include "lan/calc.tab.hpp"
+#include "SYCLCopy.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"
@@ -205,6 +206,32 @@ Hit throwRay(Ray ray, dev_Scene* scene) {
 #endif
     return nearestHit;
 }
+
+
+dev_Scene::dev_Scene(Scene* scene) {
+
+    camera = &(scene->camera);
+
+    meshObjectCount = scene->meshObjectCount();
+    materialCount = scene->materialCount();
+    textureCount = scene->textureCount();
+    triCount = scene->triCount();
+    pointLightCount = scene->pointLightCount();
+
+    pointLights = scene->getPointLights();
+    meshObjects = scene->getMeshObjects();
+    materials = scene->getMaterials();
+    textures = scene->getTextures();
+    hdri = &scene->hdri;
+
+    tris = scene->getTris();
+    bvh = scene->buildBVH();
+
+    //float* dev_passes;
+    //unsigned int* dev_samples;
+    //RngGenerator* dev_randstate;
+}
+
 
 Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
                    float& pdf, float r1) {
@@ -548,99 +575,6 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
     scene->dev_randstate[idx] = rnd;
 }
 
-void copy_exp(Exp* exp, Exp* dev_exp, sycl::queue& q) {
-
-    Exp* dev_exp1;
-    Exp* dev_exp2;
-    Exp* dev_exp3;
-
-    q.memcpy(&(dev_exp->type), &(exp->type), sizeof(Exp::Type)).wait();
-    //q.memcpy(&(dev_exp->Atemp_val), &(exp->Atemp_val), sizeof(Var)).wait();
-    q.memcpy(&(dev_exp->Vtemp_val), &(exp->Vtemp_val), sizeof(Var)).wait();
-    //q.memcpy(&(dev_exp->Avisited), &(exp->Avisited), sizeof(bool)).wait();
-    //q.memcpy(&(dev_exp->At_visited), &(exp->At_visited), sizeof(bool)).wait();
-    q.memcpy(&(dev_exp->idx), &(exp->idx), sizeof(int)).wait();
-    q.memcpy(&(dev_exp->Vvisited), &(exp->Vvisited), sizeof(bool)).wait();
-    q.memcpy(&(dev_exp->Vt_visited), &(exp->Vt_visited), sizeof(bool)).wait();
-
-    switch (exp->type) {
-    case Exp::Type::NUM:
-        q.memcpy(&(dev_exp->n), &(exp->n), sizeof(float)).wait();
-        break;
-    case Exp::Type::VEC:
-        dev_exp1 = sycl::malloc_device<Exp>(1, q);
-        dev_exp2 = sycl::malloc_device<Exp>(1, q);
-        dev_exp3 = sycl::malloc_device<Exp>(1, q);
-        copy_exp(exp->e1, dev_exp1, q);
-        copy_exp(exp->e2, dev_exp2, q);
-        copy_exp(exp->e3, dev_exp3, q);
-        q.memcpy(&(dev_exp->e1), &dev_exp1, sizeof(Exp*)).wait();
-        q.memcpy(&(dev_exp->e2), &dev_exp2, sizeof(Exp*)).wait();
-        q.memcpy(&(dev_exp->e3), &dev_exp3, sizeof(Exp*)).wait();
-        break;
-    case Exp::Type::VAR:
-        q.memcpy(&(dev_exp->x), &(exp->x), sizeof(strlen(exp->x) + 1)).wait();
-        break;
-    case Exp::Type::SUM:
-        dev_exp1 = sycl::malloc_device<Exp>(1, q);
-        dev_exp2 = sycl::malloc_device<Exp>(1, q);
-        copy_exp(exp->e1, dev_exp1, q);
-        copy_exp(exp->e2, dev_exp2, q);
-        q.memcpy(&(dev_exp->e1), &dev_exp1, sizeof(Exp*)).wait();
-        q.memcpy(&(dev_exp->e2), &dev_exp2, sizeof(Exp*)).wait();
-        break;
-    }
-}
-
-void copy_statement(Statement* sta, Statement* dev_sta, sycl::queue& q) {
-
-    q.memcpy(&(dev_sta->type), &(sta->type), sizeof(Statement::Type)).wait();
-
-    Exp* dev_exp;
-    char* dev_var;
-    Statement* dev_sta1;
-    Statement* dev_sta2;
-
-    switch (sta->type) {
-    case Statement::Type::SEQ:
-        dev_sta1 = sycl::malloc_device<Statement>(1, q);
-        dev_sta2 = sycl::malloc_device<Statement>(1, q);
-        copy_statement(sta->s1, dev_sta1, q);
-        copy_statement(sta->s2, dev_sta2, q);
-        q.memcpy(&(dev_sta->s1), &dev_sta1, sizeof(Statement*)).wait();
-        q.memcpy(&(dev_sta->s2), &dev_sta2, sizeof(Statement*)).wait();
-        break;
-    case Statement::Type::ASS:
-        dev_exp = sycl::malloc_device<Exp>(1, q);
-        copy_exp(sta->e, dev_exp, q);
-        q.memcpy(&(dev_sta->e), &dev_exp, sizeof(Exp*)).wait();
-        q.memcpy(&(dev_sta->x), &(sta->x), sizeof(strlen(sta->x) + 1)).wait();
-        break;
-    case Statement::Type::SKIP:
-        break;
-    case Statement::Type::IF:
-        dev_exp = sycl::malloc_device<Exp>(1, q);
-        copy_exp(sta->e, dev_exp, q);
-        Statement* dev_sta1 = sycl::malloc_device<Statement>(1, q);
-        Statement* dev_sta2 = sycl::malloc_device<Statement>(1, q);
-        copy_statement(sta->s1, dev_sta1, q);
-        copy_statement(sta->s2, dev_sta2, q);
-        q.memcpy(&(dev_sta->e), &dev_exp, sizeof(Exp*)).wait();
-        q.memcpy(&(dev_sta->s1), &dev_sta1, sizeof(Statement*)).wait();
-        q.memcpy(&(dev_sta->s2), &dev_sta2, sizeof(Statement*)).wait();
-        break;
-    }
-}
-
-void copy_osl_material(OslMaterial* mat, OslMaterial* dev_mat, sycl::queue& q) {
-
-    Statement* dev_sta = sycl::malloc_device<Statement>(1, q);
-
-    copy_statement(mat->program, dev_sta, q);
-
-    q.memcpy(&(dev_mat->program), &dev_sta, sizeof(Statement*)).wait();
-}
-
 
 void printExp(Exp exp) {
     switch (exp.type) {
@@ -703,275 +637,15 @@ void printStatement(Statement sta) {
 }
 
 
-// TODO: abstracting SYCL copy
-
-
-template <typename T>
-struct SYCLObject {
-
-    enum class DataType {
-        INT, INT_PTR, FLOAT, FLOAT_PTR, EXP, EXP_PTR, STATEMENT, STATEMENT_PTR
-    };
-
-    int sizeof_type(DataType type) {
-        if (type == DataType::INT)
-            return sizeof(int);
-        if (type == DataType::FLOAT)
-            return sizeof(float);
-        if (type == DataType::EXP)
-            return sizeof(Exp);
-        if (type == DataType::STATEMENT)
-            return sizeof(Statement);
-
-        //Ptr size
-        return 8;
-    }
-
-
-    std::vector<std::tuple<void* T::*, DataType>> fields;
-    std::vector<std::tuple<void* T::*, DataType>> ptrs;
-
-    template<typename D>
-    void register_field(D T::* field, DataType type) {
-        fields.push_back(std::tuple<void* T::*, DataType>((void* T::*)field, type));
-    }
-
-    template<typename D>
-    void register_ptr(D T::* field, DataType type) {
-        fields.push_back(std::tuple<void* T::*, DataType>((void* T::*)field, type));
-    }
-
-    void copy(T& obj, T& dev_obj, sycl::queue& q) {
-
-        // Copy datafields
-        for (std::tuple<T::*, int> field_tuple : fields) {
-            T::* field_ptr = std::get<0>(field_tuple);
-            DataType field_type = std::get<1>(field_tuple);
-
-            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, sizeof_type(field_size)).wait();
-        }
-
-        // Copy ptrs recursively
-        for (std::tuple<T::*, int> field_tuple : ptrs) {
-            T::* field_ptr = std::get<0>(field_tuple);
-            DataType field_type = std::get<1>(field_tuple);
-
-            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, field_size).wait();
-        }
-    }
-
-};
-
-struct SYCLManager {
-
-
-    enum class DataType {
-        INT, INT_PTR, FLOAT, FLOAT_PTR, EXP, EXP_PTR, STATEMENT, STATEMENT_PTR
-    };
-
-
-    std::vector<DataType> types;
-
-
-    void register_type(DataType type) {
-
-    }
-
-    void register_field() {
-
-    }
-
-    void register_data_field() {
-
-    }
-
-    void copy() {
-
-    }
-    
-    void setup() {
-
-        // registro el tipo exp
-        //register_type(Exp);
-
-        // añado fields de expr
-        //register_data_field(Exp, &Exp::idx);
-
-        // añado el puntero a otra exp
-        //register_ptr_field(Exp, &Exp::e1);
-
-
-        //register_arr_field(Exp, &Exp::x, 16 * sizeof(char));
-
-    }
-
-
-};
-
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
-
-    SYCLObject<Exp> test;
-    test.register_field<Exp*>(&Exp::e1, SYCLObject<Exp>::DataType::EXP);
-
-    //SYCL_EXP.register_field<Exp*>(&Exp::e1, 0);
-
-
     BOOST_LOG_TRIVIAL(info) << "Initializing rendering";
 
-    unsigned int meshObjectCount = scene->meshObjectCount();
-    unsigned int triCount = scene->triCount();
+    dev_Scene* temp = new dev_Scene(scene);
 
-    Camera* camera = scene->getMainCamera();
-
-    MeshObject* meshObjects = scene->getMeshObjects();
-
-    Tri* tris = scene->getTris();
-    BVH* bvh = scene->buildBVH();
-
-    Camera* dev_camera = sycl::malloc_device<Camera>(1, q);
-    MeshObject* dev_meshObjects =
-        sycl::malloc_device<MeshObject>(meshObjectCount, q);
-
-    Tri* dev_tris = sycl::malloc_device<Tri>(triCount, q);
-    BVH* dev_bvh = sycl::malloc_device<BVH>(1, q);
-    int* dev_triIndices = sycl::malloc_device<int>(triCount, q);
-
-    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * camera->xRes * camera->yRes * 4, q);
-    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(camera->xRes * camera->yRes, q);
-    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(camera->xRes * camera->yRes, q);
-
-    geometryMemory += sizeof(MeshObject) * meshObjectCount +
-                      sizeof(Tri) * triCount + sizeof(BVH) +
-                      sizeof(int) * triCount + sizeof(BVH);
-
-    q.memcpy(&(dev_scene->meshObjectCount), &meshObjectCount,
-             sizeof(unsigned int))
-        .wait();
-    q.memcpy(&(dev_scene->triCount), &triCount, sizeof(unsigned int)).wait();
-
-    q.memcpy(dev_meshObjects, meshObjects, sizeof(MeshObject) * meshObjectCount)
-        .wait();
-    q.memcpy(dev_camera, camera, sizeof(Camera)).wait();
-    q.memcpy(dev_tris, tris, sizeof(Tri) * triCount).wait();
-    q.memcpy(dev_bvh, bvh, sizeof(BVH)).wait();
-    q.memcpy(dev_triIndices, bvh->triIndices, sizeof(int) * triCount).wait();
-
-    for (int i = 0; i < meshObjectCount; i++) {
-        q.memcpy(&(dev_meshObjects[i].tris), &dev_tris, sizeof(Tri*)).wait();
-    }
-
-    BOOST_LOG_TRIVIAL(debug) << "Binding pointers";
-
-    q.memcpy(&(dev_scene->meshObjects), &(dev_meshObjects), sizeof(MeshObject*))
-        .wait();
-    q.memcpy(&(dev_scene->camera), &(dev_camera), sizeof(Camera*)).wait();
-    q.memcpy(&(dev_scene->tris), &(dev_tris), sizeof(Tri*)).wait();
-    q.memcpy(&(dev_scene->bvh), &(dev_bvh), sizeof(BVH*)).wait();
-    q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
-    q.memcpy(&(dev_scene->dev_samples), &(dev_samples), sizeof(unsigned int*)).wait();
-    q.memcpy(&(dev_scene->dev_randstate), &(dev_randstate), sizeof(RngGenerator*)).wait();
-
-    q.memcpy(&(dev_bvh->tris), &(dev_tris), sizeof(Tri*)).wait();
-    q.memcpy(&(dev_bvh->triIndices), &(dev_triIndices), sizeof(int*)).wait();
-
-    // POINTLIGHT SETUP
-
-    unsigned int pointLightCount = scene->pointLightCount();
-    BOOST_LOG_TRIVIAL(debug) << "Copying " << pointLightCount << " lightpoints to GPU";
-
-    PointLight* dev_pointLights =
-        sycl::malloc_device<PointLight>(pointLightCount, q);
-
-    q.memcpy(&dev_scene->pointLightCount, &pointLightCount,
-             sizeof(unsigned int))
-        .wait();
-
-    q.memcpy(dev_pointLights, scene->getPointLights(),
-             sizeof(PointLight) * pointLightCount)
-        .wait();
-    q.memcpy(&(dev_scene->pointLights), &(dev_pointLights), sizeof(PointLight*))
-        .wait();
-
-    // MATERIAL SETUP
-
-    unsigned int materialCount = scene->materialCount();
-    BOOST_LOG_TRIVIAL(debug) << "Copying " << materialCount << " materials to GPU";
-
-    q.memcpy(&dev_scene->materialCount, &materialCount, sizeof(unsigned int))
-        .wait();
-
-    Material* dev_materials = sycl::malloc_device<Material>(materialCount, q);
-
-    q.memcpy(dev_materials, scene->getMaterials(),
-             sizeof(Material) * materialCount)
-        .wait();
-
-    q.memcpy(&(dev_scene->materials), &(dev_materials), sizeof(Material*))
-        .wait();
-
-    // TEXTURES
-
-    unsigned int textureCount = scene->textureCount();
-
-    BOOST_LOG_TRIVIAL(debug) << "Copying " << textureCount << " textures to GPU";
-
-    Texture* textures = scene->getTextures();
-
-    q.memcpy(&dev_scene->textureCount, &textureCount, sizeof(unsigned int))
-        .wait();
-
-    Texture* dev_textures = sycl::malloc_device<Texture>(textureCount, q);
-
-    textureMemory += sizeof(Texture) * textureCount;
-
-    q.memcpy(dev_textures, textures, sizeof(Texture) * textureCount).wait();
-
-    for (int i = 0; i < textureCount; i++) {
-        float* textureData = sycl::malloc_device<float>(
-            textures[i].width * textures[i].height * 3, q);
-        textureMemory +=
-            sizeof(float) * textures[i].width * textures[i].height * 3;
-
-        q.memcpy(textureData, textures[i].data,
-                 sizeof(float) * textures[i].width * textures[i].height * 3)
-            .wait();
-        q.memcpy(&(dev_textures[i].data), &textureData, sizeof(float*)).wait();
-    }
-
-    q.memcpy(&(dev_scene->textures), &(dev_textures), sizeof(Texture*)).wait();
-
-    // HDRI
-
-    BOOST_LOG_TRIVIAL(debug) << "Copying HDRI to GPU";
-
-    HDRI* hdri = &scene->hdri;
-
-    HDRI* dev_hdri = sycl::malloc_device<HDRI>(1, q);
-
-    float* dev_data = sycl::malloc_device<float>(
-        hdri->texture.height * hdri->texture.width * 3, q);
-    float* dev_cdf = sycl::malloc_device<float>(
-        hdri->texture.height * hdri->texture.width, q);
-
-    textureMemory += sizeof(HDRI) + sizeof(float) * hdri->texture.height *
-                                        hdri->texture.width * 4;
-
-    q.memcpy(dev_hdri, hdri, sizeof(HDRI)).wait();
-    q.memcpy(dev_data, hdri->texture.data,
-             sizeof(float) * hdri->texture.height * hdri->texture.width * 3)
-        .wait();
-    q.memcpy(dev_cdf, hdri->cdf,
-             sizeof(float) * hdri->texture.height * hdri->texture.width)
-        .wait();
-
-    q.memcpy((&dev_hdri->texture.data), &(dev_data), sizeof(float*)).wait();
-    q.memcpy(&(dev_hdri->cdf), &(dev_cdf), sizeof(float*)).wait();
-    q.memcpy(&(dev_scene->hdri), &(dev_hdri), sizeof(float*)).wait();
-
-    BOOST_LOG_TRIVIAL(info) << (geometryMemory / (1024L * 1024L)) << " of geometry data copied";
-
+    copy_scene(temp, dev_scene, q);
+    
     BOOST_LOG_TRIVIAL(info) << "OSL MATERIAL TEST";
 
     OslMaterial* osl = new OslMaterial();
@@ -981,8 +655,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     BOOST_LOG_TRIVIAL(info) << "PARSED";
 
     printStatement(*osl->program);
-
-    //osl->program->print(std::cout);
 
     OslMaterial* dev_osl = sycl::malloc_device<OslMaterial>(1, q);;
 
@@ -996,7 +668,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(2048, 1024, h);
-        h.parallel_for(sycl::range(camera->xRes * camera->yRes),
+        h.parallel_for(sycl::range(scene->camera.xRes * scene->camera.yRes),
             [=](sycl::id<1> i) {
                 setupKernel(dev_scene, i, out, dev_osl);
             });

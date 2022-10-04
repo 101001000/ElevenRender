@@ -3,6 +3,8 @@
 #include "Vector.h"
 #include "sycl.h"
 
+//TODO: rename this
+
 template <typename T1, typename T2>
 struct Union {
     enum class Type {

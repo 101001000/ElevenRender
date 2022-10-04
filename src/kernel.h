@@ -20,7 +20,6 @@ public:
 struct dev_Scene {
     Camera* camera;
 
-    unsigned int sphereCount;
     unsigned int meshObjectCount;
     unsigned int materialCount;
     unsigned int textureCount;
@@ -38,6 +37,8 @@ struct dev_Scene {
     float* dev_passes;
 	unsigned int* dev_samples;
 	RngGenerator* dev_randstate;
+
+	dev_Scene(Scene* scene);
 };
 
 struct RenderParameters {

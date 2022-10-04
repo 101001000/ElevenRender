@@ -9,7 +9,7 @@
 #include "Math.hpp"
 #include "sycl.h"
 
-
+//TODO: refactor, remove loading from filesystem to scene loader.
 class Texture {
 public:
 
@@ -74,10 +74,29 @@ public:
 
     void applyGamma(float gamma) {
         for (int i = 0; i < width * height * 3; i++) {
-            data[i] = pow(data[i], gamma);
+            data[i] = fast_pow(data[i], gamma);
         }
     }
- 
+
+    // Quick fix for passing blender data, not ideal
+    Texture(int _width, int _height, int _channels, float* _data) {
+        width = _width;
+        height = _height;
+        data = new float[width * height * 3];
+
+        if (_channels == 4) {
+            //remove alpha channel
+            for (int i = 0; i < width * height; i++) {
+                data[i * 3 + 0] = _data[i * 4 + 0];
+                data[i * 3 + 1] = _data[i * 4 + 1];
+                data[i * 3 + 2] = _data[i * 4 + 2];
+            }
+        }
+        else if (_channels == 3) {
+            memcpy(data, _data, sizeof(float) * width * height * 3);
+        }
+    }
+
     Texture(Vector3 _color) {
 
         width = 1; height = 1;

@@ -27,7 +27,7 @@ public:
 
 
 class SceneManager : Manager {
-    
+
 public:
     Scene scene;
 
@@ -35,7 +35,7 @@ public:
 };
 
 class RenderingManager : Manager {
-    
+
 public:
 
     struct RenderInfo {
@@ -46,6 +46,8 @@ public:
 
     //TODO: RenderData refactor
     RenderData rd;
+
+    //TODO: See if having two queues is actually necessary or not
     sycl::queue k_q;
     sycl::queue d_q;
 
@@ -86,7 +88,7 @@ struct Message {
     static std::string data_type2str(DataType data_type);
     static DataType str2data_type(std::string str);
 
-    inline static Message OK() { 
+    inline static Message OK() {
         Message ok_message;
         ok_message.msg = "ok";
         ok_message.type = Message::TYPE_STATUS;
@@ -108,8 +110,7 @@ public:
     using Manager::Manager;
 
     void run();
-    std::string execute_command(Message msg);
-    void execute_message(Message msg);
+    void execute_command_msg(Message msg);
     void run_tcp();
     Message read_message();
     void write_message(Message msg);
@@ -119,7 +120,7 @@ class DenoiseManager : Manager {
 
     OIDNDevice device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
 
-    
+
 public:
     using Manager::Manager;
     void denoise(int width, int height, float* raw, float* result);

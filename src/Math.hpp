@@ -6,9 +6,9 @@
 #define PI 3.14159265358979323846f
 
 #define FAST_LERP
-/*
+
 // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-inline double fastPow(double a, double b) {
+inline double fast_pow(double a, double b) {
     union {
         double d;
         int x[2];
@@ -16,7 +16,7 @@ inline double fastPow(double a, double b) {
     u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
     u.x[0] = 0;
     return u.d;
-}*/
+}
 
 static float map(float a, float b, float c, float d, float e) {
     return d + ((a - b) / (c - b)) * (e - d);

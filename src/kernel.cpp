@@ -514,28 +514,28 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
                 }
             }
         }
-    
+
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             light.x / ((float)sa + 1);
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             light.y / ((float)sa + 1);
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             light.z / ((float)sa + 1);
-    
+
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             normal.x / ((float)sa + 1);
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             normal.y / ((float)sa + 1);
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             normal.z / ((float)sa + 1);
-    
+
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             tangent.x / ((float)sa + 1);
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
             tangent.y / ((float)sa + 1);
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
             tangent.z / ((float)sa + 1);
-    
+
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
             bitangent.x / ((float)sa + 1);
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
@@ -545,34 +545,6 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
         scene->dev_samples[idx]++;
     }
-    
-    Vector3 c;
-
-    if (s == 0)
-        c = Vector3(1, 0, 0);
-    if (s == 1)
-        c = Vector3(1, 1, 0);
-    if (s == 2)
-        c = Vector3(0, 1, 0);
-    if (s == 3)
-        c = Vector3(0, 1, 1);
-    if (s == 4)
-        c = Vector3(0, 0, 1);
-    if (s == 5)
-        c = Vector3(1, 0, 1);
-    if (s == 6)
-        c = Vector3(1, 1, 1);
-    if (s == 7)
-        c = Vector3(0, 0, 0);
-
-    if (x < 8) {
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] = c.x;
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] = c.y;
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] = c.z;
-    }
-
-
-
     scene->dev_randstate[idx] = rnd;
 }
 
@@ -732,45 +704,118 @@ void printStatement(Statement sta) {
 
 
 // TODO: abstracting SYCL copy
-/*
+
 
 template <typename T>
 struct SYCLObject {
 
-    std::vector<std::tuple<void* T::*, int>> fields;
-    std::vector<std::tuple<void* T::*, int>> ptrs;
+    enum class DataType {
+        INT, INT_PTR, FLOAT, FLOAT_PTR, EXP, EXP_PTR, STATEMENT, STATEMENT_PTR
+    };
+
+    int sizeof_type(DataType type) {
+        if (type == DataType::INT)
+            return sizeof(int);
+        if (type == DataType::FLOAT)
+            return sizeof(float);
+        if (type == DataType::EXP)
+            return sizeof(Exp);
+        if (type == DataType::STATEMENT)
+            return sizeof(Statement);
+
+        //Ptr size
+        return 8;
+    }
+
+
+    std::vector<std::tuple<void* T::*, DataType>> fields;
+    std::vector<std::tuple<void* T::*, DataType>> ptrs;
 
     template<typename D>
-    void register_field(D T::* field) {
-        fields.push_back(std::tuple<void* T::*, int>((void* T::*)field, sizeof(D)));
+    void register_field(D T::* field, DataType type) {
+        fields.push_back(std::tuple<void* T::*, DataType>((void* T::*)field, type));
     }
 
     template<typename D>
-    void register_ptr(D T::* field) {
-        fields.push_back(std::tuple<void* T::*, int>((void* T::*)field, sizeof(D)));
+    void register_ptr(D T::* field, DataType type) {
+        fields.push_back(std::tuple<void* T::*, DataType>((void* T::*)field, type));
     }
 
     void copy(T& obj, T& dev_obj, sycl::queue& q) {
 
+        // Copy datafields
         for (std::tuple<T::*, int> field_tuple : fields) {
-            T::* field_ptr  = std::get<0>(field_tuple);
-            int  field_size = std::get<1>(field_tuple);
+            T::* field_ptr = std::get<0>(field_tuple);
+            DataType field_type = std::get<1>(field_tuple);
 
-            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, field_size).wait();
+            q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, sizeof_type(field_size)).wait();
         }
 
+        // Copy ptrs recursively
         for (std::tuple<T::*, int> field_tuple : ptrs) {
             T::* field_ptr = std::get<0>(field_tuple);
-            int  field_size = std::get<1>(field_tuple);
+            DataType field_type = std::get<1>(field_tuple);
 
             q.memcpy(&dev_obj::field_ptr, &obj::field_ptr, field_size).wait();
         }
     }
 
-};*/
+};
+
+struct SYCLManager {
+
+
+    enum class DataType {
+        INT, INT_PTR, FLOAT, FLOAT_PTR, EXP, EXP_PTR, STATEMENT, STATEMENT_PTR
+    };
+
+
+    std::vector<DataType> types;
+
+
+    void register_type(DataType type) {
+
+    }
+
+    void register_field() {
+
+    }
+
+    void register_data_field() {
+
+    }
+
+    void copy() {
+
+    }
+    
+    void setup() {
+
+        // registro el tipo exp
+        //register_type(Exp);
+
+        // añado fields de expr
+        //register_data_field(Exp, &Exp::idx);
+
+        // añado el puntero a otra exp
+        //register_ptr_field(Exp, &Exp::e1);
+
+
+        //register_arr_field(Exp, &Exp::x, 16 * sizeof(char));
+
+    }
+
+
+};
 
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
+
+
+    SYCLObject<Exp> test;
+    test.register_field<Exp*>(&Exp::e1, SYCLObject<Exp>::DataType::EXP);
+
+    //SYCL_EXP.register_field<Exp*>(&Exp::e1, 0);
 
 
     BOOST_LOG_TRIVIAL(info) << "Initializing rendering";

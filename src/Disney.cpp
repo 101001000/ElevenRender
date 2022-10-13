@@ -7,20 +7,20 @@
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files(the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
+ *  the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions :
  *
- * The above copyright notice and this permission notice shall be included in all
+ * The above copyright notice and this permission notice shall be included  all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * LIABILITY, WHETHER  AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS  THE
  * SOFTWARE.
  */
 
@@ -28,7 +28,7 @@
 // Adaptación del shader de disney de knightcrawler25, derivar en un futuro para aplicar optimizaciones.
 // https://github.com/knightcrawler25/GLSL-PathTracer/blob/master/src/shaders/common/disney.glsl
 
-// Limitado solo a BRDF sin BSDF
+// Limitado solo a BRDF sycl::sin BSDF
 
 
 /*
@@ -51,7 +51,7 @@ float DielectricFresnel(float cos_theta_i, float eta) {
     if (sinThetaTSq > 1.0)
         return 1.0;
 
-    float cos_theta_t = sqrt(maxf(1.0 - sinThetaTSq, 0.0));
+    float cos_theta_t = sycl::sqrt(maxf(1.0 - sinThetaTSq, 0.0));
 
     float rs = (eta * cos_theta_t - cos_theta_i) / (eta * cos_theta_t + cos_theta_i);
     float rp = (eta * cos_theta_i - cos_theta_t) / (eta * cos_theta_i + cos_theta_t);
@@ -83,14 +83,14 @@ float GTR2_aniso(float NDotH, float HDotX, float HDotY, float ax, float ay) {
 float SmithG_GGX(float NDotV, float alphaG) {
     float a = alphaG * alphaG;
     float b = NDotV * NDotV;
-    return 1.0 / (NDotV + sqrt(a + b - a * b));
+    return 1.0 / (NDotV + sycl::sqrt(a + b - a * b));
 }
 
 float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay) {
     float a = VDotX * ax;
     float b = VDotY * ay;
     float c = NDotV;
-    return 1.0 / (NDotV + sqrt(a * a + b * b + c * c));
+    return 1.0 / (NDotV + sycl::sqrt(a * a + b * b + c * c));
 }
 
 float powerHeuristic(float a, float b) {
@@ -124,7 +124,7 @@ float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L) {
     float diffuseRatio = 0.5 * (1.0 - hitdata.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    float aspect = sqrt(1.0 - hitdata.anisotropic * 0.9);
+    float aspect = sycl::sqrt(1.0 - hitdata.anisotropic * 0.9);
     float ax = maxf(0.001, hitdata.roughness / aspect);
     float ay = maxf(0.001, hitdata.roughness * aspect);
 
@@ -199,7 +199,7 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
         Vector3 Csheen = lerp(Vector3(1.0), Ctint, hitdata.sheenTint);
 
         // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing
-        // and mix in diffuse retro-reflection based on roughness
+        // and mix  diffuse retro-reflection based on roughness
         float FL = SchlickFresnel(NDotL);
         float FV = SchlickFresnel(NDotV);
         float Fd90 = 0.5 + 2.0 * LDotH * LDotH * hitdata.roughness;
@@ -214,7 +214,7 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
 
         // TODO: Add anisotropic rotation
         // specular
-        float aspect = sqrt(1.0 - hitdata.anisotropic * 0.9);
+        float aspect = sycl::sqrt(1.0 - hitdata.anisotropic * 0.9);
         float ax = maxf(0.001, hitdata.roughness / aspect);
         float ay = maxf(0.001, hitdata.roughness * aspect);
         float Ds = GTR2_aniso(NDotH, Vector3::dot(H, T), Vector3::dot(H, B), ax, ay);

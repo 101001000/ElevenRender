@@ -4,6 +4,7 @@
 #include "Vector.h"
 
 #define PI 3.14159265358979323846f
+#define TWO_PI 6.28318530717958647692f
 
 #define FAST_LERP
 

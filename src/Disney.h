@@ -38,8 +38,6 @@
 
  // Limitado solo a BRDF sin BSDF
 
-void createBasis(Vector3 normal, Vector3& tangent, Vector3& bitangent);
-
 float SchlickFresnel(float u);
 
 float DielectricFresnel(float cos_theta_i, float eta);
@@ -57,9 +55,10 @@ float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay
 float powerHeuristic(float a, float b);
 
 
-SYCL_EXTERNAL float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L);
 
+SYCL_EXTERNAL float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L);
 
 SYCL_EXTERNAL Vector3 DisneySample(Ray ray, HitData& hitdata, float r1, float r2, float r3);
 
 SYCL_EXTERNAL Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L);
+

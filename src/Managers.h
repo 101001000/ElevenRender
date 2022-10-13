@@ -17,7 +17,6 @@
 //Forward declaration
 class CommandManager;
 
-
 class Manager {
 
 public:
@@ -29,9 +28,18 @@ public:
 class SceneManager : Manager {
 
 public:
-    Scene scene;
 
+    struct RenderConfig {
+        unsigned int max_samples = 50;
+        unsigned int max_bounces = 5;
+    };
+
+    Scene scene;
     using Manager::Manager;
+
+    void set_render_config(RenderConfig cf);
+    void set_texture(Texture& tex);
+    
 };
 
 class RenderingManager : Manager {

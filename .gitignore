@@ -32,3 +32,4 @@ src/lan/calc.tab.hpp
 src/lan/FlexLexer.h
 src/lan/lex.yy.cpp
 src/lan/calc.output
+test.osl

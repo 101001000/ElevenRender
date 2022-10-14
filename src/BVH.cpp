@@ -58,23 +58,6 @@ bool BVH::intersect(Ray ray, Vector3 b1, Vector3 b2) {
 
 }
 
-void BVH::transverseAux(Ray ray, Hit& nearestHit, Node& node) {
-	
-	if (node.depth == BVH_DEPTH) {
-		intersectNode(ray, node, nearestHit);
-		return;
-	}
-
-	Node lChild = leftChild(node.idx, node.depth);
-	Node rChild = rightChild(node.idx, node.depth);
-
-	if (intersect(ray, lChild.b1, lChild.b2))
-		transverseAux(ray, nearestHit, lChild);
-	
-	if (intersect(ray, rChild.b1, rChild.b2))
-		transverseAux(ray, nearestHit, rChild);		
-}
-
 void BVH::transverse(Ray ray, Hit& nearestHit, int ignoreID) {
   
 	Node stack[64];

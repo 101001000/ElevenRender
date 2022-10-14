@@ -75,7 +75,7 @@ void BVH::transverseAux(Ray ray, Hit& nearestHit, Node& node) {
 		transverseAux(ray, nearestHit, rChild);		
 }
 
-void BVH::transverse(Ray ray, Hit& nearestHit) {
+void BVH::transverse(Ray ray, Hit& nearestHit, int ignoreID) {
   
 	Node stack[64];
 
@@ -94,10 +94,10 @@ void BVH::transverse(Ray ray, Hit& nearestHit) {
 		bool rOverlap = intersect(ray, rChild.b1, rChild.b2);
          
 		if (node.depth == (BVH_DEPTH - 1) && rOverlap)
-			intersectNode(ray, rChild, nearestHit);
+			intersectNode(ray, rChild, nearestHit, ignoreID);
 
 		if (node.depth == (BVH_DEPTH - 1) && lOverlap)
-			intersectNode(ray, lChild, nearestHit);
+			intersectNode(ray, lChild, nearestHit, ignoreID);
 
 		bool traverseL = (lOverlap && node.depth != (BVH_DEPTH - 1));
 		bool traverseR = (rOverlap && node.depth != (BVH_DEPTH - 1));
@@ -114,7 +114,7 @@ void BVH::transverse(Ray ray, Hit& nearestHit) {
 	} while (node.valid);
 }
 
-void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit) {
+void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit, int ignoreID) {
 
 	for (int i = node.from; i < node.to; i++) {
 
@@ -125,7 +125,7 @@ void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit) {
 			if (!nearestHit.valid) {
 				nearestHit = hit;
 			}
-			else if ((hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length()) {
+			else if ((hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length() && hit.objectID != ignoreID) {
 				nearestHit = hit;
 			}
 		}

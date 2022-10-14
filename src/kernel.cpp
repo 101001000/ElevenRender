@@ -146,6 +146,7 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 
     hitdata.tangent = tangent;
     hitdata.bitangent = bitangent;
+    hitdata.position = hit.position;
 }
 
 
@@ -194,11 +195,11 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial*
     }
 }
 
-Hit throwRay(Ray ray, dev_Scene* scene) {
+Hit throwRay(Ray ray, dev_Scene* scene, int ignoreID) {
     Hit nearestHit = Hit();
 
 #if USEBVH
-    scene->bvh->transverse(ray, nearestHit);
+    scene->bvh->transverse(ray, nearestHit, ignoreID);
 #else
     for (int j = 0; j < scene->meshObjectCount; j++) {
         Hit hit = Hit();
@@ -259,7 +260,7 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
 
     // Test if the point is visible from the light
     Ray shadowRay(point + newDir * 0.001, newDir);
-    Hit shadowHit = throwRay(shadowRay, scene);
+    Hit shadowHit = throwRay(shadowRay, scene, -1);
     float shadowDist = (shadowHit.position - point).length();
 
     if (shadowHit.valid && shadowDist < dist) return Vector3();
@@ -283,13 +284,18 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
 
         Vector3 newDir = DisneySample(ray, hitdata, rnd.next(), rnd.next(), rnd.next());
 
+        newDir = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
+
+        if (Vector3::dot(newDir, hitdata.normal) < 0)
+            newDir *= -1;
+
         float u, v;
 
         Texture::sphericalMapping(Vector3(), -1 * newDir, 1, u, v);
 
-        Ray shadowRay(point + hitdata.normal * 0.0001, newDir);
+        Ray shadowRay(hitdata.position + hitdata.normal * 0.001, newDir);
 
-        Hit shadowHit = throwRay(shadowRay, scene);
+        Hit shadowHit = throwRay(shadowRay, scene, -1);
 
         if (shadowHit.valid)
             return Vector3();
@@ -297,9 +303,13 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
         Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
         Vector3 disneyBrdf = DisneyEval(ray, hitdata, newDir);
 
-        pdf = DisneyPdf(ray, hitdata, newDir);
+        disneyBrdf = Vector3(1);
+        hdriValue = Vector3(1);
 
-        return hdriValue * disneyBrdf * abs(Vector3::dot(hitdata.normal, newDir)) / pdf;
+        pdf = DisneyPdf(ray, hitdata, newDir);
+        pdf = 1 / (4 * PI);
+
+        return hdriValue * disneyBrdf  / pdf;
 
     }
     else {
@@ -317,7 +327,7 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
 
         Ray shadowRay(point + newDir * 0.0001, newDir);
 
-        Hit shadowHit = throwRay(shadowRay, scene);
+        Hit shadowHit = throwRay(shadowRay, scene, -1);
 
         if (shadowHit.valid) return Vector3();
 
@@ -457,7 +467,10 @@ void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
 
 void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
     float r1, float r2, float r3) {
-    bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
+    //bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
+    bouncedDir = uniformSampleSphere(r1,r2);
+    if (Vector3::dot(incomingRay.direction, bouncedDir) > 0)
+        bouncedDir *= -1;
 }
 
 
@@ -493,7 +506,7 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     int i = 0;
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 1; i++) {
 
         Vector3 hitLight;
         HitData hitdata;
@@ -501,7 +514,7 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
         int materialID = 0;
 
-        Hit nearestHit = throwRay(ray, scene);
+        Hit nearestHit = throwRay(ray, scene, -1);
 
         if (!nearestHit.valid) {
             float u, v;

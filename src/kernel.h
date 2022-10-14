@@ -103,7 +103,7 @@ struct HitData {
     Vector3 emission;
     Vector3 albedo;
 
-
+	Vector3 position;
     Vector3 normal;
     Vector3 tangent;
     Vector3 bitangent;

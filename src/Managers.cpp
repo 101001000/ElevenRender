@@ -153,6 +153,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     }
 
     t_rend = std::thread(renderSetup, std::ref(k_q), std::ref(scene), std::ref(dev_scene));
+    t_rend.join();
 
     rd.startTime = std::chrono::high_resolution_clock::now();
     BOOST_LOG_TRIVIAL(trace) << "LEAVING RenderingManager::start_rendering()";

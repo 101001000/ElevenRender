@@ -13,9 +13,6 @@ class RngGenerator {
 
 public:
 
-	static const float m_j[1024];
-
-	uint32_t seed = 328;
 	uint32_t state = 328;
 
 	RngGenerator(uint32_t _seed);

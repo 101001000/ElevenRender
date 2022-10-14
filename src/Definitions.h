@@ -8,7 +8,7 @@
 #define PASSES_COUNT 5
 
 #define THREADSIZE 8
-#define MAXBOUNCES 1
+#define MAXBOUNCES 5
 
 #define UPDATE_INTERVAL 1000
 

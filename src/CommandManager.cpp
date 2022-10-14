@@ -158,6 +158,7 @@ void CommandManager::load_scene_from_obj(std::string& path) {
 void CommandManager::start_render() {
     BOOST_LOG_TRIVIAL(trace) << "CommandManager::start_render";
     rm->start_rendering(&(sm->scene));
+    im->write_message(Message::OK());
 }
 
 void CommandManager::run() {

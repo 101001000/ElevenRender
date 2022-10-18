@@ -129,11 +129,11 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     }
 
 
-    //hitdata.roughness = sycl::pow(hitdata.roughness,2.2f);
-    //hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
+    hitdata.roughness = sycl::pow(hitdata.roughness,2.2f);
+    hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
 
-    hitdata.roughness = hitdata.roughness;
-    hitdata.metallic = hitdata.metallic;
+    //hitdata.roughness = hitdata.roughness;
+    //hitdata.metallic = hitdata.metallic;
 
     hitdata.clearcoatGloss = material->clearcoatGloss;
     hitdata.clearcoat = material->clearcoat;

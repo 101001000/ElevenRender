@@ -181,8 +181,8 @@ void InputManager::execute_command_msg(Message msg) {
                 tex.name = json["name"].as_string();               
 
                 if (json["color_space"] == "sRGB") {
-                    //BOOST_LOG_TRIVIAL(debug) << "Applying gamma correction to " << tex.name;
-                    //tex.applyGamma(2.2);
+                    BOOST_LOG_TRIVIAL(debug) << "Applying gamma correction to " << tex.name;
+                    tex.applyGamma(2.2);
                 }
             }
             f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
@@ -220,6 +220,7 @@ void InputManager::write_message(Message msg) {
         msg.data != nullptr) {
         BOOST_LOG_TRIVIAL(trace) << "InputManager::write_message -> writting additional data";
         boost::asio::write(*(sock.get()), boost::asio::buffer((float*)msg.data, msg.data_size));
+        delete[] msg.data;
     }
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::write_message()";
 }

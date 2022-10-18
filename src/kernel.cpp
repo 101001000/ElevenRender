@@ -429,7 +429,21 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
         rIPx *= diameter * 0.5;
         rIPy *= diameter * 0.5;
 
-        Vector3 orig = camera.position + Vector3(rIPx, rIPy, 0);
+        Vector3 rIP(rIPx, rIPy, 0);
+
+        Vector3 dirXRot = Vector3(
+            rIP.x, rIP.y * sycl::cos(rotation.x) - rIP.z * sycl::sin(rotation.x),
+            rIP.y * sycl::sin(rotation.x) + rIP.z * sycl::cos(rotation.x));
+        Vector3 dirYRot = Vector3(
+            dirXRot.x * sycl::cos(rotation.y) + dirXRot.z * sycl::sin(rotation.y),
+            dirXRot.y,
+            dirXRot.z * sycl::cos(rotation.y) - dirXRot.x * sycl::sin(rotation.y));
+        Vector3 dirZRot = Vector3(
+            dirYRot.x * sycl::cos(rotation.z) - dirYRot.y * sycl::sin(rotation.z),
+            dirYRot.x * sycl::sin(rotation.z) + dirYRot.y * sycl::cos(rotation.z),
+            dirYRot.z);
+
+        Vector3 orig = camera.position + dirZRot;
 
         // Blurred ray
         ray = Ray(orig, focusPoint - orig);
@@ -495,27 +509,27 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 wo = -ray.direction;     
 
-           // Vector3 wihdri = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
+            Vector3 wihdri = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
             Vector3 wibrdf = DisneySample(hitdata, wo, hitdata.normal, rnd.next(), rnd.next(), rnd.next());
 
-            //if (Vector3::dot(wihdri, hitdata.gnormal) < 0)
-            //    wihdri *= -1;
+            if (Vector3::dot(wihdri, hitdata.normal) < 0)
+                wihdri *= -1;
 
-            //float u, v;
+            float u, v;
 
-            //Texture::sphericalMapping(Vector3(), -1 * wihdri, 1, u, v);
+            Texture::sphericalMapping(Vector3(), -1 * wihdri, 1, u, v);
 
-            //Ray shadowRay(hitdata.position + hitdata.gnormal * 0.001, wihdri);
-            //Hit shadowHit = throwRay(shadowRay, scene, -2);
+            Ray shadowRay(hitdata.position + hitdata.normal * 0.001, wihdri);
+            Hit shadowHit = throwRay(shadowRay, scene, -2);
 
-            //Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
+            Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
 
-            //if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
-            //    hdriValue = Vector3();
+            if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
+                hdriValue = Vector3();
 
-            //Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.gnormal, wihdri) * abs(Vector3::dot(wihdri, hitdata.gnormal)) / (1 / (1));
+            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / (1);
 
-            light += reduction * (hitdata.emission);
+            light += reduction * (hitdata.emission + hdriInt);
 
             reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / (DisneyPdf(hitdata, wo, hitdata.normal, wibrdf));
 

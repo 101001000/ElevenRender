@@ -72,6 +72,9 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 		materials.push_back(umtl);
 	}
 	*/
+
+	std::map<Vector3, std::vector<Tri>> faces;
+
     for (const auto& shape : result.shapes) {
 
 		if (shape.lines.indices.size() == 0) {
@@ -109,6 +112,10 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 					tri.uv[j] = Vector3(tu, tv, 0);
 				}
 
+				faces[tri.vertices[0]].push_back(tri);
+				faces[tri.vertices[1]].push_back(tri);
+				faces[tri.vertices[2]].push_back(tri);
+
 				tris->push_back(tri);
 			}
 
@@ -121,7 +128,20 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
 			std::cout << "computing " << mo->name << "...\n";
 
-		    mo->recomputeNormals();
+			for (int i = 0; i < mo->triCount; i++) {
+				for (int j = 0; j < 3; j++) {
+					Vector3 v = mo->tris[i].vertices[j];
+					Vector3 n;
+					for (int f = 0; f < faces[v].size(); f++) {
+						Vector3 edge2 = faces[v][f].vertices[2] - faces[v][f].vertices[0];
+						Vector3 edge1 = faces[v][f].vertices[1] - faces[v][f].vertices[0];
+						n += Vector3::cross(edge2, edge1);
+					}
+					mo->tris[i].normals[j] = n.normalized();
+				}
+			}
+
+		    //mo->recomputeNormals();
 
 			CalcTangents calcTang = CalcTangents();
 			calcTang.calc(mo);

@@ -23,7 +23,7 @@ void CommandManager::get_pass(std::string& pass) {
     
     float* raw_pass = rm->get_pass(pass);
     
-    if (0) {
+    if (rm->get_render_info().samples >= 999) {
         float* denoise_pass = (float*) malloc(rm->rd.pars.width * rm->rd.pars.height * sizeof(float) * 4);
         dm->denoise(rm->rd.pars.width, rm->rd.pars.height, raw_pass, denoise_pass);
         for (int i = 3; i < rm->rd.pars.width * rm->rd.pars.height * 4; i+=4) {

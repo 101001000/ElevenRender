@@ -36,7 +36,9 @@ public:
 	float transmission = 0;
 	float specular = 0.5;
 	float specularTint = 0;
-	float sheenTint = 0;
+	float sheenTint = 0.5;
 	float subsurface = 0;
 	float sheen = 0;
+	float ax = 0;
+	float ay = 0;
 };

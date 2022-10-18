@@ -38,27 +38,6 @@
 
  // Limitado solo a BRDF sin BSDF
 
-float SchlickFresnel(float u);
-
-float DielectricFresnel(float cos_theta_i, float eta);
-
-float GTR1(float NDotH, float a);
-
-float GTR2(float NDotH, float a);
-
-float GTR2_aniso(float NDotH, float HDotX, float HDotY, float ax, float ay);
-
-float SmithG_GGX(float NDotV, float alphaG);
-
-float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay);
-
-float powerHeuristic(float a, float b);
-
-
-
-SYCL_EXTERNAL float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L);
-
-SYCL_EXTERNAL Vector3 DisneySample(Ray ray, HitData& hitdata, float r1, float r2, float r3);
-
-SYCL_EXTERNAL Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L);
-
+SYCL_EXTERNAL Vector3 DisneyEval(HitData& hd, Vector3 V, Vector3 N, Vector3 L);
+SYCL_EXTERNAL Vector3 DisneySample(HitData& hd, Vector3 V, Vector3 N, float r1, float r2, float r3);
+SYCL_EXTERNAL float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L);

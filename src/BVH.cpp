@@ -104,12 +104,11 @@ void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit, int ignoreID) {
 		Hit hit;
         
 		if (tris[triIndices[i]].hit(ray, hit)) {
-             
-			if (!nearestHit.valid) {
+            
+			// If previous hit was not valid, then the new is going to be nearer in any case.
+			if (!nearestHit.valid || (hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length() && i != ignoreID) {
 				nearestHit = hit;
-			}
-			else if ((hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length() && hit.objectID != ignoreID) {
-				nearestHit = hit;
+				nearestHit.triIdx = i;
 			}
 		}
 	}

@@ -122,16 +122,18 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
         Vector3 localNormal = (ncolor * 2) - 1;
         Vector3 worldNormal =
             (localNormal.x * tangent - localNormal.y * bitangent +
-                localNormal.z * normal)
+                localNormal.z * hit.normal)
             .normalized();
 
         hitdata.normal = worldNormal;
     }
 
-    // Convert linear to sRGB
-    // TODO: move to texture loading
-    hitdata.roughness = sycl::pow(hitdata.roughness, 2.2f);
-    hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
+
+    //hitdata.roughness = sycl::pow(hitdata.roughness,2.2f);
+    //hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
+
+    hitdata.roughness = hitdata.roughness;
+    hitdata.metallic = hitdata.metallic;
 
     hitdata.clearcoatGloss = material->clearcoatGloss;
     hitdata.clearcoat = material->clearcoat;
@@ -143,10 +145,14 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     hitdata.sheenTint = material->sheenTint;
     hitdata.subsurface = material->subsurface;
     hitdata.sheen = material->sheen;
+    hitdata.ax = material->ax;
+    hitdata.ay = material->ay;
 
+    hitdata.gnormal = hit.gnormal;
     hitdata.tangent = tangent;
     hitdata.bitangent = bitangent;
     hitdata.position = hit.position;
+    hitdata.triIdx = hit.triIdx;
 }
 
 
@@ -280,36 +286,33 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
 // that pixel would be in a sphere of infinite radius.
 Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, RngGenerator& rnd, float& pdf) {
 
+    /*
+
     if (!HDRIIS) {
 
-        Vector3 newDir = DisneySample(ray, hitdata, rnd.next(), rnd.next(), rnd.next());
+        Vector3 newDir = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
 
-        newDir = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
-
-        if (Vector3::dot(newDir, hitdata.normal) < 0)
+        if (Vector3::dot(newDir, hitdata.gnormal) < 0)
             newDir *= -1;
 
         float u, v;
 
         Texture::sphericalMapping(Vector3(), -1 * newDir, 1, u, v);
 
-        Ray shadowRay(hitdata.position + hitdata.normal * 0.001, newDir);
+        Ray shadowRay(hitdata.position + hitdata.gnormal * 0.001, newDir);
 
-        Hit shadowHit = throwRay(shadowRay, scene, -1);
+        Hit shadowHit = throwRay(shadowRay, scene, -2);
 
-        if (shadowHit.valid)
+        if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
             return Vector3();
 
         Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
-        Vector3 disneyBrdf = DisneyEval(ray, hitdata, newDir);
+        Vector3 disneyBrdf = DisneyEval(-newDir, hitdata, -ray.direction);
 
-        disneyBrdf = Vector3(1);
-        hdriValue = Vector3(1);
+        //pdf = DisneyPdf(ray, hitdata, newDir);
+        pdf = 1 / (PI * 4);
 
-        pdf = DisneyPdf(ray, hitdata, newDir);
-        pdf = 1 / (4 * PI);
-
-        return hdriValue * disneyBrdf  / pdf;
+        return hdriValue * disneyBrdf;
 
     }
     else {
@@ -333,14 +336,14 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
 
         Vector3 hdriValue = scene->hdri->texture.getValueFromUV(iu, iv);
 
-        Vector3 brdfDisney = DisneyEval(ray, hitdata, newDir);
+        Vector3 brdfDisney = DisneyEval(ray.direction, hitdata, newDir);
 
         pdf = scene->hdri->pdf(iu * scene->hdri->texture.width,
             iv * scene->hdri->texture.height);
 
         return brdfDisney * abs(Vector3::dot(newDir, hitdata.normal)) *
             (hdriValue / pdf);
-    }
+    }*/
 }
 
 void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
@@ -435,46 +438,6 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
 
 
 
-void shade(dev_Scene& scene, Ray& ray, HitData& hitdata, Hit& nearestHit,
-    Vector3& newDir, RngGenerator& rnd, Vector3& hitLight,
-    Vector3& reduction, int idx) {
-
-
-    Vector3 brdfDisney = DisneyEval(ray, hitdata, newDir);
-
-    float brdfPdf = DisneyPdf(ray, hitdata, newDir);
-    float hdriPdf;
-    float pointPdf = 0;
-
-    Vector3 hdriLightCalc = hdriLight(ray, &scene, nearestHit.position, hitdata, rnd, hdriPdf);
-
-    Vector3 pointLightCalc =
-        pointLight(ray, hitdata, &scene, nearestHit.position, pointPdf, rnd.next());
-
-    Vector3 brdfLightCalc =
-        hitdata.emission *
-        (brdfDisney * abs(Vector3::dot(newDir, hitdata.normal))) / brdfPdf;
-
-    float w1 = hdriPdf / (hdriPdf + pointPdf + brdfPdf);
-    float w2 = pointPdf / (hdriPdf + pointPdf + brdfPdf);
-    float w3 = brdfPdf / (hdriPdf + pointPdf + brdfPdf);
-
-    hitLight = reduction * (w1 * hdriLightCalc + w2 * pointLightCalc + w3 * brdfLightCalc);
-
-    reduction *= (brdfDisney * abs(Vector3::dot(newDir, hitdata.normal))) / brdfPdf;
-
-}
-
-void calculateBounce(Ray& incomingRay, HitData& hitdata, Vector3& bouncedDir,
-    float r1, float r2, float r3) {
-    //bouncedDir = DisneySample(incomingRay, hitdata, r1, r2, r3);
-    bouncedDir = uniformSampleSphere(r1,r2);
-    if (Vector3::dot(incomingRay.direction, bouncedDir) > 0)
-        bouncedDir *= -1;
-}
-
-
-
 void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     if (idx >= scene->camera->xRes * scene->camera->yRes)
@@ -506,11 +469,9 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     int i = 0;
 
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < 5; i++) {
 
-        Vector3 hitLight;
         HitData hitdata;
-        Vector3 bouncedDir;
 
         int materialID = 0;
 
@@ -519,10 +480,10 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
         if (!nearestHit.valid) {
             float u, v;
             Texture::sphericalMapping(Vector3(), -1 * ray.direction, 1, u, v);
-            light +=
-                scene->hdri->texture.getValueFromUVFiltered(u, v) * reduction;
+            light += reduction * scene->hdri->texture.getValueFromUVFiltered(u, v);
             break;
         }
+
 
         materialID = scene->meshObjects[nearestHit.objectID].materialID;
 
@@ -531,12 +492,47 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
         generateHitData(scene, material, hitdata, nearestHit);
 
         if (rnd.next() <= hitdata.opacity) {
-            calculateBounce(ray, hitdata, bouncedDir, rnd.next(), rnd.next(),
-                rnd.next());
 
-            shade(*scene, ray, hitdata, nearestHit, bouncedDir, rnd, hitLight, reduction, idx);
+            Vector3 wo = -ray.direction;     
 
-            light += hitLight;
+           // Vector3 wihdri = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
+            Vector3 wibrdf = DisneySample(hitdata, wo, hitdata.normal, rnd.next(), rnd.next(), rnd.next());
+
+            //if (Vector3::dot(wihdri, hitdata.gnormal) < 0)
+            //    wihdri *= -1;
+
+            //float u, v;
+
+            //Texture::sphericalMapping(Vector3(), -1 * wihdri, 1, u, v);
+
+            //Ray shadowRay(hitdata.position + hitdata.gnormal * 0.001, wihdri);
+            //Hit shadowHit = throwRay(shadowRay, scene, -2);
+
+            //Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
+
+            //if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
+            //    hdriValue = Vector3();
+
+            //Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.gnormal, wihdri) * abs(Vector3::dot(wihdri, hitdata.gnormal)) / (1 / (1));
+
+            light += reduction * (hitdata.emission);
+
+            reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / (DisneyPdf(hitdata, wo, hitdata.normal, wibrdf));
+
+            /*
+
+            reduction *= abs(Vector3::dot(ray.direction, hitdata.normal));
+
+            float hdriPdf;
+            Vector3 hdriLightCalc = hdriLight(ray, scene, nearestHit.position, hitdata, rnd, hdriPdf);
+
+            light = reduction * hitdata.emission + hdriLightCalc;
+
+            bouncedDir = DisneySample(ray.direction, hitdata, rnd.next(), rnd.next(), rnd.next());
+
+            reduction *= DisneyEval(-1 * bouncedDir, hitdata, -ray.direction) / DisneyPdf(-1 * bouncedDir, hitdata, -ray.direction);
+
+            */
 
             // First hit
             if (i == 0) {
@@ -545,15 +541,17 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
                 bitangent = hitdata.bitangent;
             }
 
-            ray = Ray(nearestHit.position + bouncedDir * 0.0001, bouncedDir);
+            ray = Ray(nearestHit.position + wibrdf * 0.001, wibrdf);
         }
         else {
-            ray = Ray(nearestHit.position + ray.direction * 0.0001, ray.direction);
+            ray = Ray(nearestHit.position + ray.direction * 0.001, ray.direction);
         }
     }
 
     // TODO: parametrize light clamp
     light = clamp(light, 0, 10);
+
+    //light = normal;
 
     if (!sycl::isnan(light.x) && !sycl::isnan(light.y) &&
         !sycl::isnan(light.z)) {
@@ -712,7 +710,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     sycl::range global{ scene->camera.xRes + scene->camera.xRes%8,scene->camera.yRes + scene->camera.yRes % 8 };
     sycl::range local{ 8,8 };
 
-    for (int s = 0; s < 100; s++) {
+    for (int s = 0; s < 1000; s++) {
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::nd_range{ global, local },
                 [=](sycl::nd_item<2> it) {

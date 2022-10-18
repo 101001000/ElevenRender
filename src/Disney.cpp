@@ -25,18 +25,11 @@
  */
 
 
-// Adaptación del shader de disney de knightcrawler25, derivar en un futuro para aplicar optimizaciones.
+// Adaptación del shader de disney de knightcrawler25
 // https://github.com/knightcrawler25/GLSL-PathTracer/blob/master/src/shaders/common/disney.glsl
 
-// Limitado solo a BRDF sycl::sin BSDF
 
 
-/*
-void createBasis(Vector3 normal, Vector3 &tangent, Vector3 &bitangent) {
-    Vector3 UpVector = Vector3(0, 1, 0);
-    tangent = Vector3::cross(UpVector, normal).normalized();
-    bitangent = Vector3::cross(normal, tangent).normalized();
-}*/
 
 float SchlickFresnel(float u) {
     float m = clamp(1.0 - u, 0.0, 1.0);
@@ -99,15 +92,11 @@ float powerHeuristic(float a, float b) {
 }
 
 
-float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L) {
+float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
 
-    Vector3 N = hitdata.normal;
-    Vector3 V = -1 * ray.direction;
     Vector3 H = (L + V).normalized();
-
     Vector3 T = hitdata.tangent;
     Vector3 B = hitdata.bitangent;
-
 
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
@@ -141,10 +130,7 @@ float DisneyPdf(Ray ray, HitData& hitdata, Vector3 L) {
 }
 
 
-Vector3 DisneySample(Ray ray, HitData& hitdata, float r1, float r2, float r3) {
-
-    Vector3 N = hitdata.normal;
-    Vector3 V = -1 * ray.direction;
+Vector3 DisneySample(HitData& hitdata, Vector3 V, Vector3 N, float r1, float r2, float r3) {
 
     Vector3 T = hitdata.tangent;
     Vector3 B = hitdata.bitangent;
@@ -168,20 +154,16 @@ Vector3 DisneySample(Ray ray, HitData& hitdata, float r1, float r2, float r3) {
     return dir;
 }
 
-Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
+Vector3 DisneyEval(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
 
-    Vector3 V = -1 * ray.direction;
-    Vector3 H;
     Vector3 T = hitdata.tangent;
     Vector3 B = hitdata.bitangent;
 
-    //createBasis(hitdata.normal, T, B);
+    Vector3 H = (L + V).normalized();
 
-    H = (L + V).normalized();
-
-    float NDotL = abs(Vector3::dot(hitdata.normal, L));
-    float NDotV = abs(Vector3::dot(hitdata.normal, V));
-    float NDotH = abs(Vector3::dot(hitdata.normal, H));
+    float NDotL = abs(Vector3::dot(N, L));
+    float NDotV = abs(Vector3::dot(N, V));
+    float NDotH = abs(Vector3::dot(N, H));
     float VDotH = abs(Vector3::dot(V, H));
     float LDotH = abs(Vector3::dot(L, H));
 
@@ -189,9 +171,9 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
     Vector3 bsdf = Vector3(0.0);
 
 
-    if (hitdata.transmission < 1.0 && Vector3::dot(hitdata.normal, L) > 0.0 && Vector3::dot(hitdata.normal, V) > 0.0)
+    if (hitdata.transmission < 1.0 && Vector3::dot(N, L) > 0.0 && Vector3::dot(N, V) > 0.0)
     {
-        Vector3 Cdlin = hitdata.albedo;
+        Vector3 Cdlin = hitdata.albedo; //Warning, albedo is non linear
         float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
 
         Vector3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : Vector3(1.0f); // normalize lum. to isolate hue+sat
@@ -199,7 +181,7 @@ Vector3 DisneyEval(Ray ray, HitData& hitdata, Vector3 L) {
         Vector3 Csheen = lerp(Vector3(1.0), Ctint, hitdata.sheenTint);
 
         // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing
-        // and mix  diffuse retro-reflection based on roughness
+        // and mix in diffuse retro-reflection based on roughness
         float FL = SchlickFresnel(NDotL);
         float FV = SchlickFresnel(NDotV);
         float Fd90 = 0.5 + 2.0 * LDotH * LDotH * hitdata.roughness;

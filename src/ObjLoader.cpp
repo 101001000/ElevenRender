@@ -119,6 +119,10 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 			if (shape.mesh.material_ids[0] >= 0)
 				mo->matName = result.materials[shape.mesh.material_ids[0]].name;
 
+			//std::cout << "computing " << mo->name << "...\n";
+
+		    mo->recomputeNormals();
+
 			CalcTangents calcTang = CalcTangents();
 			calcTang.calc(mo);
 			meshObjects.push_back(*mo);

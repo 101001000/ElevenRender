@@ -178,10 +178,11 @@ void InputManager::execute_command_msg(Message msg) {
                 tex = Texture(json["width"].as_int64(), json["height"].as_int64(), 4, msg_data);
                 delete[] msg_data;
 
-                tex.name = json["name"].as_string();
+                tex.name = json["name"].as_string();               
 
                 if (json["color_space"] == "sRGB") {
-                    tex.applyGamma(2.2);
+                    //BOOST_LOG_TRIVIAL(debug) << "Applying gamma correction to " << tex.name;
+                    //tex.applyGamma(2.2);
                 }
             }
             f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);

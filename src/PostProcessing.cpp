@@ -50,12 +50,12 @@ void acesTonemap(float* pixels, int width, int height) {
 		pixels[i] = clamp((pixels[i] * 0.6 * (a * pixels[i] * 0.6 + b)) / (pixels[i] * 0.6 * (c * pixels[i] * 0.6 + d) + e), 0.0f, 1.0f);
 
 }
-
+/*
 void applysRGB(float* pixels, int width, int height) {
 	for (int i = 0; i < width * height * 4; i++)
 		pixels[i] = pow(pixels[i], 1.0 / 2.2);
 }
-
+*/
 float gaussianDist(float x, float sigma) {
 	return 0.39894 * exp(-0.5 * x * x / (sigma * sigma)) / sigma;
 }

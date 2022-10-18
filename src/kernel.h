@@ -99,12 +99,17 @@ struct HitData {
 	float subsurface;
 	float sheen;
 	float opacity;
+	float ax;
+	float ay;
 
     Vector3 emission;
     Vector3 albedo;
 
+	int triIdx;
+
 	Vector3 position;
     Vector3 normal;
+	Vector3 gnormal;
     Vector3 tangent;
     Vector3 bitangent;
 };

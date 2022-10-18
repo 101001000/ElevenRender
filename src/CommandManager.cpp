@@ -95,8 +95,12 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
     if (json_mat.if_contains("name"))
         mtl.name = json_mat["name"].as_string();
 
-    if (json_mat.if_contains("albedo"))
-        mtl.albedo = parse_vector3(json_mat["albedo"].as_object());
+    if (json_mat.if_contains("albedo")) {
+        Vector3 al = parse_vector3(json_mat["albedo"].as_object());
+
+        //mtl.albedo = Vector3(sycl::pow(al.x, 1/2.2f), sycl::pow(al.y, 1 / 2.2f), sycl::pow(al.z, 1 / 2.2f));
+        mtl.albedo = al;
+    }
 
     if (json_mat.if_contains("emission"))
         mtl.emission = parse_vector3(json_mat["emission"].as_object());
@@ -140,6 +144,11 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         " Specular: " << mtl.specular <<
         " Albedo Path: " << mtl.albedo_map <<
         " Normal Path: " << mtl.albedo_map;
+
+
+    float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);
+    mtl.ax = maxf(0.001, mtl.roughness / aspect);
+    mtl.ay = maxf(0.001, mtl.roughness * aspect);
 
     sm->scene.addMaterial(mtl);
     sm->scene.pair_materials();

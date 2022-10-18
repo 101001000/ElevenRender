@@ -74,21 +74,28 @@ public:
 
         // https://gist.github.com/pixnblox/5e64b0724c186313bc7b6ce096b08820
 
-        Vector3 shadingNormal = normals[0] + (normals[1] - normals[0]) * u + (normals[2] - normals[0]) * v;
-        Vector3 shadingTangent = tangents[0] + (tangents[1] - tangents[0]) * u + (tangents[2] - tangents[0]) * v;
+        //Vector3 n0 = Vector3::dot(normals[0], ray.direction) > 0 ? -normals[0] : normals[0];
+        //Vector3 n1 = Vector3::dot(normals[1], ray.direction) > 0 ? -normals[1] : normals[1];
+        //Vector3 n2 = Vector3::dot(normals[2], ray.direction) > 0 ? -normals[2] : normals[2];
+
 
         Vector3 n0 = normals[0];
         Vector3 n1 = normals[1];
         Vector3 n2 = normals[2];
 
-        if (Vector3::dot(shadingNormal, ray.direction) > 0) {
-            shadingNormal *= -1;
-            shadingTangent *= -1;
-            n0 *= -1;
-            n1 *= -1;
-            n2 *= -1;
-        }
+        Vector3 shadingNormal = (n0 + (n1 - n0) * u + (n2 - n0) * v).normalized();
 
+        Vector3 compNormal = Vector3::cross(edge1, edge2).normalized();
+
+        if (Vector3::dot(compNormal, ray.direction) > 0)
+            compNormal *= -1;
+
+        //Maybe I need to flip tangents
+        Vector3 shadingTangent = tangents[0] + (tangents[1] - tangents[0]) * u + (tangents[2] - tangents[0]) * v;
+
+
+        //Shadow terminator creating artifacts
+        
         Vector3 p0 = projectOnPlane(geomPosition, vertices[0], n0);
         Vector3 p1 = projectOnPlane(geomPosition, vertices[1], n1);
         Vector3 p2 = projectOnPlane(geomPosition, vertices[2], n2);
@@ -96,10 +103,15 @@ public:
         Vector3 shadingPosition = p0 + (p1 - p0) * u + (p2 - p0) * v;
 
         bool convex = Vector3::dot(shadingPosition - geomPosition, shadingNormal) > 0.0f;
-
+        
+        //Some objects have bad normals, as a quick fix, I'm just using the calculated normal unless the one from the vertex is similar to the calculated one.
         hit.tangent = shadingTangent;
+        //hit.position = geomPosition;
         hit.position = convex ? shadingPosition : geomPosition;
+        //hit.normal = abs(Vector3::dot(shadingNormal, compNormal)) > 0.9 ? shadingNormal : compNormal;
         hit.normal = shadingNormal;
+        hit.gnormal = compNormal;
+
 
 #else
         Vector3 geomNormal = Vector3::cross(edge1, edge2).normalized();

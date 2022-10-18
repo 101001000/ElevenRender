@@ -64,6 +64,11 @@ public:
 	void recomputeNormals() {
 
 		for (int i = 0; i < triCount; i++) {
+
+			if (i == (int)(triCount / 10)) {
+				std::cout << ((float)i / (float)triCount) << "%, ";
+			}
+
 			for (int j = 0; j < 3; j++) {
 
 				Vector3 v = tris[i].vertices[j];

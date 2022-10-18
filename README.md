@@ -1,6 +1,8 @@
 # Elever Render
 ## A multi-platform vendor independent photorealistic rendering engine
 
+![alt text](https://i.imgur.com/G7ExwxZ.png)
+
 Eleven Render is my personal project. It's a unidirectional C++ path tracing rendering engine, where compatibility prevails over other aspects. Thanks to SYCL, it's possible to compile it for almost any GPU/CPU.
 It also seeks for broad compatibility with 3D Model software thanks to ASL, a shading language I'm working on, which allows other shading languages (like OSL), to be converted to it.
 

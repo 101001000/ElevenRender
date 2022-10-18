@@ -93,6 +93,10 @@ public:
 		return sqrt(x * x + y * y + z * z);
 	}
 
+	inline float length2() const {
+		return x * x + y * y + z * z;
+	}
+
 	inline Vector3 operator*(const float s) {
 		return Vector3(x * s, y * s, z * s);
 	}
@@ -119,6 +123,10 @@ public:
 		float EPSILON = 0.0001;
 
 		return abs(x - v.x) < EPSILON && abs(y - v.y) < EPSILON && abs(z - v.z) < EPSILON;
+	}
+
+	inline bool operator<(const Vector3& v) {
+		return length2() < v.length2();
 	}
 
 	inline bool operator!=(const Vector3& v) {
@@ -235,3 +243,10 @@ inline Vector3 Vector3::lerp2D(const Vector3& v1, const Vector3& v2, const Vecto
 	return lerp(lerp(v1, v2, amountX), lerp(v3, v4, amountX), amountY);
 }
 
+template <>
+struct std::less<Vector3> {
+	bool operator()(const Vector3& a, const Vector3& b) const
+	{
+		return std::tie(a.x, a.y, a.z) < std::tie(b.x, b.y, b.z);
+	}
+};

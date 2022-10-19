@@ -38,7 +38,7 @@ float RngGenerator::next() {
     return ((float)state / (float)UINT_MAX);
 }
 
-//TODO move this function
+//TODO: move this function
 Passes parsePass(std::string s_pass) {
 
     std::transform(s_pass.begin(), s_pass.end(), s_pass.begin(), ::tolower);
@@ -59,9 +59,7 @@ Passes parsePass(std::string s_pass) {
     return pass;
 }
 
-unsigned long textureMemory = 0;
-unsigned long geometryMemory = 0;
-
+// After hitting some surface, generate HitData which contains the information of such a hit.
 void generateHitData(dev_Scene* dev_scene_g, Material* material,
     HitData& hitdata, Hit hit) {
     Vector3 tangent, bitangent, normal;
@@ -128,12 +126,9 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
         hitdata.normal = worldNormal;
     }
 
-
+    //TODO: Figure out why it's necessary to gamma correct this values
     hitdata.roughness = sycl::pow(hitdata.roughness,2.2f);
     hitdata.metallic = sycl::pow(hitdata.metallic, 2.2f);
-
-    //hitdata.roughness = hitdata.roughness;
-    //hitdata.metallic = hitdata.metallic;
 
     hitdata.clearcoatGloss = material->clearcoatGloss;
     hitdata.clearcoat = material->clearcoat;
@@ -156,10 +151,13 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 }
 
 
+// TODO: move this to outside a kernel. Reseting buffers and initializations can be done with memset.
 void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial* dev_osl) {
 
+    // Initializing RNG
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
 
+    // Setting pixel buffers to zero
     for (int i = 0; i < PASSES_COUNT; i++) {
         dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
             4) +
@@ -175,24 +173,12 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial*
             (4 * idx + 3)] = 1.0;
     }
 
+    // Reset the amount of samples for each pixel.
     dev_scene_g->dev_samples[idx] = 0;
 
+    // Linking triangle information to mesh object tri ptr.
+    // TODO: figure out a cleaner way of doing this.
     if (idx == 0) {
-
-        out << "PRINTING EMPTY\n";
-
-        dev_osl->program->print(out);
-
-        out << "COMPUTING\n";
-
-        dev_osl->compute_ci(out);
-
-        out << "PRINTING FULL\n";
-
-        //dev_osl->program->print(out);
-
-        dev_osl->vars.print(out);
-
         int triSum = 0;
         for (int i = 0; i < dev_scene_g->meshObjectCount; i++) {
             dev_scene_g->meshObjects[i].tris += triSum;
@@ -201,11 +187,12 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial*
     }
 }
 
-Hit throwRay(Ray ray, dev_Scene* scene, int ignoreID) {
+// Throw a ray to the scene, and calculate the hit point.
+Hit throwRay(Ray ray, dev_Scene* scene) {
     Hit nearestHit = Hit();
 
 #if USEBVH
-    scene->bvh->transverse(ray, nearestHit, ignoreID);
+    scene->bvh->transverse(ray, nearestHit);
 #else
     for (int j = 0; j < scene->meshObjectCount; j++) {
         Hit hit = Hit();
@@ -222,7 +209,8 @@ Hit throwRay(Ray ray, dev_Scene* scene, int ignoreID) {
     return nearestHit;
 }
 
-
+// Copy constructor for dev_scene. 
+// TODO: redo this.
 dev_Scene::dev_Scene(Scene* scene) {
 
     camera = &(scene->camera);
@@ -243,7 +231,7 @@ dev_Scene::dev_Scene(Scene* scene) {
     bvh = scene->buildBVH();
 }
 
-
+// Calculate the light amount from all the light-points.
 Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
     float& pdf, float r1) {
     if (scene->pointLightCount <= 0) {
@@ -262,7 +250,7 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
 
     // Test if the point is visible from the light
     Ray shadowRay(point + newDir * 0.001, newDir);
-    Hit shadowHit = throwRay(shadowRay, scene, -1);
+    Hit shadowHit = throwRay(shadowRay, scene);
     float shadowDist = (shadowHit.position - point).length();
 
     if (shadowHit.valid && shadowDist < dist) return Vector3();
@@ -342,6 +330,8 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
     }*/
 }
 
+// Calculate the initial camera ray. 
+// TODO: clean up the rotation mess
 void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
     float r2, float r3, float r4, float r5) {
     // Relative coordinates for the point where the first ray will be launched
@@ -447,7 +437,7 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
 }
 
 
-
+// Main Kernel
 void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     if (idx >= scene->camera->xRes * scene->camera->yRes)
@@ -485,15 +475,15 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
         int materialID = 0;
 
-        Hit nearestHit = throwRay(ray, scene, -1);
+        Hit nearestHit = throwRay(ray, scene);
 
+        // If the ray goes outside the world, sample the environment.
         if (!nearestHit.valid) {
             float u, v;
             Texture::sphericalMapping(Vector3(), -1 * ray.direction, 1, u, v);
             light += reduction * scene->hdri->texture.getValueFromUVFiltered(u, v);
             break;
         }
-
 
         materialID = scene->meshObjects[nearestHit.objectID].materialID;
 
@@ -509,7 +499,6 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 wibrdf = DisneySample(hitdata, wo, hitdata.normal, rnd.next(), rnd.next(), rnd.next());
 
-
             float nu = textCoordinate.x / (float)scene->hdri->texture.width;
             float nv = textCoordinate.y / (float)scene->hdri->texture.height;
 
@@ -518,10 +507,8 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 wihdri = -scene->hdri->texture.reverseSphericalMapping(iu, iv).normalized();
 
-
-
             Ray shadowRay(hitdata.position + hitdata.normal * 0.001, wihdri);
-            Hit shadowHit = throwRay(shadowRay, scene, -2);
+            Hit shadowHit = throwRay(shadowRay, scene);
 
             Vector3 hdriValue = scene->hdri->texture.getValueFromUV(iu, iv);
 
@@ -530,13 +517,17 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             float hdripdf = scene->hdri->pdf(iu * scene->hdri->texture.width, iv * scene->hdri->texture.height);
 
-            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / (hdripdf * 2 * PI);
+            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / hdripdf;
             
+            float brdfpdf = DisneyPdf(hitdata, wo, hitdata.normal, wibrdf);
+
+            float hw = hdripdf / (brdfpdf + hdripdf);
+            float bw = brdfpdf / (brdfpdf + hdripdf);
 
             //Vector3 hdriInt = textCoordinate;
             light += reduction * (hitdata.emission + hdriInt);
 
-            reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / (DisneyPdf(hitdata, wo, hitdata.normal, wibrdf));
+            reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / brdfpdf;
 
         
             // First hit
@@ -556,8 +547,7 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
     // TODO: parametrize light clamp
     light = clamp(light, 0, 10);
 
-    //light = normal;
-
+    // TODO: cleanup
     if (!sycl::isnan(light.x) && !sycl::isnan(light.y) &&
         !sycl::isnan(light.z)) {
         if (sa > 0) {

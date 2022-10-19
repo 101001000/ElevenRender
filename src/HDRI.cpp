@@ -39,7 +39,7 @@ HDRI::HDRI(std::string filepath) {
 	for (int i = 0; i < texture.width * texture.height * 3; i++)
 		texture.data[i] = tmp_data[i];
 
-	texture.xOffset = 0.5;
+	//texture.xOffset = 0.5;
 
 	stbi_image_free(tmp_data);
 
@@ -125,7 +125,7 @@ int HDRI::binarySearch(float* arr, float value, int length) {
 
 	while (to - from > 0) {
 		int m = from + (to - from) / 2;
-		if (m >= length || m < 0) return m; // This shouldn't happen...
+		if (m >= length || m < 0) return 0; // This shouldn't happen...
 		if (value == arr[m]) return m;
 		if (value < arr[m])	to = m - 1;
 		if (value > arr[m]) from = m + 1;
@@ -135,14 +135,11 @@ int HDRI::binarySearch(float* arr, float value, int length) {
 
 
 float HDRI::pdf(int x, int y) {
-
 	Vector3 dv = texture.getValueFromCoordinates(x, y);
 	float theta = (((float)y / (float)texture.height)) * PI;
 
-	return ((dv.x + dv.y + dv.z) / radianceSum);
-
 	// Semisphere area
-	//return ((dv.x + dv.y + dv.z) / radianceSum) * texture.width * texture.height / (2.0 * PI * sycl::sin(theta));
+	return ((dv.x + dv.y + dv.z) / radianceSum) * texture.width * texture.height / (2.0 * PI * sycl::sin(theta));
 }
 
 Vector3 HDRI::sample(float r1) {

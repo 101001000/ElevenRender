@@ -176,11 +176,11 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     HDRI* dev_hdri = sycl::malloc_device<HDRI>(1, q);
 
     float* dev_data = sycl::malloc_device<float>(hdri->texture.height * hdri->texture.width * 3, q);
-    float* dev_cdf = sycl::malloc_device<float>(hdri->texture.height * hdri->texture.width, q);
+    float* dev_cdf = sycl::malloc_device<float>(hdri->texture.height * hdri->texture.width + 1, q);
 
     q.memcpy(dev_hdri, hdri, sizeof(HDRI)).wait();
     q.memcpy(dev_data, hdri->texture.data, sizeof(float) * hdri->texture.height * hdri->texture.width * 3).wait();
-    q.memcpy(dev_cdf, hdri->cdf, sizeof(float) * hdri->texture.height * hdri->texture.width).wait();
+    q.memcpy(dev_cdf, hdri->cdf, sizeof(float) * hdri->texture.height * hdri->texture.width + 1).wait();
 
     q.memcpy((&dev_hdri->texture.data), &(dev_data), sizeof(float*)).wait();
     q.memcpy(&(dev_hdri->cdf), &(dev_cdf), sizeof(float*)).wait();

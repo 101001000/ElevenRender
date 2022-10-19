@@ -241,10 +241,6 @@ dev_Scene::dev_Scene(Scene* scene) {
 
     tris = scene->getTris();
     bvh = scene->buildBVH();
-
-    //float* dev_passes;
-    //unsigned int* dev_samples;
-    //RngGenerator* dev_randstate;
 }
 
 
@@ -509,45 +505,40 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 wo = -ray.direction;     
 
-            Vector3 wihdri = uniformSampleSphere(rnd.next(), rnd.next()).normalized();
+            Vector3 textCoordinate = scene->hdri->sample(rnd.next());
+
             Vector3 wibrdf = DisneySample(hitdata, wo, hitdata.normal, rnd.next(), rnd.next(), rnd.next());
 
-            if (Vector3::dot(wihdri, hitdata.normal) < 0)
-                wihdri *= -1;
 
-            float u, v;
+            float nu = textCoordinate.x / (float)scene->hdri->texture.width;
+            float nv = textCoordinate.y / (float)scene->hdri->texture.height;
 
-            Texture::sphericalMapping(Vector3(), -1 * wihdri, 1, u, v);
+            float iu = scene->hdri->texture.inverseTransformUV(nu, nv).x;
+            float iv = scene->hdri->texture.inverseTransformUV(nu, nv).y;
+
+            Vector3 wihdri = -scene->hdri->texture.reverseSphericalMapping(iu, iv).normalized();
+
+
 
             Ray shadowRay(hitdata.position + hitdata.normal * 0.001, wihdri);
             Hit shadowHit = throwRay(shadowRay, scene, -2);
 
-            Vector3 hdriValue = scene->hdri->texture.getValueFromUV(u, v);
+            Vector3 hdriValue = scene->hdri->texture.getValueFromUV(iu, iv);
 
             if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
                 hdriValue = Vector3();
 
-            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / (1);
+            float hdripdf = scene->hdri->pdf(iu * scene->hdri->texture.width, iv * scene->hdri->texture.height);
 
+            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / (hdripdf * 2 * PI);
+            
+
+            //Vector3 hdriInt = textCoordinate;
             light += reduction * (hitdata.emission + hdriInt);
 
             reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / (DisneyPdf(hitdata, wo, hitdata.normal, wibrdf));
 
-            /*
-
-            reduction *= abs(Vector3::dot(ray.direction, hitdata.normal));
-
-            float hdriPdf;
-            Vector3 hdriLightCalc = hdriLight(ray, scene, nearestHit.position, hitdata, rnd, hdriPdf);
-
-            light = reduction * hitdata.emission + hdriLightCalc;
-
-            bouncedDir = DisneySample(ray.direction, hitdata, rnd.next(), rnd.next(), rnd.next());
-
-            reduction *= DisneyEval(-1 * bouncedDir, hitdata, -ray.direction) / DisneyPdf(-1 * bouncedDir, hitdata, -ray.direction);
-
-            */
-
+        
             // First hit
             if (i == 0) {
                 normal = hitdata.normal;

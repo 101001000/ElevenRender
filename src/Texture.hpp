@@ -124,6 +124,11 @@ public:
         x = (int)(xTile * (x + xOffset * width)) % width;
         y = (int)(yTile * (y + yOffset * height)) % height;
 
+        if (x < 0)
+            x = 0;
+        if (y < 0)
+            y = 0;
+
         pixel.x = data[(3 * (y * width + x) + 0)];
         pixel.y = data[(3 * (y * width + x) + 1)];
         pixel.z = data[(3 * (y * width + x) + 2)];

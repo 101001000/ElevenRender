@@ -55,9 +55,9 @@ public:
 
 	void transverseAux(Ray ray, Hit& nearestHit, Node& node);
 
-	SYCL_EXTERNAL void transverse(Ray ray, Hit& nearestHit, int ignoreID);
+	SYCL_EXTERNAL void transverse(Ray ray, Hit& nearestHit);
 
-	void intersectNode(Ray ray, Node node, Hit& nearestHit, int ignoreID);
+	void intersectNode(Ray ray, Node node, Hit& nearestHit);
 
 	Node leftChild(int idx, int depth);
 

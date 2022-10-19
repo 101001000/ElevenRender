@@ -58,7 +58,7 @@ bool BVH::intersect(Ray ray, Vector3 b1, Vector3 b2) {
 
 }
 
-void BVH::transverse(Ray ray, Hit& nearestHit, int ignoreID) {
+void BVH::transverse(Ray ray, Hit& nearestHit) {
   
 	Node stack[64];
 
@@ -77,10 +77,10 @@ void BVH::transverse(Ray ray, Hit& nearestHit, int ignoreID) {
 		bool rOverlap = intersect(ray, rChild.b1, rChild.b2);
          
 		if (node.depth == (BVH_DEPTH - 1) && rOverlap)
-			intersectNode(ray, rChild, nearestHit, ignoreID);
+			intersectNode(ray, rChild, nearestHit);
 
 		if (node.depth == (BVH_DEPTH - 1) && lOverlap)
-			intersectNode(ray, lChild, nearestHit, ignoreID);
+			intersectNode(ray, lChild, nearestHit);
 
 		bool traverseL = (lOverlap && node.depth != (BVH_DEPTH - 1));
 		bool traverseR = (rOverlap && node.depth != (BVH_DEPTH - 1));
@@ -97,7 +97,7 @@ void BVH::transverse(Ray ray, Hit& nearestHit, int ignoreID) {
 	} while (node.valid);
 }
 
-void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit, int ignoreID) {
+void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit) {
 
 	for (int i = node.from; i < node.to; i++) {
 
@@ -106,7 +106,7 @@ void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit, int ignoreID) {
 		if (tris[triIndices[i]].hit(ray, hit)) {
             
 			// If previous hit was not valid, then the new is going to be nearer in any case.
-			if (!nearestHit.valid || (hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length() && i != ignoreID) {
+			if (!nearestHit.valid || (hit.position - ray.origin).length() < (nearestHit.position - ray.origin).length()) {
 				nearestHit = hit;
 				nearestHit.triIdx = i;
 			}

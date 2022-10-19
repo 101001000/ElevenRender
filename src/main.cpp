@@ -1,13 +1,14 @@
 #include "CommandManager.h"
 #include "Logging.h"
 
-
+//TODO: Move Logging to Logging.h
 inline void coloring_formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
 {
     auto severity = rec[boost::log::trivial::severity];
     if (severity)
     {
-        // Set the color
+        // Set the color for Windows console.
+        // TODO: Make the Linux version
         switch (severity.get())
         {
         case boost::log::trivial::severity_level::info:
@@ -32,6 +33,7 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
     }
 
     strm << rec[a_timestamp] << " - [" << rec[a_thread_id] << "] [" << rec[boost::log::trivial::severity] << "]: " << rec[boost::log::expressions::smessage];
+    //SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
 }
 
 int main(int argc, char* argv[]) {
@@ -49,7 +51,6 @@ int main(int argc, char* argv[]) {
     CommandManager cm;
     cm.init();
    
-
     BOOST_LOG_TRIVIAL(info) << "Quitting";
 
     return 0;

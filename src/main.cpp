@@ -43,7 +43,6 @@ int main(int argc, char* argv[]) {
     sink->locked_backend()->add_stream(stream);
     sink->set_formatter(&coloring_formatter);
 
-
     boost::log::core::get()->add_sink(sink);
     boost::log::add_common_attributes();
 

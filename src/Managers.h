@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommandManager.h"
-#include "Window.h"
 #include "kernel.h"
 #include <functional>
 

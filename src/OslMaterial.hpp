@@ -3,6 +3,8 @@
 #include "Vector.h"
 #include "sycl.h"
 
+#define MAX_STR_LENGTH 16
+
 //TODO: rename this
 
 template <typename T1, typename T2>
@@ -163,7 +165,7 @@ struct Exp {
 
     int idx = -1;
     float n;
-    char x[16];
+    char x[MAX_STR_LENGTH];
 
     Exp* e1 = NULL;
     Exp* e2 = NULL;
@@ -189,7 +191,7 @@ struct Exp {
         type = _type;
     }
     Exp(Type _type, char* _x) {
-        strcpy(x, _x);
+        strcpy_s(x, MAX_STR_LENGTH, _x);
         type = _type;
     }
     Exp(Type _type, Exp* _e1, Exp* _e2) {
@@ -485,7 +487,7 @@ struct Statement {
     Statement* s1 = NULL;
     Statement* s2 = NULL;
 
-    char x[16];
+    char x[MAX_STR_LENGTH];
     Exp* e;
 
     bool visited = false;
@@ -496,7 +498,7 @@ struct Statement {
     }
     Statement(Type _type, char* _x, Exp* _e) {
         type = _type;
-        strcpy(x, _x);
+        strcpy_s(x, MAX_STR_LENGTH, _x);
         e = _e;
     }
     Statement(Type _type, Statement* _s1, Statement* _s2) {

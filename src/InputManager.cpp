@@ -219,7 +219,7 @@ void InputManager::write_message(Message msg) {
         msg.data_type != Message::DataType::DATA_TYPE_NONE &&
         msg.data != nullptr) {
         BOOST_LOG_TRIVIAL(trace) << "InputManager::write_message -> writting additional data";
-        boost::asio::write(*(sock.get()), boost::asio::buffer((float*)msg.data, msg.data_size));
+        boost::asio::write(*(sock.get()), boost::asio::buffer(static_cast<float*>(msg.data), msg.data_size));
         delete[] msg.data;
     }
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::write_message()";

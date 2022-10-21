@@ -15,7 +15,7 @@ public:
 
 	uint32_t state = 328;
 
-	RngGenerator(uint32_t _seed);
+	explicit RngGenerator(uint32_t _seed);
 	float next();
 };
 
@@ -42,7 +42,7 @@ struct dev_Scene {
 	unsigned int* dev_samples;
 	RngGenerator* dev_randstate;
 
-	dev_Scene(Scene* scene);
+	explicit dev_Scene(Scene* scene);
 };
 
 struct RenderParameters {

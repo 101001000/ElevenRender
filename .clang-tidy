@@ -1,1 +1,1 @@
-Checks: '-*,modernize-deprecated-headers'
+Checks: '-*,google-explicit-constructor'

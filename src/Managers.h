@@ -20,7 +20,7 @@ class Manager {
 
 public:
     CommandManager* cm;
-    Manager(CommandManager* _cm);
+    explicit Manager(CommandManager* _cm);
 };
 
 
@@ -61,7 +61,7 @@ public:
     std::thread t_rend;
     std::thread t_key;
 
-    RenderingManager(CommandManager* _cm);
+    explicit RenderingManager(CommandManager* _cm);
 
     void start_rendering(Scene* scene);
     float* get_pass(std::string pass);

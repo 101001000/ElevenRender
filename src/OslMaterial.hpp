@@ -17,12 +17,12 @@ struct Union {
     T1 d1;
     T2 d2;
 
-    Union(T1 val) {
+    explicit Union(T1 val) {
         d1 = val;
         type = Type::T1_TYPE;
     }
 
-    Union(T2 val) {
+    explicit Union(T2 val) {
         d2 = val;
         type = Type::T2;
     }
@@ -75,17 +75,17 @@ struct Var {
     float f;
     Vector3 v;
 
-    Var(Vector3 _v) {
+    explicit Var(Vector3 _v) {
         v = _v;
         type = Type::VEC;
     }
 
-    Var(float _f) {
+    explicit Var(float _f) {
         f = _f;
         type = Type::FLO;
     }
 
-    Var(Type _type) {
+    explicit Var(Type _type) {
         type = _type;
     }
 
@@ -493,7 +493,7 @@ struct Statement {
     bool visited = false;
     bool t_visited = false;
 
-    Statement(Type _type) {
+    explicit Statement(Type _type) {
         type = _type;
     }
     Statement(Type _type, char* _x, Exp* _e) {

@@ -16,11 +16,11 @@ public:
 
 	HDRI();
 
-	HDRI(Vector3 color);
+	explicit HDRI(Vector3 color);
 
 #if !defined(__CUDACC__)
 
-	HDRI(std::string filepath);
+	explicit HDRI(std::string filepath);
 #else
 
 #endif

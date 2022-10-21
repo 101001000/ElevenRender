@@ -1,7 +1,7 @@
 %option noyywrap nounistd
 
 %{
-#include <stdio.h>
+#include <cstdio>
 #include "calc.tab.hpp"
 
 #define YY_DECL int yylex()

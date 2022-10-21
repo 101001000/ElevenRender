@@ -2,6 +2,9 @@
 
 #include <string>
 
+// TODO: refactor str constructor
+// TODO: parametrize epsilon
+
 class Vector3 {
 
 public:
@@ -10,7 +13,7 @@ public:
 public:
 
 
-	inline Vector3(std::string str) {
+	inline explicit Vector3(std::string str) {
 
 		//SE PUEDE SIMPLIFICAR CON UN ÍNDICE
 
@@ -73,7 +76,7 @@ public:
 		z = _z;
 	}
 
-	inline Vector3(float _x) {
+	inline explicit Vector3(float _x) {
 		x = _x;
 		y = _x;
 		z = _x;

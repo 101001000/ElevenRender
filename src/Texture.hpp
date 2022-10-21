@@ -32,7 +32,7 @@ public:
     float xOffset = 0;
     float yOffset = 0;
 
-    Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
+    explicit Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
 
     //TODO fix this compilation nightmare
 #if !defined(__CUDACC__)
@@ -97,7 +97,7 @@ public:
         }
     }
 
-    Texture(Vector3 _color) {
+    explicit Texture(Vector3 _color) {
 
         width = 1; height = 1;
 

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "../third-party/sycl.h"
+#include <sycl.h>
 #include <iostream>
 #include <limits>
 
@@ -21,7 +21,7 @@
 #include "SYCLCopy.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../third-party/stb_image.h"
+#include <stb_image.h>
 
 
 RngGenerator::RngGenerator(uint32_t _seed) {

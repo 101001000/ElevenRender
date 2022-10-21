@@ -1,1 +1,1 @@
-Checks: 'google*'
+Checks: '-*,modernize-deprecated-headers'

@@ -2,12 +2,12 @@
 #define TEXTURE_H
 
 #if !defined(__CUDACC__)
-#include "../third-party/stb_image.h"
+#include <stb_image.h>
 #endif
 
 
 #include "Math.hpp"
-#include "../third-party/sycl.h"
+#include <sycl.h>
 
 //TODO: refactor, remove loading from filesystem to scene loader.
 class Texture {

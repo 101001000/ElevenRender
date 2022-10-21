@@ -11,7 +11,7 @@ public:
 
 	float focalLength = 35 * 0.001;
 	float sensorWidth = 35 * 0.001;
-	float sensorHeight = sensorWidth * ((float)yRes / (float)xRes);
+	float sensorHeight = sensorWidth * (static_cast<float>(yRes) / static_cast<float>(xRes));
 	float aperture = 2.8;
 	float focusDistance = 1000000;
 

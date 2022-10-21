@@ -1,7 +1,7 @@
 #include "CommandManager.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../third-party/stb_image_write.h"
+#include <stb_image_write.h>
 
 CommandManager::CommandManager() {
     im = std::make_shared<InputManager>(this);

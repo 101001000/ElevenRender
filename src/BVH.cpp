@@ -47,12 +47,14 @@ bool BVH::intersect(Ray ray, Vector3 b1, Vector3 b2) {
 	float tmax = minf(minf(maxf(t1, t2), maxf(t3, t4)), maxf(t5, t6));
 
 	// if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
-	if (tmax < 0)
+	if (tmax < 0) {
 		return false;
+	}
 
 	// if tmin > tmax, ray doesn't intersect AABB
-	if (tmin > tmax)
+	if (tmin > tmax) {
 		return false;
+	}
 
 	return true;
 
@@ -76,11 +78,13 @@ void BVH::transverse(Ray ray, Hit& nearestHit) {
 		bool lOverlap = intersect(ray, lChild.b1, lChild.b2);
 		bool rOverlap = intersect(ray, rChild.b1, rChild.b2);
          
-		if (node.depth == (BVH_DEPTH - 1) && rOverlap)
+		if (node.depth == (BVH_DEPTH - 1) && rOverlap) {
 			intersectNode(ray, rChild, nearestHit);
+		}
 
-		if (node.depth == (BVH_DEPTH - 1) && lOverlap)
+		if (node.depth == (BVH_DEPTH - 1) && lOverlap) {
 			intersectNode(ray, lChild, nearestHit);
+		}
 
 		bool traverseL = (lOverlap && node.depth != (BVH_DEPTH - 1));
 		bool traverseR = (rOverlap && node.depth != (BVH_DEPTH - 1));
@@ -90,8 +94,9 @@ void BVH::transverse(Ray ray, Hit& nearestHit) {
 
 		} else {
 			node = (traverseL) ? lChild : rChild;
-			if (traverseL && traverseR)
+			if (traverseL && traverseR) {
 				*stackPtr++ = rChild;
+			}
 		}
 
 	} while (node.valid);
@@ -115,12 +120,12 @@ void BVH::intersectNode(Ray ray, Node node, Hit& nearestHit) {
 }
 
 Node BVH::leftChild(int idx, int depth) {
-	if (depth == BVH_DEPTH) return Node();
+	if (depth == BVH_DEPTH) { return Node(); }
 	return nodes[idx + 1];
 }
 
 Node BVH::rightChild(int idx, int depth) {
-	if (depth == BVH_DEPTH) return Node();
+	if (depth == BVH_DEPTH) { return Node(); }
 	return nodes[idx + (2 << (BVH_DEPTH - depth - 1))];
 }
 
@@ -183,11 +188,13 @@ void BVH::buildIt(std::vector<BVHTri>* _tris) {
 
 		node.node.idx = nodeIdx++;
 
-		if (node.node.depth == 0)
+		if (node.node.depth == 0) {
 			totalTris = node.tris->size();
+		}
 
-		if (node.node.depth == 7)
+		if (node.node.depth == 7) {
 			printf("\rAllocated tris: %d / %d, %d%%", allocatedTris, totalTris, (100 * allocatedTris) / totalTris);
+		}
 
 		// Nodo hoja
 		if (node.node.depth == BVH_DEPTH) {
@@ -195,8 +202,9 @@ void BVH::buildIt(std::vector<BVHTri>* _tris) {
 			node.node.from = triIdx;
 			node.node.to = triIdx + node.tris->size();
 
-			for (int i = 0; i < node.tris->size(); i++)
+			for (int i = 0; i < node.tris->size(); i++) {
 				triIndices[triIdx++] = node.tris->at(i).index;
+			}
 
 			allocatedTris += node.tris->size();
 		}
@@ -232,11 +240,13 @@ void BVH::buildAux(int depth, std::vector<BVHTri>* _tris) {
 
 	Vector3 b1, b2;
 
-	if (depth == 0)
+	if (depth == 0) {
 		totalTris = _tris->size();
+	}
 
-	if(depth == 7)
+	if (depth == 7) {
 		printf("\rAllocated tris: %d / %d, %d%%", allocatedTris, totalTris, (100 * allocatedTris) / totalTris);
+	}
 
 	bounds(_tris, b1, b2);
 
@@ -244,8 +254,9 @@ void BVH::buildAux(int depth, std::vector<BVHTri>* _tris) {
 
 		nodes[nodeIdx++] = Node(nodeIdx, b1, b2, triIdx, triIdx + _tris->size(), depth);
 
-		for (int i = 0; i < _tris->size(); i++)
+		for (int i = 0; i < _tris->size(); i++) {
 			triIndices[triIdx++] = _tris->at(i).index;
+		}
 
 		allocatedTris += _tris->size();
 	}
@@ -315,8 +326,9 @@ void BVH::dividePlane(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, 
 
 void BVH::divideSAH(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, std::vector<BVHTri>* trisRight) {
 
-	if (tris->size() <= 0)
+	if (tris->size() <= 0) {
 		return;
+	}
 
 	Vector3 totalB1, totalB2;
 

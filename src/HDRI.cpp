@@ -36,8 +36,9 @@ HDRI::HDRI(std::string filepath) {
 
 	//std::cout << texture.width << " . " << texture.height << std::endl;
 
-	for (int i = 0; i < texture.width * texture.height * 3; i++)
+	for (int i = 0; i < texture.width * texture.height * 3; i++) {
 		texture.data[i] = tmp_data[i];
+	}
 
 	//texture.xOffset = 0.5;
 
@@ -125,10 +126,10 @@ int HDRI::binarySearch(float* arr, float value, int length) {
 
 	while (to - from > 0) {
 		int m = from + (to - from) / 2;
-		if (m >= length || m < 0) return 0; // This shouldn't happen...
-		if (value == arr[m]) return m;
-		if (value < arr[m])	to = m - 1;
-		if (value > arr[m]) from = m + 1;
+		if (m >= length || m < 0) { return 0; } // This shouldn't happen...
+		if (value == arr[m]){ return m;}
+		if (value < arr[m]) { to = m - 1; }
+		if (value > arr[m]) { from = m + 1; }
 	}
 	return to;
 }

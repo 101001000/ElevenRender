@@ -92,8 +92,9 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
 
     Material mtl;
 
-    if (json_mat.if_contains("name"))
+    if (json_mat.if_contains("name")) {
         mtl.name = json_mat["name"].as_string();
+    }
 
     if (json_mat.if_contains("albedo")) {
         Vector3 al = parse_vector3(json_mat["albedo"].as_object());
@@ -102,39 +103,41 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         mtl.albedo = al;
     }
 
-    if (json_mat.if_contains("emission"))
+    if (json_mat.if_contains("emission")) {
         mtl.emission = parse_vector3(json_mat["emission"].as_object());
-
-    if (json_mat.if_contains("roughness"))
+    }
+    if (json_mat.if_contains("roughness")) {
         mtl.roughness = json_mat["roughness"].as_double();
-
-    if (json_mat.if_contains("metalness"))
+    }
+    if (json_mat.if_contains("metalness")) {
         mtl.metallic = json_mat["metalness"].as_double();
-
-    if (json_mat.if_contains("specular"))
+    }
+    if (json_mat.if_contains("specular")) {
         mtl.specular = json_mat["specular"].as_double();
-
-    if (json_mat.if_contains("opacity"))
+    }
+    if (json_mat.if_contains("opacity")) {
         mtl.opacity = json_mat["opacity"].as_double();
+    }
 
 
-    if (json_mat.if_contains("albedo_map"))
+    if (json_mat.if_contains("albedo_map")) {
         mtl.albedo_map = json_mat["albedo_map"].as_string();
-
-    if (json_mat.if_contains("emission_map"))
+    }
+    if (json_mat.if_contains("emission_map")) {
         mtl.emission_map = json_mat["emission_map"].as_string();
-
-    if (json_mat.if_contains("roughness_map"))
+    }
+    if (json_mat.if_contains("roughness_map")) {
         mtl.roughness_map = json_mat["roughness_map"].as_string();
-
-    if (json_mat.if_contains("metallic_map"))
+    }
+    if (json_mat.if_contains("metallic_map")) {
         mtl.metallic_map = json_mat["metallic_map"].as_string();
-
-    if (json_mat.if_contains("normal_map"))
+    }
+    if (json_mat.if_contains("normal_map")) {
         mtl.normal_map = json_mat["normal_map"].as_string();
-
-    if (json_mat.if_contains("opacity_map"))
+    }
+    if (json_mat.if_contains("opacity_map")) {
         mtl.opacity_map = json_mat["opacity_map"].as_string();
+    }
 
     BOOST_LOG_TRIVIAL(debug) << "Material parsed: " << mtl.name <<
         " Albedo: " << mtl.albedo.x << ", " << mtl.albedo.y << ", " << mtl.albedo.z << ", " <<

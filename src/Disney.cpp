@@ -41,8 +41,9 @@ float DielectricFresnel(float cos_theta_i, float eta) {
     float sinThetaTSq = eta * eta * (1.0f - cos_theta_i * cos_theta_i);
 
     // Total internal reflection
-    if (sinThetaTSq > 1.0)
+    if (sinThetaTSq > 1.0) {
         return 1.0;
+    }
 
     float cos_theta_t = sycl::sqrt(maxf(1.0 - sinThetaTSq, 0.0));
 
@@ -53,8 +54,9 @@ float DielectricFresnel(float cos_theta_i, float eta) {
 }
 
 float GTR1(float NDotH, float a) {
-    if (a >= 1.0)
+    if (a >= 1.0) {
         return (1.0 / PI);
+    }
     float a2 = a * a;
     float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
     return (a2 - 1.0) / (PI * sycl::log(a2) * t);
@@ -104,8 +106,9 @@ float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
     float NDotH = abs(Vector3::dot(N, H));
 
     // TODO: Fix importance sampling for microfacet transmission
-    if (Vector3::dot(N, L) <= 0.0)
+    if (Vector3::dot(N, L) <= 0.0) {
         return 1.0;
+    }
 
     float specularAlpha = maxf(0.001, hitdata.roughness);
     float clearcoatAlpha = lerp(0.1, 0.001, hitdata.clearcoatGloss);

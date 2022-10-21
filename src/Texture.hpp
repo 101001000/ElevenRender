@@ -38,11 +38,13 @@ public:
 #if !defined(__CUDACC__)
     Texture(std::string filepath, CS colorSpace) {
 
-        if(colorSpace == CS::sRGB)
+        if (colorSpace == CS::sRGB) {
             stbi_ldr_to_hdr_gamma(2.2f);
+        }
 
-        if(colorSpace == CS::LINEAR)
+        else if (colorSpace == CS::LINEAR) {
             stbi_ldr_to_hdr_gamma(1.0f);
+        }
  
         stbi_set_flip_vertically_on_load(true);
 
@@ -124,10 +126,12 @@ public:
         x = (int)(xTile * (x + xOffset * width)) % width;
         y = (int)(yTile * (y + yOffset * height)) % height;
 
-        if (x < 0)
+        if (x < 0) {
             x = 0;
-        if (y < 0)
+        }
+        if (y < 0) {
             y = 0;
+        }
 
         pixel.x = data[(3 * (y * width + x) + 0)];
         pixel.y = data[(3 * (y * width + x) + 1)];
@@ -164,10 +168,12 @@ public:
 	}
 
     Vector3 getValueFromUVFiltered(float u, float v) {
-        if (filter == Filter::BILINEAR)
+        if (filter == Filter::BILINEAR) {
             return getValueBilinear(u, v);
-        else
+        }
+        else {
             return getValueFromUV(u, v);
+        }
     }
 
     static inline void sphericalMapping(Vector3 origin, Vector3 point, float radius, float& u, float& v) {

@@ -27,8 +27,9 @@
 RngGenerator::RngGenerator(uint32_t _seed) {
     this->state = _seed + 1;
 
-    for (int i = 0; i < _seed; i++)
+    for (int i = 0; i < _seed; i++) {
         this->next();
+    }
 }
 
 float RngGenerator::next() {
@@ -45,16 +46,21 @@ Passes parsePass(std::string s_pass) {
 
     Passes pass = BEAUTY;
 
-    if (s_pass.compare("beauty") == 0)
+    if (s_pass.compare("beauty") == 0) {
         pass = BEAUTY;
-    if (s_pass.compare("denoise") == 0)
+    }
+    else if (s_pass.compare("denoise") == 0) {
         pass = DENOISE;
-    if (s_pass.compare("normal") == 0)
+    }
+    else if (s_pass.compare("normal") == 0) {
         pass = NORMAL;
-    if (s_pass.compare("tangent") == 0)
+    }
+    else if (s_pass.compare("tangent") == 0) {
         pass = TANGENT;
-    if (s_pass.compare("bitangent") == 0)
+    }
+    else if (s_pass.compare("bitangent") == 0) {
         pass = BITANGENT;
+    }
 
     return pass;
 }
@@ -198,11 +204,14 @@ Hit throwRay(Ray ray, dev_Scene* scene) {
         Hit hit = Hit();
 
         if (scene->meshObjects[j].hit(ray, hit)) {
-            if (!nearestHit.valid) nearestHit = hit;
+            if (!nearestHit.valid) {
+                nearestHit = hit;
+            }
 
             if ((hit.position - ray.origin).length() <
-                (nearestHit.position - ray.origin).length())
+                (nearestHit.position - ray.origin).length()) {
                 nearestHit = hit;
+            }
         }
     }
 #endif
@@ -253,7 +262,9 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
     Hit shadowHit = throwRay(shadowRay, scene);
     float shadowDist = (shadowHit.position - point).length();
 
-    if (shadowHit.valid && shadowDist < dist) return Vector3();
+    if (shadowHit.valid && shadowDist < dist) {
+        return Vector3();
+    }
 
     // Quadratic attenuation
     Vector3 pointLightValue = (light.radiance / (dist * dist));
@@ -440,8 +451,9 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
 // Main Kernel
 void renderingKernel(dev_Scene* scene, int idx, int s) {
 
-    if (idx >= scene->camera->xRes * scene->camera->yRes)
+    if (idx >= scene->camera->xRes * scene->camera->yRes) {
         return;
+    }
 
     RngGenerator rnd = scene->dev_randstate[idx];
 
@@ -512,8 +524,10 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 hdriValue = scene->hdri->texture.getValueFromUV(iu, iv);
 
-            if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx)
+            if (shadowHit.valid && shadowHit.triIdx != hitdata.triIdx) {
                 hdriValue = Vector3();
+            }
+                
 
             float hdripdf = scene->hdri->pdf(iu * scene->hdri->texture.width, iv * scene->hdri->texture.height);
 

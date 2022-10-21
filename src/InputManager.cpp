@@ -271,8 +271,9 @@ void InputManager::run_tcp() {
         while (!error) {
             Message msg = read_message();
             BOOST_LOG_TRIVIAL(debug) << "Message readed " << msg.msg;
-            if (msg.type == Message::Type::TYPE_COMMAND)
+            if (msg.type == Message::Type::TYPE_COMMAND) {
                 execute_command_msg(msg);
+            }
         }
         BOOST_LOG_TRIVIAL(info) << "Disconnected";
     }

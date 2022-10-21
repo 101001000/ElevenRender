@@ -134,23 +134,26 @@ public:
 
     void print(sycl::stream sycl_stream) {
         for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-            if (vals[i].type == Var::Type::UND)
+            if (vals[i].type == Var::Type::UND) {
                 sycl_stream << "var " << i << " - " << "keys[i]" << "... (und) \n";
-            if (vals[i].type == Var::Type::FLO)
+            }
+            if (vals[i].type == Var::Type::FLO) {
                 sycl_stream << "var " << i << " - " << "keys[i]" << "... (float): " << vals[i].f << "\n";
-            if (vals[i].type == Var::Type::VEC)
+            }
+            if (vals[i].type == Var::Type::VEC) {
                 sycl_stream << "var " << i << " - " << "keys[i]" << "... (vector): (" << vals[i].v[0] << ", " << vals[i].v[1] << ", " << vals[i].v[2] << ")" << "\n";
-
+            }
         }
     }
 
     void print(std::ostream stream) {
         for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-            if (vals[i].type == Var::Type::FLO)
+            if (vals[i].type == Var::Type::FLO) {
                 stream << "var " << i << " - " << "keys[i]" << "... (float): " << vals[i].f << "\n";
-            if (vals[i].type == Var::Type::VEC)
+            }
+            if (vals[i].type == Var::Type::VEC){
                 stream << "var " << i << " - " << "keys[i]" << "... (vector): (" << vals[i].v[0] << ", " << vals[i].v[1] << ", " << vals[i].v[2] << ")" << "\n";
-
+            }
         }
     }
 };
@@ -208,12 +211,15 @@ struct Exp {
 
     int rec_setidx(int n) {
 
-        if (e1 != NULL)
+        if (e1 != NULL) {
             n = e1->rec_setidx(n) + 1;
-        if (e2 != NULL)
-            n = e2->rec_setidx(n) + 1;       
-        if (e3 != NULL)
+        }
+        if (e2 != NULL) {
+            n = e2->rec_setidx(n) + 1;
+        }
+        if (e3 != NULL) {
             n = e3->rec_setidx(n) + 1;
+        }
         idx = n;
         return n;
     }
@@ -256,18 +262,21 @@ struct Exp {
             Exp* current = S.top();
             if (prev == NULL || prev->e1 == current
                 || prev->e2 == current) {
-                if (current->e1 && current->type == Type::SUM)
+                if (current->e1 && current->type == Type::SUM) {
                     S.push(current->e1);
-                else if (current->e2 && current->type == Type::SUM)
+                }
+                else if (current->e2 && current->type == Type::SUM) {
                     S.push(current->e2);
+                }
                 else {
                     S.pop();
                     process_A_base(current, vars, val_temp);
                 }
             }
             else if (current->e1 == prev) {
-                if (current->e2 && current->type == Type::SUM)
+                if (current->e2 && current->type == Type::SUM) {
                     S.push(current->e2);
+                }
                 else {
                     S.pop();
                     process_A_base(current, vars, val_temp);
@@ -333,11 +342,13 @@ struct Exp {
 
         while (temp && temp->Vvisited == Vt_visited) {
 
-            if (temp->e1 && temp->e1->Vvisited == Vt_visited && temp->type == Type::SUM)
+            if (temp->e1 && temp->e1->Vvisited == Vt_visited && temp->type == Type::SUM) {
                 temp = temp->e1;
+            }
 
-            else if (temp->e2 && temp->e2->Vvisited == Vt_visited && temp->type == Type::SUM)
+            else if (temp->e2 && temp->e2->Vvisited == Vt_visited && temp->type == Type::SUM) {
                 temp = temp->e2;
+            }
 
             else {
 
@@ -519,11 +530,13 @@ struct Statement {
 
         while (temp && temp->visited == t_visited) {
 
-            if (temp->s1 && temp->s1->visited == t_visited)
+            if (temp->s1 && temp->s1->visited == t_visited) {
                 temp = temp->s1;
+            }
 
-            else if (temp->s2 && temp->s2->visited == t_visited)
+            else if (temp->s2 && temp->s2->visited == t_visited) {
                 temp = temp->s2;
+            }
 
             else {
                 switch (temp->type) {
@@ -561,14 +574,17 @@ struct Statement {
 
         while (temp && temp->visited == t_visited) {
 
-            if (temp->type == Type::IF)
+            if (temp->type == Type::IF) {
                 if_result = (temp->e->A(vars, out).f != 0);
+            }
 
-            if (temp->s1 && temp->s1->visited == t_visited && (!(temp->type == Type::IF) || if_result))
+            if (temp->s1 && temp->s1->visited == t_visited && (!(temp->type == Type::IF) || if_result)) {
                 temp = temp->s1;
+            }
 
-            else if (temp->s2 && temp->s2->visited == t_visited && (!(temp->type == Type::IF) || !if_result))
+            else if (temp->s2 && temp->s2->visited == t_visited && (!(temp->type == Type::IF) || !if_result)) {
                 temp = temp->s2;
+            }
 
             else {
                 switch (temp->type) {

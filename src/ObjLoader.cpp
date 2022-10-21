@@ -17,26 +17,31 @@ UnloadedMaterial ObjLoader::parseMtl(std::ifstream& stream, std::string name) {
 		//Ns TODO this is an exponent for specular
 		//Ka TODO --> Ambient color
 		//Kd
-		if (line[0] == 'K' && line[1] == 'd')
+		if (line[0] == 'K' && line[1] == 'd') {
 			umtl.mat.albedo = Vector3(line.substr(2));
+		}
 		//Ks TODO find a way to make this compatible
-		if (line[0] == 'K' && line[1] == 's')
+		if (line[0] == 'K' && line[1] == 's') {
 			umtl.mat.specular = Vector3(line.substr(2)).x;
+		}
 		//Ke
-		if (line[0] == 'K' && line[1] == 'e')
+		if (line[0] == 'K' && line[1] == 'e') {
 			umtl.mat.emission = Vector3(line.substr(2));
+		}
 		//Ni
-		if (line[0] == 'N' && line[1] == 'i')
+		if (line[0] == 'N' && line[1] == 'i') {
 			umtl.mat.eta = std::stof(getSecondWord(line));
+		}
 		//d
-		if (line[0] == 'd')
+		if (line[0] == 'd') {
 			umtl.mat.opacity = std::stof(getSecondWord(line)); // Implicit type conversion, check if it's appropiate
-		
+		}
 		std::vector<std::string> mapNames = { "map_Kd", "map_Ns", "map_Bump", "refl" };
 
 		for (int i = 0; i < mapNames.size(); i++) {
-			if (line.find(mapNames[i]) != std::string::npos)
+			if (line.find(mapNames[i]) != std::string::npos) {
 				umtl.maps[mapNames[i]] = getSecondWord(line);
+			}
 		}
 	}
 
@@ -123,8 +128,9 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 			mo->tris = tris->data();
 			mo->triCount = tris->size();
 
-			if (shape.mesh.material_ids[0] >= 0)
+			if (shape.mesh.material_ids[0] >= 0) {
 				mo->matName = result.materials[shape.mesh.material_ids[0]].name;
+			}
 
 			std::cout << "computing " << mo->name << "...\n";
 
@@ -162,14 +168,17 @@ MeshObject ObjLoader::parseObj(std::ifstream &stream) {
 
 	while (std::getline(stream, line) && line[0] != 'o') {
 
-		if (line.find("usemtl") != std::string::npos)
+		if (line.find("usemtl") != std::string::npos) {
 			mo.matName = getSecondWord(line);
+		}
 
-		if (line[0] == 'v' && line[1] == ' ')
+		if (line[0] == 'v' && line[1] == ' ') {
 			vertices.push_back(Vector3(line.substr(2)) * Vector3(1, 1, -1));
+		}
 
-		if (line[0] == 'v' && line[1] == 't')
+		if (line[0] == 'v' && line[1] == 't') {
 			textureCoord.push_back(Vector3(line.substr(2)));
+		}
 
 		if (line[0] == 'v' && line[1] == 'n') {
 			Vector3 n = Vector3(line.substr(2)) * Vector3(1, 1, -1);
@@ -192,7 +201,7 @@ MeshObject ObjLoader::parseObj(std::ifstream &stream) {
 
 				if (isdigit(c) || c == '/') {
 
-					if (idx == -1) idx = 0;
+					if (idx == -1) { idx = 0; }
 					int len = strlen(f[idx]);
 
 					f[idx][len] = c;
@@ -214,7 +223,7 @@ MeshObject ObjLoader::parseObj(std::ifstream &stream) {
 				int _idx = 0;
 
 				for (char& c : f[i]) {
-					if (c == '\0') break;
+					if (c == '\0') { break; }
 
 					if (isdigit(c)) {
 						int len = strlen(v[_idx]);
@@ -228,14 +237,17 @@ MeshObject ObjLoader::parseObj(std::ifstream &stream) {
 				}
 
 
-				if (strlen(v[0]) > 0)
+				if (strlen(v[0]) > 0) {
 					tri.vertices[i] = vertices.at(std::stoi(&(v[0])[0]) - 1);
+				}
 
-				if (strlen(v[1]) > 0)
+				if (strlen(v[1]) > 0) {
 					tri.uv[i] = textureCoord.at(std::stoi(&(v[1])[0]) - 1);
+				}
 
-				if (strlen(v[2]) > 0) 
+				if (strlen(v[2]) > 0) {
 					tri.normals[i] = normals.at(std::stoi(&(v[2])[0]) - 1).normalized();
+				}
 				
 
 			}

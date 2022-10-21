@@ -42,9 +42,11 @@ Message::Message() {
 std::string Message::type2str(Type type) {
     std::string str = "";
 
-    for (auto it = type_map.begin(); it != type_map.end(); ++it)
-        if (it->second == type)
+    for (auto it = type_map.begin(); it != type_map.end(); ++it) {
+        if (it->second == type) {
             str = it->first;
+        }
+    }
     return str;
 }
 Message::Type Message::str2type(std::string str) {
@@ -53,9 +55,11 @@ Message::Type Message::str2type(std::string str) {
 std::string Message::data_type2str(DataType data_type) {
     std::string str = "";
 
-    for (auto it = data_type_map.begin(); it != data_type_map.end(); ++it)
-        if (it->second == data_type)
+    for (auto it = data_type_map.begin(); it != data_type_map.end(); ++it) {
+        if (it->second == data_type) {
             str = it->first;
+        }
+    }
     return str;
 }
 Message::DataType Message::str2data_type(std::string str) {
@@ -215,8 +219,9 @@ void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
     oidnExecuteFilter(filter);
 
     const char* errorMessage;
-    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
+    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE) {
         BOOST_LOG_TRIVIAL(error) << errorMessage;
+    }
 
     // Cleanup
     oidnReleaseFilter(filter);

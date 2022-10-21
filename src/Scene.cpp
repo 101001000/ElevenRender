@@ -9,27 +9,27 @@ int Scene::pointLightCount() {	return pointLights.size();}
 Camera* Scene::getMainCamera() { return &camera; }
 
 Material* Scene::getMaterials() {
-	if (materials.size() == 0) return (Material*)0;
+	if (materials.size() == 0) { return (Material*)0; }
 	return materials.data();
 }
 
 Tri* Scene::getTris() {
-	if (tris.size() == 0) return (Tri*)0;
+	if (tris.size() == 0) { return (Tri*)0; }
 	return tris.data();
 }
 
 MeshObject* Scene::getMeshObjects() {
-	if (meshObjects.size() == 0) return (MeshObject*)0;
+	if (meshObjects.size() == 0) { return (MeshObject*)0; }
 	return meshObjects.data();
 }
 
 PointLight* Scene::getPointLights() {
-	if (pointLights.size() == 0) return (PointLight*)0;
+	if (pointLights.size() == 0) { return (PointLight*)0; }
 	return pointLights.data();
 }
 
 Texture* Scene::getTextures() {
-	if (textures.size() == 0) return (Texture*)0;
+	if (textures.size() == 0) { return (Texture*)0; }
 	return textures.data();
 }
 
@@ -75,18 +75,24 @@ void Scene::pair_textures() {
 
 		for (int j = 0; j < textures.size(); j++) {
 
-			if (textures[j].name == materials[i].albedo_map)
+			if (textures[j].name == materials[i].albedo_map) {
 				materials[i].albedoTextureID = j;
-			if (textures[j].name == materials[i].emission_map)
+			}
+			if (textures[j].name == materials[i].emission_map) {
 				materials[i].emissionTextureID = j;
-			if (textures[j].name == materials[i].roughness_map)
+			}
+			if (textures[j].name == materials[i].roughness_map) {
 				materials[i].roughnessTextureID = j;
-			if (textures[j].name == materials[i].metallic_map)
+			}
+			if (textures[j].name == materials[i].metallic_map) {
 				materials[i].metallicTextureID = j;
-			if (textures[j].name == materials[i].opacity_map)
+			}
+			if (textures[j].name == materials[i].opacity_map) {
 				materials[i].opacityTextureID = j;
-			if (textures[j].name == materials[i].normal_map)
+			}
+			if (textures[j].name == materials[i].normal_map) {
 				materials[i].normalTextureID = j;
+			}
 		}
 	}
 
@@ -198,11 +204,13 @@ Scene Scene::loadScene(std::string path) {
 	}
 
 
-	if (hdri_json.if_contains("xOffset"))
+	if (hdri_json.if_contains("xOffset")) {
 		scene.hdri.texture.xOffset = hdri_json["xOffset"].as_double();
+	}
 
-	if (hdri_json.if_contains("yOffset"))
+	if (hdri_json.if_contains("yOffset")) {
 		scene.hdri.texture.xOffset = hdri_json["yOffset"].as_double();
+	}
 
 	printf("Loading objs...\n");
 

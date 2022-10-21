@@ -54,17 +54,19 @@ public:
         Vector3 tvec = ray.origin - vertices[0];
 
         u = Vector3::dot(tvec, pvec) * inv_det;
-        if (u < 0.0 || u > 1.0)
+        if (u < 0.0 || u > 1.0) {
             return false;
+        }
 
         Vector3 qvec = Vector3::cross(tvec, edge1);
         v = Vector3::dot(ray.direction, qvec) * inv_det;
-        if (v < 0.0 || (u + v) > 1.0)
+        if (v < 0.0 || (u + v) > 1.0) {
             return false;
+        }
 
         t = Vector3::dot(edge2, qvec) * inv_det;
 
-        if (t < 0) return false;
+        if (t < 0) { return false; }
 
         // UV coordinates from the texture, weighted with vertex texture UV
         Vector3 tUV = uv[0] + (uv[1] - uv[0]) * u + (uv[2] - uv[0]) * v;
@@ -87,8 +89,9 @@ public:
 
         Vector3 compNormal = Vector3::cross(edge1, edge2).normalized();
 
-        if (Vector3::dot(compNormal, ray.direction) > 0)
+        if (Vector3::dot(compNormal, ray.direction) > 0) {
             compNormal *= -1;
+        }
 
         //Maybe I need to flip tangents
         Vector3 shadingTangent = tangents[0] + (tangents[1] - tangents[0]) * u + (tangents[2] - tangents[0]) * v;

@@ -1,1 +1,1 @@
-Checks: '-*,google-explicit-constructor'
+Checks: '-*,google-readability-braces-around-statements'

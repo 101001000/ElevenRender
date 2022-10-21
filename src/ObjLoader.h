@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "libs/rapidobj.hpp"
-#include "libs/mikktspaceCallback.h"
+#include "../third-party/rapidobj.hpp"
+#include "../third-party/mikktspaceCallback.h"
 #include <vector>
 #include <sstream>
 #include <iostream>
@@ -10,7 +10,7 @@
 
 #include "Vector.h"
 #include "Material.h"
-#include "libs/mikktspace.h"
+#include "../third-party/mikktspace.h"
 #include "Tri.h"
 #include "MeshObject.hpp"
 

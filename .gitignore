@@ -2,7 +2,7 @@ include
 boost
 CMakeFiles
 lib
-src/libs
+third-party
 src/glad.c
 bin
 *.exe
@@ -23,9 +23,9 @@ x64
 *.png
 *.dll
 *.pdb
-src/libs/stb_image.h
-src/libs/stb_image_write.h
-src/libs/tiny_obj_loader.h
+third-party/stb_image.h
+third-party/stb_image_write.h
+third-party/tiny_obj_loader.h
 test.osl
 src/lan/calc.tab.cpp
 src/lan/calc.tab.hpp

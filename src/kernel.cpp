@@ -117,7 +117,7 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
         Vector3 ncolor =
             dev_scene_g->textures[material->normalTextureID].getValueFromUV(
                 hit.tu, hit.tv);
-        Vector3 localNormal = (ncolor * 2) - 1;
+        Vector3 localNormal = (ncolor * 2) - Vector3::One();
         Vector3 worldNormal =
             (localNormal.x * tangent - localNormal.y * bitangent +
                 localNormal.z * hit.normal)

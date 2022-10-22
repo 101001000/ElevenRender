@@ -36,7 +36,7 @@ float RngGenerator::next() {
     state ^= state << 13;
     state ^= state >> 17;
     state ^= state << 5;
-    return ((float)state / (float)UINT_MAX);
+    return (static_cast<float>(state) / static_cast<float>(UINT_MAX));
 }
 
 //TODO: move this function
@@ -248,10 +248,10 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
         return Vector3::Zero();
     }
 
-    pdf = ((float)scene->pointLightCount) / (2.0 * PI);
+    pdf = (static_cast<float>(scene->pointLightCount)) / (2.0 * PI);
 
     // Retrieve a random light
-    PointLight light = scene->pointLights[(int)(scene->pointLightCount * r1)];
+    PointLight light = scene->pointLights[static_cast<int>(scene->pointLightCount * r1)];
 
     Vector3 newDir = (light.position - point).normalized();
 
@@ -347,17 +347,17 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
     float r2, float r3, float r4, float r5) {
     // Relative coordinates for the point where the first ray will be launched
     float dx = camera.position.x +
-        ((float)x) / ((float)camera.xRes) * camera.sensorWidth;
+        (static_cast<float>(x)) / (static_cast<float>(camera.xRes)) * camera.sensorWidth;
     float dy = camera.position.y +
-        ((float)y) / ((float)camera.yRes) * camera.sensorHeight;
+        (static_cast<float>(y)) / (static_cast<float>(camera.yRes)) * camera.sensorHeight;
 
     // Absolute coordinates for the point where the first ray will be launched
     float odx = (-camera.sensorWidth / 2.0) + dx;
     float ody = (-camera.sensorHeight / 2.0) + dy;
 
     // Random part of the sampling offset so we get antialasing
-    float rx = (1.0 / (float)camera.xRes) * (r1 - 0.5) * camera.sensorWidth;
-    float ry = (1.0 / (float)camera.yRes) * (r2 - 0.5) * camera.sensorHeight;
+    float rx = (1.0 / static_cast<float>(camera.xRes)) * (r1 - 0.5) * camera.sensorWidth;
+    float ry = (1.0 / static_cast<float>(camera.yRes)) * (r2 - 0.5) * camera.sensorHeight;
 
     // Sensor point, the point where intersects the ray with the sensor
     float SPx = odx + rx;
@@ -511,8 +511,8 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
             Vector3 wibrdf = DisneySample(hitdata, wo, hitdata.normal, rnd.next(), rnd.next(), rnd.next());
 
-            float nu = textCoordinate.x / (float)scene->hdri->texture.width;
-            float nv = textCoordinate.y / (float)scene->hdri->texture.height;
+            float nu = textCoordinate.x / static_cast<float>(scene->hdri->texture.width);
+            float nv = textCoordinate.y / static_cast<float>(scene->hdri->texture.height);
 
             float iu = scene->hdri->texture.inverseTransformUV(nu, nv).x;
             float iv = scene->hdri->texture.inverseTransformUV(nu, nv).y;
@@ -568,42 +568,42 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
             for (int pass = 0; pass < PASSES_COUNT; pass++) {
                 if (pass != DENOISE) {
                     scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] *=
-                        ((float)sa) / ((float)(sa + 1));
+                        (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
                     scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] *=
-                        ((float)sa) / ((float)(sa + 1));
+                        (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
                     scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] *=
-                        ((float)sa) / ((float)(sa + 1));
+                        (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
                 }
             }
         }
 
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
-            light.x / ((float)sa + 1);
+            light.x / (static_cast<float>(sa + 1));
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
-            light.y / ((float)sa + 1);
+            light.y / (static_cast<float>(sa + 1));
         scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
-            light.z / ((float)sa + 1);
+            light.z / (static_cast<float>(sa + 1));
 
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
-            normal.x / ((float)sa + 1);
+            normal.x / (static_cast<float>(sa + 1));
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
-            normal.y / ((float)sa + 1);
+            normal.y / (static_cast<float>(sa + 1));
         scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
-            normal.z / ((float)sa + 1);
+            normal.z / (static_cast<float>(sa + 1));
 
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
-            tangent.x / ((float)sa + 1);
+            tangent.x / (static_cast<float>(sa + 1));
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
-            tangent.y / ((float)sa + 1);
+            tangent.y / (static_cast<float>(sa + 1));
         scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
-            tangent.z / ((float)sa + 1);
+            tangent.z / (static_cast<float>(sa + 1));
 
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
-            bitangent.x / ((float)sa + 1);
+            bitangent.x / (static_cast<float>(sa + 1));
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
-            bitangent.y / ((float)sa + 1);
+            bitangent.y / (static_cast<float>(sa + 1));
         scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
-            bitangent.z / ((float)sa + 1);
+            bitangent.z / (static_cast<float>(sa + 1));
 
         scene->dev_samples[idx]++;
     }

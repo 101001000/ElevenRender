@@ -62,7 +62,7 @@ inline void HDRI::generateCDF2() {
 			float r = 0;
 			float u, v;
 
-			Vector3 sample = uniformSampleSphere((float)x / (float)texture.width, (float)y / (float)texture.height);
+			Vector3 sample = uniformSampleSphere(static_cast<float>(x) / static_cast<float>(texture.width), static_cast<float>(y) / static_cast<float>(texture.height));
 
 			Texture::sphericalMapping(Vector3(), sample, 1, u, v);
 
@@ -81,7 +81,7 @@ inline void HDRI::generateCDF2() {
 
 			float u, v;
 
-			Vector3 sample = uniformSampleSphere((float)x / (float)texture.width, (float)y / (float)texture.height);
+			Vector3 sample = uniformSampleSphere(static_cast<float>(x) / static_cast<float>(texture.width), static_cast<float>(y) / static_cast<float>(texture.height));
 
 			Texture::sphericalMapping(Vector3(), sample, 1, u, v);
 
@@ -137,7 +137,7 @@ int HDRI::binarySearch(float* arr, float value, int length) {
 
 float HDRI::pdf(int x, int y) {
 	Vector3 dv = texture.getValueFromCoordinates(x, y);
-	float theta = (((float)y / (float)texture.height)) * PI;
+	float theta = ((static_cast<float>(y) / static_cast<float>(texture.height))) * PI;
 
 	// Semisphere area
 	return ((dv.x + dv.y + dv.z) / radianceSum) * texture.width * texture.height / (2.0 * PI * sycl::sin(theta));
@@ -162,7 +162,7 @@ inline Vector3 HDRI::sample2(float r1) {
 
 	float u, v;
 
-	Vector3 sample = uniformSampleSphere((float)wu / (float)texture.width, (float)wv / (float)texture.height);
+	Vector3 sample = uniformSampleSphere(static_cast<float>(wu) / static_cast<float>(texture.width), static_cast<float>(wv) / static_cast<float>(texture.height));
 
 	Texture::sphericalMapping(Vector3(), sample, 1, u, v);
 

@@ -71,10 +71,10 @@ boost::json::object Message::get_json_data() {
     boost::json::value json;
 
     try {
-        json = boost::json::parse((char*) data);
+        json = boost::json::parse(static_cast<char*>(data));
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what() << ((char*)data);
+        BOOST_LOG_TRIVIAL(error) << e.what() << (static_cast<char*>(data));
     }
 
     return json.as_object();
@@ -82,7 +82,7 @@ boost::json::object Message::get_json_data() {
 
 float* Message::get_float_data() {
     BOOST_LOG_TRIVIAL(trace) << "Message::get_float_data()";
-    return (float*) data;
+    return static_cast<float*>(data);
 }
 
 

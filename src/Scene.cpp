@@ -9,27 +9,27 @@ int Scene::pointLightCount() {	return pointLights.size();}
 Camera* Scene::getMainCamera() { return &camera; }
 
 Material* Scene::getMaterials() {
-	if (materials.size() == 0) { return (Material*)0; }
+	if (materials.size() == 0) { return static_cast<Material*>(nullptr); }
 	return materials.data();
 }
 
 Tri* Scene::getTris() {
-	if (tris.size() == 0) { return (Tri*)0; }
+	if (tris.size() == 0) { return static_cast<Tri*>(nullptr); }
 	return tris.data();
 }
 
 MeshObject* Scene::getMeshObjects() {
-	if (meshObjects.size() == 0) { return (MeshObject*)0; }
+	if (meshObjects.size() == 0) { return static_cast<MeshObject*>(nullptr); }
 	return meshObjects.data();
 }
 
 PointLight* Scene::getPointLights() {
-	if (pointLights.size() == 0) { return (PointLight*)0; }
+	if (pointLights.size() == 0) { return static_cast<PointLight*>(nullptr); }
 	return pointLights.data();
 }
 
 Texture* Scene::getTextures() {
-	if (textures.size() == 0) { return (Texture*)0; }
+	if (textures.size() == 0) { return static_cast<Texture*>(nullptr); }
 	return textures.data();
 }
 

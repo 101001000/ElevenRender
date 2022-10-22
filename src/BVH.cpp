@@ -389,7 +389,7 @@ void BVH::divideSAH(std::vector<BVHTri>* tris, std::vector<BVHTri>* trisLeft, st
 				boundsUnion(b3, b4, b1s[k], b2s[k], b3, b4);
 			}
 
-			float heuristic = boundsArea(b1, b2) * (float)count1 + boundsArea(b3, b4) * (float)count2;
+			float heuristic = boundsArea(b1, b2) * static_cast<float>(count1) + boundsArea(b3, b4) * static_cast<float>(count2);
 
 			if (heuristic < bestHeuristic) {
 				bestHeuristic = heuristic;

@@ -1,1 +1,1 @@
-Checks: '-*,google-readability-braces-around-statements'
+Checks: '-*,google*,-google-readability-todo'

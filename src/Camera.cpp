@@ -9,5 +9,5 @@ Camera::Camera(unsigned int _xRes, unsigned int _yRes) {
 }
 
 void Camera::setSensorWidth(float size) {
-	sensorHeight = size * ((float)yRes / (float)xRes);
+	sensorHeight = size * (static_cast<float>(yRes) / static_cast<float>(xRes));
 }

@@ -58,9 +58,9 @@ public:
         data = new float[width * height * 3];
 
         for (int i = 0, j = 0; i < width * height * 3; i += 3, j += channels) {
-            data[i + 0] = ((float)tmp_data[j + 0]);
-            data[i + 1] = ((float)tmp_data[j + 1]);
-            data[i + 2] = ((float)tmp_data[j + 2]);
+            data[i + 0] = (tmp_data[j + 0]);
+            data[i + 1] = (tmp_data[j + 1]);
+            data[i + 2] = (tmp_data[j + 2]);
         }
 
         printf("Loaded! %dpx x %dpx, %d channels\n", width, height, channels);
@@ -123,8 +123,8 @@ public:
         Vector3 pixel;
 
         // Offset and tiling tranformations
-        x = (int)(xTile * (x + xOffset * width)) % width;
-        y = (int)(yTile * (y + yOffset * height)) % height;
+        x = static_cast<int>(xTile * (x + xOffset * width)) % width;
+        y = static_cast<int>(yTile * (y + yOffset * height)) % height;
 
         if (x < 0) {
             x = 0;
@@ -197,12 +197,12 @@ public:
 
         // OJO TILE
 
-        x = (int)(xTile * (x + xOffset * width)) % width;
-        y = (int)(yTile * (y + yOffset * height)) % height;
+        x = static_cast<int>(xTile * (x + xOffset * width)) % width;
+        y = static_cast<int>(yTile * (y + yOffset * height)) % height;
 
 
-        float nu = (float)x / (float)width;
-        float nv = (float)y / (float)height;
+        float nu = static_cast<float>(x) / static_cast<float>(width);
+        float nv = static_cast<float>(y) / static_cast<float>(height);
 
         limitUV(nu, nv);
 
@@ -216,11 +216,11 @@ public:
 
         // OJO TILE
 
-        x = (int)(xTile * (x - xOffset * width)) % width;
-        y = (int)(yTile * (y - yOffset * height)) % height;
+        x = static_cast<int>(xTile * (x - xOffset * width)) % width;
+        y = static_cast<int>(yTile * (y - yOffset * height)) % height;
 
-        float nu = (float)x / (float)width;
-        float nv = (float)y / (float)height;
+        float nu = static_cast<float>(x) / static_cast<float>(width);
+        float nv = static_cast<float>(y) / static_cast<float>(height);
 
         limitUV(nu, nv);
 

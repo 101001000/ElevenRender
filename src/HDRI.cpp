@@ -6,20 +6,8 @@ HDRI::HDRI() {
 }
 
 HDRI::HDRI(Vector3 color) {
-
-	// Esto debería hacerlo con constructor
-	texture.data = new float[1024 * 1024 * 3];
-	texture.width = 1024;
-	texture.height = 1024;
-
-	for (int i = 0; i < texture.width * texture.height; i++) {
-		texture.data[3 * i + 0] = color.x;
-		texture.data[3 * i + 1] = color.y;
-		texture.data[3 * i + 2] = color.z;
-	}
-
+	texture = Texture(color);
 	cdf = new float[texture.width * texture.height + 1];
-
 	generateCDF();
 }
 
@@ -28,17 +16,11 @@ HDRI::HDRI(Vector3 color) {
 HDRI::HDRI(std::string filepath) {
 
 	int channels;
+	int width, height;
 
-	float* tmp_data = stbi_loadf(filepath.c_str(), &texture.width, &texture.height, &channels, 0);
+	float* tmp_data = stbi_loadf(filepath.c_str(), &width, &height, &channels, 0);
 
-	texture.data = new float[texture.width * texture.height * 3];
-	texture.filter = Texture::Filter::BILINEAR;
-
-	//std::cout << texture.width << " . " << texture.height << std::endl;
-
-	for (int i = 0; i < texture.width * texture.height * 3; i++) {
-		texture.data[i] = tmp_data[i];
-	}
+	texture = Texture(width, height, channels, tmp_data);
 
 	// HDRI loading implemented is 180º degree shifted in the horizontal position
 	texture.pixel_shift(0.5, 0);

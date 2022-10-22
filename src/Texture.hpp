@@ -5,7 +5,6 @@
 #include <stb_image.h>
 #endif
 
-
 #include "Math.hpp"
 #include <sycl.h>
 
@@ -16,8 +15,6 @@ public:
     enum class Filter { NO_FILTER, BILINEAR };
     enum class CS { LINEAR, sRGB };
 
-	float* data;
-
     Filter filter = Filter::NO_FILTER;
     Vector3 color;
 
@@ -25,6 +22,8 @@ public:
 
     int width;
     int height;
+    float* data;
+    unsigned int channels;
 
     explicit Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
 
@@ -67,64 +66,74 @@ public:
        
 #endif
 
+    // Limit the amount of channels to 3
+    void clamp_channels() {
+        for (int i = 3; i < channels; i++) {
+            remove_last_channel();
+        }
+    }
+
+    void remove_last_channel() {
+        float* new_pixels = new float[width * height * (channels - 1)];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                for (int c = 0; c < channels - 1; c++) {
+                    new_pixels[(channels - 1) * (y * width + x) + c] = data[channels * (y * width + x) + c];
+                }
+            }
+        }
+        channels--;
+        delete[] data;
+        data = new_pixels;
+    }
+
     // Displaces pixels horizontally or vertically.
     void pixel_shift(const float x_amount, const float y_amount) {
-        float* shifted_pixels = new float[width * height * 3];
+        float* shifted_pixels = new float[width * height * channels];
         for (int x = 0; x < width; x++) {
             int shifted_x = static_cast<int>(x + width * x_amount) % width;
             for (int y = 0; y < height; y++) {
                 int shifted_y = static_cast<int>(y + height * y_amount) % height;
-                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 0)] = data[(3 * (y * width + x) + 0)];
-                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 1)] = data[(3 * (y * width + x) + 1)];
-                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 2)] = data[(3 * (y * width + x) + 2)];
+                for (int c = 0; c < channels; c++) {
+                    shifted_pixels[channels * (shifted_y * width + shifted_x) + c] = data[channels * (y * width + x) + c];
+                }
             }
         }
         delete[] data;
         data = shifted_pixels;
     }
 
+    // TODO: This should gamma correct alpha channel?
     void applyGamma(float gamma) {
-        for (int i = 0; i < width * height * 3; i++) {
+        for (int i = 0; i < width * height * channels; i++) {
             data[i] = fast_pow(data[i], gamma);
         }
     }
 
-    // Quick fix for passing blender data, not ideal
     Texture(int _width, int _height, int _channels, float* _data) {
         width = _width;
         height = _height;
-        data = new float[width * height * 3];
-
-        if (_channels == 4) {
-            //remove alpha channel
-            for (int i = 0; i < width * height; i++) {
-                data[i * 3 + 0] = _data[i * 4 + 0];
-                data[i * 3 + 1] = _data[i * 4 + 1];
-                data[i * 3 + 2] = _data[i * 4 + 2];
-            }
-        }
-        else if (_channels == 3) {
-            memcpy(data, _data, sizeof(float) * width * height * 3);
-        }
+        data = new float[width * height * _channels];
+        channels = _channels;
+        memcpy(data, _data, sizeof(float) * width * height * _channels);
+        clamp_channels();
     }
 
     explicit Texture(Vector3 _color) {
 
         width = 1; height = 1;
-
+        channels = 3;
         color = _color;
         data = new float[3];
         data[0] = color.x; data[1] = color.y; data[2] = color.z;
     }
 
     Texture() {
-        
         width = 1;
         height = 1;
-
-        data = new float[3];
-
-        data[0] = 0; data[1] = 0; data[2] = 0;
+        channels = 1;
+        data = new float[1];
+        data[0] = 0;
     }
 
     Vector3 getValueFromCoordinates(int x, int y) {
@@ -134,9 +143,22 @@ public:
         clamp(x, 0, width - 1);
         clamp(y, 0, height - 1);
 
-        pixel.x = data[(3 * (y * width + x) + 0)];
-        pixel.y = data[(3 * (y * width + x) + 1)];
-        pixel.z = data[(3 * (y * width + x) + 2)];
+        if (channels == 0) {
+            pixel = Vector3();
+        }
+        else if (channels == 1) {
+            pixel = Vector3(data[y * width + x]);
+        }
+        else if (channels == 2) {
+            pixel.x = data[(channels * (y * width + x) + 0)];
+            pixel.y = data[(channels * (y * width + x) + 1)];
+        }
+        // Ignore >3 channels
+        else {
+            pixel.x = data[(channels * (y * width + x) + 0)];
+            pixel.y = data[(channels * (y * width + x) + 1)];
+            pixel.z = data[(channels * (y * width + x) + 2)];
+        }
 
         return pixel;
     }

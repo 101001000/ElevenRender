@@ -26,12 +26,6 @@ public:
     int width;
     int height;
 
-    float xTile = 1;
-    float yTile = 1;
-
-    float xOffset = 0;
-    float yOffset = 0;
-
     explicit Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
 
     //TODO fix this compilation nightmare
@@ -73,6 +67,21 @@ public:
        
 #endif
 
+    // Displaces pixels horizontally or vertically.
+    void pixel_shift(const float x_amount, const float y_amount) {
+        float* shifted_pixels = new float[width * height * 3];
+        for (int x = 0; x < width; x++) {
+            int shifted_x = static_cast<int>(x + width * x_amount) % width;
+            for (int y = 0; y < height; y++) {
+                int shifted_y = static_cast<int>(y + height * y_amount) % height;
+                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 0)] = data[(3 * (y * width + x) + 0)];
+                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 1)] = data[(3 * (y * width + x) + 1)];
+                shifted_pixels[(3 * (shifted_y * width + shifted_x) + 2)] = data[(3 * (y * width + x) + 2)];
+            }
+        }
+        delete[] data;
+        data = shifted_pixels;
+    }
 
     void applyGamma(float gamma) {
         for (int i = 0; i < width * height * 3; i++) {
@@ -122,16 +131,8 @@ public:
 
         Vector3 pixel;
 
-        // Offset and tiling tranformations
-        x = static_cast<int>(xTile * (x + xOffset * width)) % width;
-        y = static_cast<int>(yTile * (y + yOffset * height)) % height;
-
-        if (x < 0) {
-            x = 0;
-        }
-        if (y < 0) {
-            y = 0;
-        }
+        clamp(x, 0, width - 1);
+        clamp(y, 0, height - 1);
 
         pixel.x = data[(3 * (y * width + x) + 0)];
         pixel.y = data[(3 * (y * width + x) + 1)];
@@ -190,16 +191,11 @@ public:
         limitUV(u,v);
     }
 
+
     inline Vector3 transformUV(float u, float v) {
 
         int x = u * width;
         int y = v * height;
-
-        // OJO TILE
-
-        x = static_cast<int>(xTile * (x + xOffset * width)) % width;
-        y = static_cast<int>(yTile * (y + yOffset * height)) % height;
-
 
         float nu = static_cast<float>(x) / static_cast<float>(width);
         float nv = static_cast<float>(y) / static_cast<float>(height);
@@ -213,11 +209,6 @@ public:
 
         int x = u * width;
         int y = v * height;
-
-        // OJO TILE
-
-        x = static_cast<int>(xTile * (x - xOffset * width)) % width;
-        y = static_cast<int>(yTile * (y - yOffset * height)) % height;
 
         float nu = static_cast<float>(x) / static_cast<float>(width);
         float nv = static_cast<float>(y) / static_cast<float>(height);

@@ -1,1 +1,1 @@
-Checks: '-*,google*,-google-readability-todo'
+Checks: '-*,modernize*'

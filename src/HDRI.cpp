@@ -40,7 +40,8 @@ HDRI::HDRI(std::string filepath) {
 		texture.data[i] = tmp_data[i];
 	}
 
-	//texture.xOffset = 0.5;
+	// HDRI loading implemented is 180º degree shifted in the horizontal position
+	texture.pixel_shift(0.5, 0);
 
 	stbi_image_free(tmp_data);
 

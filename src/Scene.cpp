@@ -205,11 +205,11 @@ Scene Scene::loadScene(std::string path) {
 
 
 	if (hdri_json.if_contains("xOffset")) {
-		scene.hdri.texture.xOffset = hdri_json["xOffset"].as_double();
+		scene.hdri.texture.pixel_shift(hdri_json["xOffset"].as_double(), 0);
 	}
 
 	if (hdri_json.if_contains("yOffset")) {
-		scene.hdri.texture.xOffset = hdri_json["yOffset"].as_double();
+		scene.hdri.texture.pixel_shift(0, hdri_json["yOffset"].as_double());
 	}
 
 	printf("Loading objs...\n");

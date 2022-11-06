@@ -104,11 +104,11 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
 
     BOOST_LOG_TRIVIAL(debug) << "Copying passes";
 
-    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * scene->camera->xRes * scene->camera->yRes * 4, q);
+    float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * scene->x_res * scene->y_res * 4, q);
     q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
-    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(scene->camera->xRes * scene->camera->yRes, q);
+    unsigned int* dev_samples = sycl::malloc_device<unsigned int>(scene->x_res * scene->y_res, q);
     q.memcpy(&(dev_scene->dev_samples), &(dev_samples), sizeof(unsigned int*)).wait();
-    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(scene->camera->xRes * scene->camera->yRes, q);
+    RngGenerator* dev_randstate = sycl::malloc_device<RngGenerator>(scene->x_res * scene->y_res, q);
     q.memcpy(&(dev_scene->dev_randstate), &(dev_randstate), sizeof(RngGenerator*)).wait();
 
     BOOST_LOG_TRIVIAL(debug) << "Copying tris";

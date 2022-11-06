@@ -165,16 +165,16 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial*
 
     // Setting pixel buffers to zero
     for (int i = 0; i < PASSES_COUNT; i++) {
-        dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
+        dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
             (4 * idx + 0)] = 0.0;
-        dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
+        dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
             (4 * idx + 1)] = 0.0;
-        dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
+        dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
             (4 * idx + 2)] = 0.0;
-        dev_scene_g->dev_passes[(i * dev_scene_g->camera->xRes * dev_scene_g->camera->yRes *
+        dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
             (4 * idx + 3)] = 1.0;
     }
@@ -238,7 +238,11 @@ dev_Scene::dev_Scene(Scene* scene) {
 
     tris = scene->getTris();
     bvh = scene->buildBVH();
-}
+
+    x_res = scene->x_res;
+    y_res = scene->y_res;
+
+ }
 
 // Calculate the light amount from all the light-points.
 Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
@@ -343,21 +347,21 @@ Vector3 hdriLight(Ray ray, dev_Scene* scene, Vector3 point, HitData hitdata, Rng
 
 // Calculate the initial camera ray. 
 // TODO: clean up the rotation mess
-void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
+void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray, float r1,
     float r2, float r3, float r4, float r5) {
     // Relative coordinates for the point where the first ray will be launched
     float dx = camera.position.x +
-        (static_cast<float>(x)) / (static_cast<float>(camera.xRes)) * camera.sensorWidth;
+        (static_cast<float>(x)) / (static_cast<float>(scene.x_res)) * camera.sensorWidth;
     float dy = camera.position.y +
-        (static_cast<float>(y)) / (static_cast<float>(camera.yRes)) * camera.sensorHeight;
+        (static_cast<float>(y)) / (static_cast<float>(scene.y_res)) * camera.sensorHeight;
 
     // Absolute coordinates for the point where the first ray will be launched
     float odx = (-camera.sensorWidth / 2.0) + dx;
     float ody = (-camera.sensorHeight / 2.0) + dy;
 
     // Random part of the sampling offset so we get antialasing
-    float rx = (1.0 / static_cast<float>(camera.xRes)) * (r1 - 0.5) * camera.sensorWidth;
-    float ry = (1.0 / static_cast<float>(camera.yRes)) * (r2 - 0.5) * camera.sensorHeight;
+    float rx = (1.0 / static_cast<float>(scene.x_res)) * (r1 - 0.5) * camera.sensorWidth;
+    float ry = (1.0 / static_cast<float>(scene.y_res)) * (r2 - 0.5) * camera.sensorHeight;
 
     // Sensor point, the point where intersects the ray with the sensor
     float SPx = odx + rx;
@@ -451,7 +455,7 @@ void calculateCameraRay(int x, int y, Camera& camera, Ray& ray, float r1,
 // Main Kernel
 void renderingKernel(dev_Scene* scene, int idx, int s) {
 
-    if (idx >= scene->camera->xRes * scene->camera->yRes) {
+    if (idx >= scene->x_res * scene->y_res) {
         return;
     }
 
@@ -461,11 +465,11 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
 
     Ray ray;
 
-    int x = (idx % scene->camera->xRes);
-    int y = (idx / scene->camera->xRes);
+    int x = (idx % scene->x_res);
+    int y = (idx / scene->y_res);
 
 
-    calculateCameraRay(x, y, *scene->camera, ray, rnd.next(), rnd.next(),
+    calculateCameraRay(x, y, *scene, *scene->camera, ray, rnd.next(), rnd.next(),
         rnd.next(), rnd.next(), rnd.next());
 
     // Accumulated radiance
@@ -567,42 +571,42 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
         if (sa > 0) {
             for (int pass = 0; pass < PASSES_COUNT; pass++) {
                 if (pass != DENOISE) {
-                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] *=
+                    scene->dev_passes[(pass * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] *=
                         (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
-                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] *=
+                    scene->dev_passes[(pass * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] *=
                         (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
-                    scene->dev_passes[(pass * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] *=
+                    scene->dev_passes[(pass * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] *=
                         (static_cast<float>(sa)) / (static_cast<float>((sa + 1)));
                 }
             }
         }
 
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] +=
             light.x / (static_cast<float>(sa + 1));
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] +=
             light.y / (static_cast<float>(sa + 1));
-        scene->dev_passes[(BEAUTY * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] +=
             light.z / (static_cast<float>(sa + 1));
 
-        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(NORMAL * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] +=
             normal.x / (static_cast<float>(sa + 1));
-        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(NORMAL * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] +=
             normal.y / (static_cast<float>(sa + 1));
-        scene->dev_passes[(NORMAL * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(NORMAL * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] +=
             normal.z / (static_cast<float>(sa + 1));
 
-        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(TANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] +=
             tangent.x / (static_cast<float>(sa + 1));
-        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(TANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] +=
             tangent.y / (static_cast<float>(sa + 1));
-        scene->dev_passes[(TANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(TANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] +=
             tangent.z / (static_cast<float>(sa + 1));
 
-        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 0)] +=
+        scene->dev_passes[(BITANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] +=
             bitangent.x / (static_cast<float>(sa + 1));
-        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 1)] +=
+        scene->dev_passes[(BITANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] +=
             bitangent.y / (static_cast<float>(sa + 1));
-        scene->dev_passes[(BITANGENT * scene->camera->xRes * scene->camera->yRes * 4) + (4 * idx + 2)] +=
+        scene->dev_passes[(BITANGENT * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] +=
             bitangent.z / (static_cast<float>(sa + 1));
 
         scene->dev_samples[idx]++;
@@ -705,7 +709,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
 
     q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(4096, 1024, h);
-        h.parallel_for(sycl::range(scene->camera.xRes * scene->camera.yRes),
+        h.parallel_for(sycl::range(scene->x_res * scene->y_res),
             [=](sycl::id<1> i) {
                 setupKernel(dev_scene, i, out, dev_osl);
             });
@@ -716,14 +720,14 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     //TODO: figure out how to manage max samples (noise cutoff?)
 
 
-    sycl::range global{ scene->camera.xRes + scene->camera.xRes%8,scene->camera.yRes + scene->camera.yRes % 8 };
+    sycl::range global{ scene->x_res + scene->x_res%8,scene->y_res + scene->y_res % 8 };
     sycl::range local{ 8,8 };
 
     for (int s = 0; s < 1000; s++) {
         q.submit([&](cl::sycl::handler& h) {
             h.parallel_for(sycl::nd_range{ global, local },
                 [=](sycl::nd_item<2> it) {
-                    renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->camera->yRes + it.get_global_id(1), s);
+                    renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), s);
                 });
             });
     }

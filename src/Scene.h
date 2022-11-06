@@ -31,6 +31,9 @@ public:
 
 	std::map<std::string, unsigned int> textureIDs;
 
+	unsigned int x_res;
+	unsigned int y_res;
+
 	HDRI hdri;
 	Camera camera;
 

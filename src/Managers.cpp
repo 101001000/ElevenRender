@@ -2,79 +2,125 @@
 #include "Managers.h"
 #include "kernel.h"
 
-std::map<std::string, Message::Type> Message::type_map = boost::assign::map_list_of("none", TYPE_NONE)
-                                                                                   ("command", TYPE_COMMAND)
-                                                                                   ("status", TYPE_STATUS)
-                                                                                   ("buffer", TYPE_BUFFER)
-                                                                                   ("render_info", TYPE_RENDER_INFO);
-std::map<std::string, Message::DataType> Message::data_type_map = boost::assign::map_list_of("none", DATA_TYPE_NONE)("float", DATA_TYPE_FLOAT)("json", DATA_TYPE_JSON)("string", DATA_TYPE_STRING);
 
-
-
-
-Message Message::parse_json(boost::json::object json) {
+Message Message::json2header(boost::json::object json) {
     BOOST_LOG_TRIVIAL(trace) << "in Message::parse_json()";
+
     Message msg;
-
     msg.type = Message::str2type(json["type"].as_string().c_str());
-    msg.msg = json["msg"].as_string();
+    msg.data_size = json["data_size"].as_int64();
+    msg.data_format = str2data_format(json["data_format"].as_string().c_str());
 
-    if (json.if_contains("additional_data")) {
-        BOOST_LOG_TRIVIAL(trace) << "Message::parse_json() -> parsing additional data";
-        boost::json::object additional_data_json = json["additional_data"].as_object();
-        msg.data_size = additional_data_json["data_size"].as_int64();
-        msg.data_type = str2data_type(additional_data_json["data_type"].as_string().c_str());
-        msg.data = nullptr;
-    }
 
     BOOST_LOG_TRIVIAL(trace) << "out Message::parse_json()";
     return msg;
 }
 
+
 Message::Message() {
-    type = Type::TYPE_NONE;
-    msg = "";
-    data_type = DataType::DATA_TYPE_NONE;
+    type = Type::NONE;
+    data_format = DataFormat::NONE;
     data_size = 0;
     data = nullptr;
 }
 
-std::string Message::type2str(Type type) {
-    std::string str = "";
+std::string Message::type2str(Message::Type type) {
 
-    for (auto it = type_map.begin(); it != type_map.end(); ++it) {
-        if (it->second == type) {
-            str = it->first;
-        }
+    std::string str = "und";
+
+    switch (type) {
+    case Message::Type::NONE:
+        str = "none";
+        break;
+    case Message::Type::COMMAND:
+        str = "command";
+        break;
+    case Message::Type::STATUS:
+        str = "status";
+        break;
+    case Message::Type::DATA:
+        str = "data";
+        break;
     }
     return str;
 }
+
 Message::Type Message::str2type(std::string str) {
-    return type_map[str];
-}
-std::string Message::data_type2str(DataType data_type) {
-    std::string str = "";
 
-    for (auto it = data_type_map.begin(); it != data_type_map.end(); ++it) {
-        if (it->second == data_type) {
-            str = it->first;
-        }
+    Message::Type type;
+
+    if (str == "none") {
+        type = Message::Type::NONE;
+    }
+    else if (str == "command") {
+        type = Message::Type::COMMAND;
+    }
+    else if (str == "status") {
+        type = Message::Type::STATUS;
+    }
+    else if (str == "data") {
+        type = Message::Type::DATA;
+    }
+    return type;
+}
+
+std::string Message::data_format2str(Message::DataFormat format) {
+
+    std::string str = "und";
+
+    switch (format) {
+    case Message::DataFormat::NONE:
+        str = "none";
+        break;
+    case Message::DataFormat::STRING:
+        str = "string";
+        break;
+    case Message::DataFormat::JSON:
+        str = "json";
+        break;
+    case Message::DataFormat::FLOAT3:
+        str = "float3";
+        break;
+    case Message::DataFormat::FLOAT4:
+        str = "float4";
+        break;
     }
     return str;
 }
-Message::DataType Message::str2data_type(std::string str) {
-    return data_type_map[str];
+
+Message::DataFormat Message::str2data_format(std::string str) {
+
+    Message::DataFormat format;
+
+    if (str == "none") {
+        format = Message::DataFormat::NONE;
+    }
+    else if (str == "float3") {
+        format = Message::DataFormat::FLOAT3;
+    }
+    else if (str == "float4") {
+        format = Message::DataFormat::FLOAT3;
+    }
+    else if (str == "json") {
+        format = Message::DataFormat::JSON;
+    }
+    else if (str == "string") {
+        format = Message::DataFormat::STRING;
+    }
+    return format;
 }
+
+
 
 boost::json::object Message::get_json_data() {
     BOOST_LOG_TRIVIAL(trace) << "Message::get_json_data()";
     boost::json::value json;
 
     try {
-        json = boost::json::parse(static_cast<char*>(data));
+        json = boost::json::parse(static_cast<const char*>(data));
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what() << (static_cast<char*>(data));
+        BOOST_LOG_TRIVIAL(error) << e.what() << (static_cast<const char*>(data));
     }
 
     return json.as_object();
@@ -85,27 +131,20 @@ float* Message::get_float_data() {
     return static_cast<float*>(data);
 }
 
+std::string Message::get_string_data() {
+    BOOST_LOG_TRIVIAL(trace) << "Message::get_string_data()";
+    return std::string(static_cast<const char*>(data));
+}
 
 
-boost::json::object Message::parse_message(Message msg) {
+boost::json::object Message::msg2json_header(Message msg) {
 
     BOOST_LOG_TRIVIAL(trace) << "Message::parse_message()";
     boost::json::object json;
 
     json["type"] = Message::type2str(msg.type);
-    json["msg"] = msg.msg;
-
-    if (msg.data_size != 0 &&
-        msg.data_type != DataType::DATA_TYPE_NONE &&
-        msg.data != nullptr) {
-
-        boost::json::object additional_data_json;
-
-        additional_data_json["data_size"] = msg.data_size;
-        additional_data_json["data_type"] = msg.data_type;
-
-        json["additional_data"] = additional_data_json;
-    }
+    json["data_format"] = Message::data_format2str(msg.data_format);
+    json["data_size"] = msg.data_size;
 
     return json;
 }
@@ -145,7 +184,6 @@ RenderingManager::RenderInfo RenderingManager::get_render_info() {
 void RenderingManager::start_rendering(Scene* scene) {
 
     BOOST_LOG_TRIVIAL(trace) << "RenderingManager::start_rendering()";
-    rd.pars = RenderParameters(scene->camera.xRes, scene->camera.yRes, 50);
 
     for (int i = 0; i < PASSES_COUNT; i++) {
 

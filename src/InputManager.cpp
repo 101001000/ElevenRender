@@ -19,7 +19,8 @@ std::vector<const char*> str_to_argv(std::string str) {
 
 void InputManager::execute_command_msg(Message msg) {
 
-    std::string command = msg.msg;
+    std::string command = msg.get_string_data();
+
     BOOST_LOG_TRIVIAL(trace) << "in InputManager::execute_command" << command;
     std::ostringstream response;
 
@@ -32,6 +33,7 @@ void InputManager::execute_command_msg(Message msg) {
 
         ("load_config", "load configuration from tcp (use --path for importing .json config files)")
         ("load_object", "load object from tcp (use --path for importing wavefront .obj files)")
+        ("load_camera", "load camera from tcp (use --path for importing camera .json files)")
         ("load_hdri", "load HDRI from tcp (use --path for importing .exr/.hdr files)")
         ("load_brdf_material", "load brdf material from tcp (use --path for importing .brdf files)")
         ("load_osl_material", "load osl material from tcp (use --path for importing .oslm files)")
@@ -65,19 +67,71 @@ void InputManager::execute_command_msg(Message msg) {
 
         else if (vm.count("load_object")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object";
+            std::vector<MeshObject> objects(0);
+
             if (vm.count("path")) {
-                //TODO make scene object agnostic
-                f = std::bind(&CommandManager::load_scene_from_obj, std::ref(cm), vm["path"].as<std::string>());
+
+                std::vector<UnloadedMaterial> umtls(0);
+
+                ObjLoader objLoader;
+                objLoader.loadObjsRapid(vm["path"].as<std::string>(), objects, umtls);
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
-                //TODO implement TCP object loading
+                //TODO implement TCP object loadingç
+                BOOST_LOG_TRIVIAL(error) << "TCP feature not implemented yet";
             }
+
+            f = std::bind(&CommandManager::load_objects, std::ref(cm), objects);
+        }
+
+        
+        else if (vm.count("load_camera")) {
+            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_camera";
+            Camera camera;
+            boost::json::object camera_json;
+
+            if (vm.count("path")) {
+                std::ifstream st(vm["path"].as<std::string>());
+                std::string str((std::istreambuf_iterator<char>(st)), std::istreambuf_iterator<char>());
+                camera_json = boost::json::parse(str).as_object();
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
+            }
+            else {
+                Message data_msg = read_message();
+                camera_json = data_msg.get_json_data();
+            }
+
+            boost::json::object position_json = boost::json::parse(camera_json["position"].as_string()).as_object();
+            boost::json::object rotation_json = boost::json::parse(camera_json["rotation"].as_string()).as_object();
+
+            camera.aperture = camera_json["aperture"].as_double();
+            camera.bokeh = camera_json["bokeh"].as_bool();
+            camera.focusDistance = camera_json["focus_distance"].as_double();
+            camera.focalLength = camera_json["focal_length"].as_double();
+            camera.sensorWidth = camera_json["sensor_width"].as_double();
+            camera.sensorHeight = camera_json["sensor_height"].as_double();
+
+            camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
+            camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
+
+            f = std::bind(&CommandManager::load_camera, std::ref(cm), camera);
         }
 
         else if (vm.count("load_hdri")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_hdri";
             if (vm.count("path")) {
                 //TODO implement HDRI loading
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
                 //TODO implement TCP HDRI loading
@@ -86,18 +140,35 @@ void InputManager::execute_command_msg(Message msg) {
 
         else if (vm.count("load_config")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_config";
+            RenderParameters rp;
             if (vm.count("path")) {
-                //TODO implement config loading
+                BOOST_LOG_TRIVIAL(error) << "load_config filesystem feature not implemented yet";
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
-                //TODO implement TCP config loading
+                Message data_msg = read_message();
+                boost::json::object json_data = data_msg.get_json_data();
+                try {
+                    rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64());
+                }
+                catch (std::exception const& e) {
+                    BOOST_LOG_TRIVIAL(error) << "Invalid config format: " << e.what();
+                }
             }
+            f = std::bind(&CommandManager::load_config, std::ref(cm), rp);
         }
 
         else if (vm.count("load_brdf_material")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_brdf_material";
             if (vm.count("path")) {
                 //TODO implement config loading
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
                 f = std::bind(&CommandManager::load_material_from_json, std::ref(cm), msg.get_json_data());
@@ -109,6 +180,10 @@ void InputManager::execute_command_msg(Message msg) {
             //TODO
             if (vm.count("path")) {
 
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
 
@@ -139,12 +214,6 @@ void InputManager::execute_command_msg(Message msg) {
             //TODO
         }
 
-        else if (vm.count("start")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue start";
-            f = std::bind(&CommandManager::start_render, std::ref(cm));
-        }
-
-
         else if (vm.count("get_info")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue get_info";
             if (vm.count("output")) {
@@ -158,36 +227,62 @@ void InputManager::execute_command_msg(Message msg) {
         else if (vm.count("load_texture")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_texture";
 
+            // 1: check args, send ok
+            // 2: wait for metadata
+            // 3: check metadata, send ok
+            // 4: wait for texture data
+            // 5: generate texture
+
+            Message metadata_msg = read_message();
+
+            boost::json::object json_metadata = metadata_msg.get_json_data();
+
+            int width = json_metadata["width"].as_int64();
+            int height = json_metadata["height"].as_int64();
+            int channels = json_metadata["channels"].as_int64();
+
+            std::string name = static_cast<std::string>(json_metadata["name"].as_string());
+            std::string color_space = static_cast<std::string>(json_metadata["color_space"].as_string());
+
+            write_message(Message::OK());
+
             Texture tex;
 
             if (vm.count("path")) {
-                //TODO: load texture by file
+
+                //TODO: Manage color space loading
+                stbi_set_flip_vertically_on_load(true);
+
+                int l_width, l_height, l_channels;
+
+                float* tmp_data = stbi_loadf(vm["path"].as<std::string>().c_str(), &l_width, &l_height, &l_channels, 0);
+
+                //TODO: Add error loading handling
+                BOOST_LOG_TRIVIAL(debug) << "Loaded texture from" << vm["path"].as<std::string>();
+
+                if (width != l_width || height != l_height || channels != l_channels) {
+                    BOOST_LOG_TRIVIAL(warning) << "Metadata - file metadata missmatch on " << name;
+                }
+
+                tex = Texture(l_width, l_height, l_channels, tmp_data);
+
+                stbi_image_free(tmp_data);
+            }
+            else if (vm.count("sm")) {
+                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                //TODO implement sm object loading
             }
             else {
-                //TODO: change the metadata to a full json message block
-                std::vector<std::string> split_metadata = vm["load_texture"].as<std::vector<std::string>>();
-                std::string metadata;
 
-                for (std::string str : split_metadata) {
-                    metadata += str + " ";
-                }
+                Message data_msg = read_message();
+                float* data = msg.get_float_data();
+                tex = Texture(width, height, channels, data);
+                delete[] data;
 
-                boost::json::object json = boost::json::parse(metadata).as_object();
-
-                float* msg_data = msg.get_float_data();
-                tex = Texture(json["width"].as_int64(), json["height"].as_int64(), 4, msg_data);
-                delete[] msg_data;
-
-                tex.name = json["name"].as_string();               
-
-                if (json["color_space"] == "sRGB") {
-                    BOOST_LOG_TRIVIAL(debug) << "Applying gamma correction to " << tex.name;
-                    tex.applyGamma(2.2);
-                }
             }
             f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
-        } 
-        
+        }
+
         else {
             BOOST_LOG_TRIVIAL(error) << "Command not found";
         }
@@ -212,11 +307,11 @@ void InputManager::execute_command_msg(Message msg) {
 void InputManager::write_message(Message msg) {
     BOOST_LOG_TRIVIAL(trace) << "in InputManager::write_message()";
 
-    std::string str = serialize(Message::parse_message(msg));
+    std::string str = serialize(Message::msg2json_header(msg));
     size_t a = sock.get()->write_some(boost::asio::buffer(str));
 
     if (msg.data_size != 0 &&
-        msg.data_type != Message::DataType::DATA_TYPE_NONE &&
+        msg.data_format != Message::DataFormat::NONE &&
         msg.data != nullptr) {
         BOOST_LOG_TRIVIAL(trace) << "InputManager::write_message -> writting additional data";
         boost::asio::write(*(sock.get()), boost::asio::buffer(static_cast<float*>(msg.data), msg.data_size));
@@ -224,6 +319,7 @@ void InputManager::write_message(Message msg) {
     }
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::write_message()";
 }
+
 
 Message InputManager::read_message() {
     BOOST_LOG_TRIVIAL(trace) << "in InputManager::read_message()";
@@ -238,10 +334,12 @@ Message InputManager::read_message() {
 
     boost::json::value input_json;
 
+    BOOST_LOG_TRIVIAL(debug) << input_str;
+
     try {
         input_json = boost::json::parse(input_str);
 
-        msg = Message::parse_json(input_json.as_object());
+        msg = Message::json2header(input_json.as_object());
 
         if (msg.data_size != 0) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::read_message() -> reading additional data";
@@ -250,7 +348,7 @@ Message InputManager::read_message() {
         }
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what();
+        BOOST_LOG_TRIVIAL(error) << "InputManager::read_message(): " << e.what();
     }
 
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::read_message()";
@@ -270,8 +368,8 @@ void InputManager::run_tcp() {
 
         while (!error) {
             Message msg = read_message();
-            BOOST_LOG_TRIVIAL(debug) << "Message readed " << msg.msg;
-            if (msg.type == Message::Type::TYPE_COMMAND) {
+            BOOST_LOG_TRIVIAL(debug) << "Message readed ";
+            if (msg.type == Message::Type::COMMAND) {
                 execute_command_msg(msg);
             }
         }
@@ -279,4 +377,6 @@ void InputManager::run_tcp() {
     }
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::run_tcp()";
 }
+
+
 

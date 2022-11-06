@@ -16,13 +16,13 @@ void CommandManager::get_pass(std::string& pass) {
 
     Message pass_data_msg;
 
-    pass_data_msg.msg = "beauty_data";
-    pass_data_msg.type = Message::TYPE_BUFFER;
+    pass_data_msg.type = Message::Type::DATA;
     pass_data_msg.data_size = rm->rd.pars.width * rm->rd.pars.height * 4 * sizeof(float);
-    pass_data_msg.data_type = Message::DATA_TYPE_FLOAT;
+    pass_data_msg.data_format = Message::DataFormat::FLOAT4;
     
     float* raw_pass = rm->get_pass(pass);
     
+    //TODO: fix this denoising patch.
     if (rm->get_render_info().samples >= 999) {
         float* denoise_pass = static_cast<float*>(malloc(rm->rd.pars.width * rm->rd.pars.height * sizeof(float) * 4));
         dm->denoise(rm->rd.pars.width, rm->rd.pars.height, raw_pass, denoise_pass);
@@ -48,8 +48,10 @@ void CommandManager::get_render_info() {
 
     json_info["samples"] = render_info.samples;
 
-    render_info_msg.msg = boost::json::serialize(json_info);
-    render_info_msg.type = Message::TYPE_RENDER_INFO;
+    render_info_msg.data = (void*)(boost::json::serialize(json_info).c_str());
+    render_info_msg.data_format = Message::DataFormat::JSON;
+    render_info_msg.data_size = boost::json::serialize(json_info).size() + 1;
+    render_info_msg.type = Message::Type::DATA;
     im->write_message(render_info_msg);
 }
 
@@ -60,6 +62,19 @@ void CommandManager::load_texture(Texture texture) {
 
     im->write_message(Message::OK());
 }
+
+void CommandManager::load_config(RenderParameters rp) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_config()";
+    rm->rd.pars = rp;
+    im->write_message(Message::OK());
+}
+
+void CommandManager::load_camera(Camera camera) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_camera()";
+    sm->scene.camera = camera;
+    im->write_message(Message::OK());
+}
+
 
 void CommandManager::save_pass(std::string& pass, std::string& path) {
 
@@ -157,6 +172,17 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
     sm->scene.pair_materials();
     sm->scene.pair_textures();
 
+    im->write_message(Message::OK());
+}
+
+void CommandManager::load_objects(std::vector<MeshObject> objects) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_objects(" << objects.size() << ")";
+
+    for (MeshObject obj : objects) {
+        sm->scene.addMeshObject(obj);
+    }
+
+    sm->scene.pair_materials();
     im->write_message(Message::OK());
 }
 

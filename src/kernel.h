@@ -30,6 +30,9 @@ struct dev_Scene {
     unsigned int triCount;
     unsigned int pointLightCount;
 
+	unsigned int x_res;
+	unsigned int y_res;
+
     PointLight* pointLights;
     MeshObject* meshObjects;
     Material* materials;

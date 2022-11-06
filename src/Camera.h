@@ -6,12 +6,9 @@ class Camera {
 
 public:
 
-	unsigned int xRes = 1280;
-	unsigned int yRes = 720;
-
 	float focalLength = 35 * 0.001;
-	float sensorWidth = 35 * 0.001;
-	float sensorHeight = sensorWidth * (static_cast<float>(yRes) / static_cast<float>(xRes));
+	float sensorWidth = 36 * 0.001;
+	float sensorHeight = 24 * 0.001;
 	float aperture = 2.8;
 	float focusDistance = 1000000;
 
@@ -24,11 +21,6 @@ public:
 public:
 
 	Camera() {}
-
-	Camera(unsigned int _xRes, unsigned int _yRes);
-
-	void setSensorWidth(float size);
-
 
 };
 

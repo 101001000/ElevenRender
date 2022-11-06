@@ -141,6 +141,9 @@ BVH* Scene::buildBVH() {
 
 Scene Scene::loadScene(std::string path) {
 
+
+	Scene scene = Scene();
+
 	try {
 
 	ObjLoader objLoader;
@@ -148,8 +151,6 @@ Scene Scene::loadScene(std::string path) {
 	path += "\\";
 
 	printf("Loading scene \n");
-
-	Scene scene = Scene();
 
 	std::ifstream st(path + "scene.json");
 
@@ -168,9 +169,6 @@ Scene Scene::loadScene(std::string path) {
 	boost::json::object camera_pos_json = camera_json["position"].as_object();
 	boost::json::object camera_rot_json = camera_json["rotation"].as_object();
 
-	int xRes = camera_json["xRes"].as_int64();
-	int yRes = camera_json["yRes"].as_int64();
-
 	float focalLength = camera_json["focalLength"].as_double();
 	float focusDistance = camera_json["focusDistance"].as_double();
 	float aperture = camera_json["aperture"].as_double();
@@ -179,7 +177,7 @@ Scene Scene::loadScene(std::string path) {
 	Vector3 cameraPosition = Vector3(camera_pos_json["x"].as_double(), camera_pos_json["y"].as_double(), camera_pos_json["z"].as_double());
 	Vector3 cameraRotation = Vector3(camera_rot_json["x"].as_double(), camera_rot_json["y"].as_double(), camera_rot_json["z"].as_double());
 
-	scene.camera = Camera(xRes, yRes);
+	scene.camera = Camera();
 	scene.camera.focalLength = focalLength;
 	scene.camera.focusDistance = focusDistance;
 	scene.camera.aperture = aperture;
@@ -247,11 +245,12 @@ Scene Scene::loadScene(std::string path) {
 		printf("\n");
 	}
 	*/
-	return scene;
+	
 	}
 	catch (std::exception const& e) {
 		BOOST_LOG_TRIVIAL(error) << e.what();
 	}
 
+	return scene;
 
 }

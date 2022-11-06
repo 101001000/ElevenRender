@@ -28,17 +28,10 @@ class SceneManager : Manager {
 
 public:
 
-    struct RenderConfig {
-        unsigned int max_samples = 50;
-        unsigned int max_bounces = 5;
-    };
-
     Scene scene;
-    using Manager::Manager;
 
-    void set_render_config(RenderConfig cf);
-    void set_texture(Texture& tex);
-    
+    using Manager::Manager;
+        
 };
 
 class RenderingManager : Manager {
@@ -65,12 +58,79 @@ public:
 
     void start_rendering(Scene* scene);
     float* get_pass(std::string pass);
-    RenderInfo get_render_info();
+    RenderInfo get_render_info();                
 
 };
 
 
 
+/*
+template<typename T>
+class Message2 {
+public:
+    std::vector<T> data;
+    Message2(T _data) : data(_data) {}
+       
+};
+
+template<typename T>
+class DataMessage : public Message2<T> {
+public:
+    DataMessage(T _data) : Message2(_data) {}
+    inline static DataMessage<float> FLOAT(float* _data, unsigned int _size) {
+        data{_data, _data + _size};
+    }
+    inline static DataMessage<boost::json::object> JSON(boost::json::object& obj) { return Message2(obj); }
+};
+
+class StatusMessage : public Message2<std::string> {
+public:
+    StatusMessage(std::string status) : Message2(status) {}
+    inline static StatusMessage OK() { return StatusMessage("OK"); }
+    inline static StatusMessage ERR() { return StatusMessage("ERROR"); }
+};
+
+class CommandMessage : public Message2<std::string> {
+
+};*/
+
+struct Message {
+
+    enum class Type { NONE, COMMAND, STATUS, DATA};
+    enum class DataFormat { NONE, FLOAT3, FLOAT4, STRING, JSON};
+
+    Type type;
+    DataFormat data_format;
+    void* data;
+    unsigned int data_size;
+
+    Message();
+
+    inline static Message OK() {
+        Message ok_message;
+        ok_message.data = (void*)("ok");
+        ok_message.data_size = 3;
+        ok_message.data_format = DataFormat::STRING;
+        ok_message.type = Type::STATUS;
+        return ok_message;
+    }
+
+    static boost::json::object msg2json_header(Message msg);
+    static Message json2header(boost::json::object json);
+    static std::string type2str(Type type);
+    static Type str2type(std::string str);
+    static std::string data_format2str(DataFormat data_format);
+    static DataFormat str2data_format(std::string str);
+
+
+    boost::json::object get_json_data();
+    float* get_float_data();
+    std::string get_string_data();
+
+};
+
+/*
+//TODO: Refactor Message templated.
 struct Message {
 
     enum Type { TYPE_NONE, TYPE_COMMAND, TYPE_STATUS, TYPE_BUFFER, TYPE_RENDER_INFO };
@@ -106,6 +166,7 @@ struct Message {
     float* get_float_data();
 };
 
+*/
 class InputManager : Manager {
 
 public:

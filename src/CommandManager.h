@@ -23,11 +23,6 @@ public:
 
     CommandManager();
 
-
-    // WindowManager commands
-    //void open_window();
-
-    //void change_preview(std::string& pass);
     void load_scene_from_obj(std::string& pass);
     void load_texture(Texture texture);
     void get_render_info();
@@ -35,6 +30,9 @@ public:
     void save_pass(std::string& pass, std::string& path);
     void get_pass(std::string& pass);
     void start_render();
+    void load_config(RenderParameters rp);
+    void load_camera(Camera camera);
+    void load_objects(std::vector<MeshObject> objects);
 
     void run();
     void init();

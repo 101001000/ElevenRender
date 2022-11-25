@@ -52,17 +52,18 @@ struct RenderParameters {
 
 	unsigned int width, height;
 	unsigned int sampleTarget;
+	bool denoise;
 
 	bool passes_enabled[PASSES_COUNT];
 
-	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget) : width(width), height(height), sampleTarget(sampleTarget) {
+	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise) {
 		passes_enabled[BEAUTY] = true;
 		passes_enabled[DENOISE] = true;
 		passes_enabled[NORMAL] = true;
 		passes_enabled[TANGENT] = true;
 		passes_enabled[BITANGENT] = true;
 	};
-	RenderParameters() : width(1280), height(720), sampleTarget(100) {};
+	RenderParameters() : width(1280), height(720), sampleTarget(100), denoise(false) {};
 };
 
 struct RenderData {
@@ -118,7 +119,4 @@ struct HitData {
 };
 
 
-int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene);
-
-int getSamples(dev_Scene* dev_scene, sycl::queue& q);
-
+int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples);

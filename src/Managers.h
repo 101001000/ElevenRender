@@ -13,6 +13,8 @@
 #include <boost/assign.hpp>
 #include <boost/json.hpp>
 
+#define MESSAGE_HEADER_SIZE 1024
+
 //Forward declaration
 class CommandManager;
 
@@ -126,6 +128,7 @@ struct Message {
     boost::json::object get_json_data();
     float* get_float_data();
     std::string get_string_data();
+    std::string to_string();
 
 };
 

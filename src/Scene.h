@@ -65,8 +65,7 @@ public:
 
 	void addMeshObject(MeshObject meshObject);
 
-	void addHDRI(std::string filepath);
-	void addHDRI(Vector3 color);
+	void addHDRI(HDRI hdri);
 
 	void pair_materials();
 	void pair_textures();

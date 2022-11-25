@@ -14,6 +14,7 @@ build.ninja
 cmake_install.cmake
 CMakeCache.txt
 CMakeLists.txt
+CMakeLists2.txt
 .vs
 x64
 *.vcxproj
@@ -33,3 +34,4 @@ src/lan/FlexLexer.h
 src/lan/lex.yy.cpp
 src/lan/calc.output
 test.osl
+blender_temp

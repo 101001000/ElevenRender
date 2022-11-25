@@ -65,8 +65,7 @@ void Scene::addMeshObject(MeshObject meshObject) {
 	}
 }
 
-void Scene::addHDRI(std::string filepath) { hdri = HDRI(filepath); }
-void Scene::addHDRI(Vector3 color) { hdri = HDRI(color); }
+void Scene::addHDRI(HDRI _hdri) { hdri = _hdri; }
 
 void Scene::pair_textures() {
 
@@ -193,12 +192,12 @@ Scene Scene::loadScene(std::string path) {
 
 	if (hdri_json.if_contains("name")) {
 		std::cout << "loading hdri from " << hdri_json["name"].as_string() << std::endl;
-		scene.addHDRI(hdri_json["name"].as_string().c_str());
+		scene.addHDRI(HDRI(hdri_json["name"].as_string().c_str()));
 	}
 	else if (hdri_json.if_contains("color")) {
 		Vector3 color = Vector3(hdri_json["color"].as_object()["r"].as_double(), hdri_json["color"].as_object()["g"].as_double(), hdri_json["color"].as_object()["b"].as_double());
 		//Vector3 gc_color = Vector3(sycl::pow(color.x, 2.2f), sycl::pow(color.y, 2.2f), sycl::pow(color.z, 2.2f));
-		scene.addHDRI(color);
+		scene.addHDRI(HDRI(color));
 	}
 
 

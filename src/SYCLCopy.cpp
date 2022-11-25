@@ -102,7 +102,7 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy(dev_camera, scene->camera, sizeof(Camera)).wait();
     q.memcpy(&(dev_scene->camera), &dev_camera, sizeof(Camera*)).wait();
 
-    BOOST_LOG_TRIVIAL(debug) << "Copying passes";
+    BOOST_LOG_TRIVIAL(debug) << "Copying passes (" << scene->x_res << "x" << scene->y_res << ")";
 
     float* dev_passes = sycl::malloc_device<float>(PASSES_COUNT * scene->x_res * scene->y_res * 4, q);
     q.memcpy(&(dev_scene->dev_passes), &(dev_passes), sizeof(float*)).wait();
@@ -117,7 +117,7 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy(dev_tris, scene->tris, sizeof(Tri) * scene->triCount).wait();
     q.memcpy(&(dev_scene->tris), &(dev_tris), sizeof(Tri*)).wait();
 
-    BOOST_LOG_TRIVIAL(debug) << "Copying Mesh Objects";
+    BOOST_LOG_TRIVIAL(debug) << "Copying " << scene->meshObjectCount << " Mesh Objects";
 
     MeshObject* dev_mo = sycl::malloc_device<MeshObject>(scene->meshObjectCount, q);
     q.memcpy(dev_mo, scene->meshObjects, sizeof(MeshObject) * scene->meshObjectCount).wait();
@@ -126,7 +126,7 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
         q.memcpy(&(dev_mo[i].tris), &dev_tris, sizeof(Tri*)).wait();
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "Copying tri-indices";
+    BOOST_LOG_TRIVIAL(debug) << "Copying " << scene->triCount << " tri - indices";
 
     int* dev_triIndices = sycl::malloc_device<int>(scene->triCount, q);
     q.memcpy(dev_triIndices, scene->bvh->triIndices, sizeof(int) * scene->triCount).wait();
@@ -167,7 +167,7 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy(&(dev_scene->textures), &(dev_textures), sizeof(Texture*)).wait();
 
 
-    BOOST_LOG_TRIVIAL(debug) << "Copying HDRI to GPU";
+    BOOST_LOG_TRIVIAL(debug) << "Copying HDRI";
 
     HDRI* hdri = scene->hdri;
     HDRI* dev_hdri = sycl::malloc_device<HDRI>(1, q);
@@ -182,5 +182,8 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy((&dev_hdri->texture.data), &(dev_data), sizeof(float*)).wait();
     q.memcpy(&(dev_hdri->cdf), &(dev_cdf), sizeof(float*)).wait();
     q.memcpy(&(dev_scene->hdri), &(dev_hdri), sizeof(float*)).wait();
+
+
+    BOOST_LOG_TRIVIAL(info) << "All scene copied";
 
 }

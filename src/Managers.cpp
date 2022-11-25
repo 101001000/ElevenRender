@@ -24,6 +24,21 @@ Message::Message() {
     data = nullptr;
 }
 
+std::string Message::to_string() {
+    std::string str = "HEADER: Type: " + Message::type2str(type) + ", Data Format: " + Message::data_format2str(data_format) + ", Data Size: " + std::to_string(data_size) + "\n";
+
+    if (data_format == DataFormat::JSON) {
+        str += "BODY: " + boost::json::serialize(get_json_data());
+    }
+
+    if (data_format == DataFormat::STRING) {
+        str += "BODY: " + get_string_data();
+    }
+    
+    return str;
+
+}
+
 std::string Message::type2str(Message::Type type) {
 
     std::string str = "und";
@@ -47,7 +62,7 @@ std::string Message::type2str(Message::Type type) {
 
 Message::Type Message::str2type(std::string str) {
 
-    Message::Type type;
+    Message::Type type = Message::Type::NONE;
 
     if (str == "none") {
         type = Message::Type::NONE;
@@ -90,7 +105,7 @@ std::string Message::data_format2str(Message::DataFormat format) {
 
 Message::DataFormat Message::str2data_format(std::string str) {
 
-    Message::DataFormat format;
+    Message::DataFormat format = Message::DataFormat::NONE;
 
     if (str == "none") {
         format = Message::DataFormat::NONE;
@@ -99,7 +114,7 @@ Message::DataFormat Message::str2data_format(std::string str) {
         format = Message::DataFormat::FLOAT3;
     }
     else if (str == "float4") {
-        format = Message::DataFormat::FLOAT3;
+        format = Message::DataFormat::FLOAT4;
     }
     else if (str == "json") {
         format = Message::DataFormat::JSON;
@@ -117,10 +132,10 @@ boost::json::object Message::get_json_data() {
     boost::json::value json;
 
     try {
-        json = boost::json::parse(static_cast<const char*>(data));
+        json = boost::json::parse(static_cast<char*>(data));
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what() << (static_cast<const char*>(data));
+        BOOST_LOG_TRIVIAL(error) << e.what();
     }
 
     return json.as_object();
@@ -128,7 +143,7 @@ boost::json::object Message::get_json_data() {
 
 float* Message::get_float_data() {
     BOOST_LOG_TRIVIAL(trace) << "Message::get_float_data()";
-    return static_cast<float*>(data);
+    return (static_cast<float*>(data));
 }
 
 std::string Message::get_string_data() {
@@ -194,7 +209,7 @@ void RenderingManager::start_rendering(Scene* scene) {
         }
     }
 
-    t_rend = std::thread(renderSetup, std::ref(k_q), std::ref(scene), std::ref(dev_scene));
+    t_rend = std::thread(renderSetup, std::ref(k_q), std::ref(scene), std::ref(dev_scene), rd.pars.sampleTarget);
     t_rend.join();
 
     rd.startTime = std::chrono::high_resolution_clock::now();

@@ -1,8 +1,12 @@
 #include "HDRI.h"
 
 
-HDRI::HDRI() {
-	texture = Texture();
+
+
+HDRI::HDRI(Texture _texture) {
+	texture = _texture;
+	cdf = new float[texture.width * texture.height + 1];
+	generateCDF();
 }
 
 HDRI::HDRI(Vector3 color) {
@@ -10,6 +14,8 @@ HDRI::HDRI(Vector3 color) {
 	cdf = new float[texture.width * texture.height + 1];
 	generateCDF();
 }
+
+HDRI::HDRI() : HDRI(Vector3(0.5)) {}
 
 #if !defined(__CUDACC__)
 

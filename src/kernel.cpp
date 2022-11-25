@@ -453,7 +453,7 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
 
 
 // Main Kernel
-void renderingKernel(dev_Scene* scene, int idx, int s) {
+void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
     if (idx >= scene->x_res * scene->y_res) {
         return;
@@ -466,8 +466,9 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
     Ray ray;
 
     int x = (idx % scene->x_res);
-    int y = (idx / scene->y_res);
+    int y = (idx / scene->x_res);
 
+    for (int s = 0; s < samples; s++) {
 
     calculateCameraRay(x, y, *scene, *scene->camera, ray, rnd.next(), rnd.next(),
         rnd.next(), rnd.next(), rnd.next());
@@ -612,6 +613,12 @@ void renderingKernel(dev_Scene* scene, int idx, int s) {
         scene->dev_samples[idx]++;
     }
     scene->dev_randstate[idx] = rnd;
+
+    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0,   ((float)y) / 1080.0)[0];
+    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0, ((float)y) / 1080.0)[1];
+    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0, ((float)y) / 1080.0)[2];
+
+    }
 }
 
 
@@ -677,9 +684,9 @@ void printStatement(Statement sta) {
 
 
 
-int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
+int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples) {
 
-    BOOST_LOG_TRIVIAL(info) << "Initializing rendering";
+    BOOST_LOG_TRIVIAL(info) << "Initializing rendering at " << target_samples << " sample target";
 
     dev_Scene* temp = new dev_Scene(scene);
 
@@ -720,17 +727,18 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene) {
     //TODO: figure out how to manage max samples (noise cutoff?)
 
 
-    sycl::range global{ scene->x_res + scene->x_res%8,scene->y_res + scene->y_res % 8 };
+    sycl::range global{ scene->x_res + scene->x_res % 8,scene->y_res + scene->y_res % 8 };
     sycl::range local{ 8,8 };
 
-    for (int s = 0; s < 1000; s++) {
-        q.submit([&](cl::sycl::handler& h) {
-            h.parallel_for(sycl::nd_range{ global, local },
-                [=](sycl::nd_item<2> it) {
-                    renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), s);
-                });
+
+    q.submit([&](cl::sycl::handler& h) {
+
+        h.parallel_for(sycl::nd_range{ global, local },
+            [=](sycl::nd_item<2> it) {
+                renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), target_samples);
             });
-    }
+    });
+
 
     BOOST_LOG_TRIVIAL(info) << "All samples added to the queue";
 

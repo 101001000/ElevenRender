@@ -17,6 +17,7 @@ public:
 	HDRI();
 
 	explicit HDRI(Vector3 color);
+	explicit HDRI(Texture texture);
 
 #if !defined(__CUDACC__)
 

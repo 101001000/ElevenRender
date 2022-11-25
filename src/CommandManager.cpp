@@ -50,7 +50,7 @@ void CommandManager::get_render_info() {
 
     render_info_msg.data = (void*)(boost::json::serialize(json_info).c_str());
     render_info_msg.data_format = Message::DataFormat::JSON;
-    render_info_msg.data_size = boost::json::serialize(json_info).size() + 1;
+    render_info_msg.data_size = boost::json::serialize(json_info).size();
     render_info_msg.type = Message::Type::DATA;
     im->write_message(render_info_msg);
 }
@@ -63,15 +63,25 @@ void CommandManager::load_texture(Texture texture) {
     im->write_message(Message::OK());
 }
 
-void CommandManager::load_config(RenderParameters rp) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_config()";
-    rm->rd.pars = rp;
+void CommandManager::load_hdri(HDRI hdri) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_hdri(" << hdri.texture.width << "x" << hdri.texture.height << ")";
+    BOOST_LOG_TRIVIAL(info) << hdri.texture.data[0];
+    sm->scene.addHDRI(hdri);
     im->write_message(Message::OK());
 }
 
-void CommandManager::load_camera(Camera camera) {
+void CommandManager::load_config(RenderParameters rp) {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << ")";
+    rm->rd.pars = rp;
+    //TODO: Pars and scene both have redundant resolution.
+    sm->scene.x_res = rp.width;
+    sm->scene.y_res = rp.height;
+    im->write_message(Message::OK());
+}
+
+void CommandManager::load_camera() {
     BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_camera()";
-    sm->scene.camera = camera;
+    //sm->scene.camera = camera;
     im->write_message(Message::OK());
 }
 

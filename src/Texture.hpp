@@ -68,8 +68,13 @@ public:
 
     // Limit the amount of channels to 3
     void clamp_channels() {
-        for (int i = 3; i < channels; i++) {
+        std::cout << "Clamping channels" << std::endl;
+        // Channel count is modified when removing one channel.
+        int or_channels = channels;
+        for (int i = 3; i < or_channels; i++) {
+            std::cout << "Removing one channel" << std::endl;
             remove_last_channel();
+            std::cout << "Removed!" << std::endl;
         }
     }
 
@@ -115,8 +120,8 @@ public:
         height = _height;
         data = new float[width * height * _channels];
         channels = _channels;
-        memcpy(data, _data, sizeof(float) * width * height * _channels);
-        clamp_channels();
+        memcpy(data, _data, sizeof(float) * width * height * channels);
+        //clamp_channels();
     }
 
     explicit Texture(Vector3 _color) {

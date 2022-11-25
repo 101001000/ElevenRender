@@ -54,6 +54,7 @@ void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObj
 
     if (result.error) {
         std::cout << result.error.code.message() << '\n';
+		std::cout << path << '\n';
     }
 
     bool success = rapidobj::Triangulate(result);

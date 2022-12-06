@@ -12,7 +12,7 @@ At the moment, Eleven is a WIP, and features like ASL are just proof of concepts
 
 ## Releases
 The only way to use Eleven Render right now is through Blender, thanks to the [ElevenBlender plug-in](https://github.com/101001000/ElevenBlender) 
-Download the last ElevenBlender release here:
+Download the last ElevenBlender release here: <span style="color:red">**There's no releases yet**</span>.
 
 
 ## Features
@@ -24,7 +24,32 @@ Download the last ElevenBlender release here:
 - Denoising (Open Image Denoiser) 
 
 ## Build
-### Dependencies
+
+**Disclaimer** At the current moment, there's not a builiding guide which will allow you to build Eleven flawlessly. I plan to release a Linux one, and to solve some compilation issues.
+
+I'm also working on installing Boost libraries automatically, but [there's some compatibility issues with Windows, Intel DPC++ and Boost](https://github.com/101001000/ElevenRender/issues/7)
+
+### Windows (VS2022) - CUDA
+
+Install [Boost 1.80.00](https://www.boost.org/doc/libs/1_62_0/more/getting_started/windows.html) on the system (C:\Program Files\boost\boost_1_80_0), and compile it following the step 5 from the linked instructions. Ideally you must compile it with clangw16 toolset. 
+
+Currently, the 16 version of Clang, is not available on Visual Studio, so if you want to avoid the mess to setup Visual Studio for clangw16, you can apply this quick dirty patch[^1]:
+You need to override the BOOST_LIB_TOOLSET variable, located in C:\Program Files\boost\boost_1_80_0\boost\config\auto_link.hpp to "clangw16", for example by typing #define BOOST_LIB_TOOLSET "clangw15" in the line 227.
+
+Finally run build.bat. It will download automatically the rest of the dependencies, including the DPC++ Intel's toolchain. 
+
+<!--- If you want to use your own SYCL implementation, you can just run build.bat with an additional argument pointing your sycl_workspace installation.)-->
+
+
+
+[^1]: I was not able to compile Boost with the Intel's DPC++ toolchain, because it doesn't support Windows SEH exceptions, which are being used in the Boost::asio library. To solve it, I made a quick patch by compiling Boost manually and renaming some of the library files. I'm working on being able to compile Boost with CMAKE, meanwhile, that's the solution.
+
+
+## Docs
+
+<details open>
+<summary>Third party libraries used</summary>
+
 - [SYCL]() 
 - [Boost](https://github.com/boostorg/boost) for TCP, logging, program args, 
 - [Intel Open Image Denoiser](https://github.com/OpenImageDenoise/oidn) for final denoise
@@ -34,10 +59,7 @@ Download the last ElevenBlender release here:
 - [Rapidobj](https://github.com/guybrush77/rapidobj) for loading wavefront objects
 - [stb_image & stb_image_write](https://github.com/nothings/stb) for image IO
 
-## Docs
 
-<details open>
-<summary>Gallery</summary>
 <br>
 </details>
 

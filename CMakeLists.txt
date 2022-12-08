@@ -3,7 +3,11 @@ set(FETCHCONTENT_QUIET FALSE)
 set( CMAKE_CXX_STANDARD 17 )
 include(FetchContent)
 
-if(NOT DEFINED SYCL_PATH)
+if(NOT SYCL_PATH)
+    set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/_deps/sycl_llvm-src/)
+endif()
+
+if(NOT EXISTS ${SYCL_PATH}/build/bin/clang++.exe)
 
 	message(STATUS "Getting Intel DPC++ framework...")
 	
@@ -18,10 +22,8 @@ if(NOT DEFINED SYCL_PATH)
 	
 	execute_process(COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/_deps/sycl_llvm-src/buildbot/configure.py --cuda)
 	execute_process(COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/_deps/sycl_llvm-src/buildbot/compile.py)
-	
-	set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/_deps/sycl_llvm-src/)
 
-endif(NOT DEFINED SYCL_PATH)
+endif()
 
 
 message(STATUS "Setting up clang...")
@@ -114,119 +116,3 @@ add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} _deps/mikktspace-src/mikkt
 target_link_libraries(ElevenRender ${Boost_LIBRARIES})
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
-
-
-
-#set(Boost_NO_SYSTEM_PATHS on CACHE BOOL "Do not search system for Boost" )
-#set(BOOST_ROOT _deps/boost-src CACHE PATH "Boost library path" )
-
-#set(Boost_COMPILER "-vc143")
-#set(Boost_NO_BOOST_CMAKE ON)
-
-#set(BOOST_INCLUDE_LIBRARIES program_options json log asio)
-#
-#FetchContent_Declare(
-#  Boost
-#  GIT_REPOSITORY https://github.com/boostorg/boost.git
-#  GIT_TAG boost-1.79.0
-#  GIT_PROGRESS TRUE
-#)
-#
-##
-#FetchContent_MakeAvailable(Boost)
-
-#
-#execute_process(
-#		WORKING_DIRECTORY _deps/boost-src
-#		COMMAND cmd /C bootstrap.bat)
-#		
-#execute_process(
-#		WORKING_DIRECTORY _deps/boost-src
-#		COMMAND cmd /C b2.exe link=static)	
-
-#set(BOOST_ROOT _deps/boost-src CACHE PATH "Boost library path" )
-#set(Boost_NO_SYSTEM_PATHS on CACHE BOOL "Do not search system for Boost" )
-#
-#set(Boost_USE_STATIC_LIBS ON)
-##set(Boost_COMPILER "-vc143")
-#
-##set(BOOST_ENABLE_CMAKE ON)
-###set(BOOST_INCLUDE_LIBRARIES program_options json log asio assign)
-###
-###FetchContent_Declare(
-###  Boost
-###  GIT_REPOSITORY https://github.com/boostorg/boost.git
-###  GIT_TAG boost-1.79.0
-###  GIT_PROGRESS TRUE
-###)
-###
-###FetchContent_GetProperties(Boost)
-###if(NOT Boost_POPULATED)
-###  FetchContent_Populate(Boost)
-###endif()
-#
-## This Clang SYCL version is not compatible with Windows SEH. It's necessary to remove the __try line from the win_mutex.ipp file. I don't really understand the implications of this change, so keep in mind this can break things.
-#message(STATUS "Replacing SEH")
-#
-#STRING(REGEX REPLACE "/" "\\\\" Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}) 
-#
-#execute_process(
-#		COMMAND cmd /C string_replace.bat "__try" "try" \"${Boost_INCLUDE_DIRS}\\boost\\asio\\detail\\impl\\win_mutex.ipp" > \"${Boost_INCLUDE_DIRS}\\boost\\asio\\detail\\impl\\win_mutex2.ipp")
-#	
-#message(STATUS cmd /C string_replace.bat "__try" "try" \"${Boost_INCLUDE_DIRS}\\boost\\asio\\detail\\impl\\win_mutex.ipp" > \"${Boost_INCLUDE_DIRS}\\boost\\asio\\detail\\impl\\win_mutex2.ipp")
-#	
-#execute_process(
-#		COMMAND cmd /C erase ${Boost_INCLUDE_DIRS}"\\boost\\asio\\detail\\impl\\win_mutex.ipp")
-#
-#execute_process(
-#		COMMAND cmd /C rename ${Boost_INCLUDE_DIRS}"\\boost\\asio\\detail\\impl\\win_mutex2.ipp" "win_mutex.ipp")
-
-## I was not able to build boost with cmake in windows because some tags, so instead I'm just using the scripts provided to build it.
-#message(STATUS "Building boost manually")
-#
-#include(ExternalProject)
-#
-## Download boost from git and build regex module
-#
-#
-#ExternalProject_Add(Boost_download
-#  GIT_REPOSITORY https://github.com/boostorg/boost.git
-#  GIT_TAG boost-1.79.0
-#  GIT_PROGRESS TRUE
-#  BUILD_IN_SOURCE 1
-#  UPDATE_COMMAND ""
-#  PATCH_COMMAND ""
-#  CONFIGURE_COMMAND bootstrap.bat
-#  BUILD_COMMAND b2.exe install
-#    --without-python
-#    --without-mpi
-#    --disable-icu
-#    --prefix=${CMAKE_BINARY_DIR}/INSTALL
-#    --threading=single,multi
-#    --link=shared
-#    --variant=release
-#    -j8
-#  INSTALL_COMMAND ""
-#  INSTALL_DIR ${CMAKE_BINARY_DIR}/INSTALL
-#)
-#
-#set(Boost_LIBRARY_DIR ${CMAKE_BINARY_DIR}/INSTALL/lib/ )
-#set(Boost_INCLUDE_DIR ${CMAKE_BINARY_DIR}/INSTALL/include/boost-1_79/ )
-#
-#add_library(Boost SHARED IMPORTED)
-#set_target_properties(Boost PROPERTIES IMPORTED_LOCATION ${Boost_LIBRARY_DIR})
-#
-#include_directories(${Boost_INCLUDE_DIR})
-#
-##execute_process(
-##		WORKING_DIRECTORY _deps/boost-src
-##		COMMAND cmd /C bootstrap.bat)
-##		
-##execute_process(
-##		WORKING_DIRECTORY _deps/boost-src
-##		COMMAND cmd /C b2.exe)	
-##
-##find_package(Boost 1.79.0 COMPONENTS program_options json log REQUIRED)
-#
-#
-##include_directories(ElevenRender ${Boost_INCLUDE_DIRS})

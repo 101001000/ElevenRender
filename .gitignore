@@ -13,7 +13,6 @@ bin
 build.ninja
 cmake_install.cmake
 CMakeCache.txt
-CMakeLists.txt
 CMakeLists2.txt
 .vs
 x64
@@ -35,3 +34,6 @@ src/lan/lex.yy.cpp
 src/lan/calc.output
 test.osl
 blender_temp
+_deps
+CMakeLists3.txt
+string_replace.bat

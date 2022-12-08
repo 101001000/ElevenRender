@@ -9,23 +9,23 @@ endif()
 
 message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
 
-#if(NOT EXISTS ${SYCL_PATH}/build/bin/clang++.exe)
-#
-#	message(STATUS "Getting Intel DPC++ framework...")
-#	
-#	FetchContent_Declare(sycl_llvm
-#		GIT_REPOSITORY  https://github.com/intel/llvm
-#		GIT_TAG         0f579bae55c48d810e1ed76db29229c854e61d5e
-#		GIT_PROGRESS TRUE)
-#	
-#	FetchContent_MakeAvailable(sycl_llvm)
-#	
-#	message(STATUS "Building Intel DPC++ framework...")
-#	
-#	execute_process(COMMAND python ${SYCL_PATH}/buildbot/configure.py --cuda)
-#	execute_process(COMMAND python ${SYCL_PATH}/buildbot/compile.py)
-#
-#endif()
+if(NOT EXISTS ${SYCL_PATH}/build/bin/clang++.exe)
+
+	message(STATUS "Getting Intel DPC++ framework...")
+	
+	FetchContent_Declare(sycl_llvm
+		GIT_REPOSITORY  https://github.com/intel/llvm
+		GIT_TAG         0f579bae55c48d810e1ed76db29229c854e61d5e
+		GIT_PROGRESS TRUE)
+	
+	FetchContent_MakeAvailable(sycl_llvm)
+	
+	message(STATUS "Building Intel DPC++ framework...")
+	
+	execute_process(COMMAND python ${SYCL_PATH}/buildbot/configure.py --cuda)
+	execute_process(COMMAND python ${SYCL_PATH}/buildbot/compile.py)
+
+endif()
 
 
 message(STATUS "Setting up clang...")

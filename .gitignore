@@ -37,3 +37,4 @@ blender_temp
 _deps
 CMakeLists3.txt
 string_replace.bat
+build/*

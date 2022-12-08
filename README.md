@@ -31,6 +31,18 @@ I'm also working on installing Boost libraries automatically, but [there's some 
 
 ### Windows (VS2022) - CUDA
 
+#### Dependencies:
+
+* Python v3.11.0
+* CMake v3.25
+* Visual Studio 2022
+* Ninja v1.11.1
+* CUDA toolkit v11.8
+
+The rest of the dependencies are downloaded by the building script.
+
+#### Instructions:
+
 Install [Boost 1.80.00](https://www.boost.org/doc/libs/1_62_0/more/getting_started/windows.html) on the system (C:\Program Files\boost\boost_1_80_0), and compile it following the step 5 from the linked instructions. Ideally you must compile it with clangw16 toolset. 
 
 Currently, the 16 version of Clang, is not available on Visual Studio, so if you want to avoid the mess to setup Visual Studio for clangw16, you can apply this quick dirty patch[^1]:

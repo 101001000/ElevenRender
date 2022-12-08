@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <rapidobj.hpp>
-#include <mikktspaceCallback.h>
+#include <rapidobj/rapidobj.hpp>
+#include "mikktspaceCallback.h"
 #include <vector>
 #include <sstream>
 #include <iostream>

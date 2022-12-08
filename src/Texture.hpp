@@ -6,7 +6,7 @@
 #endif
 
 #include "Math.hpp"
-#include <sycl.h>
+#include "sycl.h"
 
 //TODO: refactor, remove loading from filesystem to scene loader.
 class Texture {

@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <OpenImageDenoise/oidn.hpp>
 #include <boost/program_options.hpp>
-#include <boost/assign.hpp>
 #include <boost/json.hpp>
 
 #define MESSAGE_HEADER_SIZE 1024

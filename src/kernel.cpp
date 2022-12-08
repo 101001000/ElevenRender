@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include <sycl.h>
+#include "sycl.h"
 #include <iostream>
 #include <limits>
 

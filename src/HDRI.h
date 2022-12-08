@@ -3,7 +3,7 @@
 
 #include "Texture.hpp"
 #include "Sampling.h"
-#include <sycl.h>
+#include "sycl.h"
 
 
 class HDRI {

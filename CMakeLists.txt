@@ -4,7 +4,7 @@ set( CMAKE_CXX_STANDARD 17 )
 include(FetchContent)
 
 if(NOT SYCL_PATH)
-    set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/)
+    set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src)
 endif()
 
 message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
@@ -15,7 +15,7 @@ if(NOT EXISTS ${SYCL_PATH}/build/bin/clang++.exe)
 	
 	FetchContent_Declare(sycl_llvm
 		GIT_REPOSITORY  https://github.com/intel/llvm
-		GIT_TAG         0f579bae55c48d810e1ed76db29229c854e61d5e
+		GIT_TAG         5352b423f8913fce44e8276de68a39ffdb190bdc
 		GIT_PROGRESS TRUE)
 	
 	FetchContent_MakeAvailable(sycl_llvm)
@@ -39,6 +39,7 @@ set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
 
+link_directories(${CMAKE_SOURCE_DIR}/build/_deps/sycl_llvm-src/build/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
@@ -50,7 +51,6 @@ find_package(Git REQUIRED)
 message(STATUS "Setting up Boost...")
 
 set(Boost_COMPILER "-clangw15")
-set(Boost_USE_STATIC_LIBS ON)
 #set(BOOST_ENABLE_CMAKE ON)
 find_package(Boost 1.79.0 COMPONENTS program_options json log REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS}) 
@@ -119,3 +119,4 @@ add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src
 target_link_libraries(ElevenRender ${Boost_LIBRARIES})
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
+target_link_libraries(ElevenRender sycl)

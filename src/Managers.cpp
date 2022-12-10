@@ -216,8 +216,17 @@ void RenderingManager::start_rendering(Scene* scene) {
     BOOST_LOG_TRIVIAL(trace) << "LEAVING RenderingManager::start_rendering()";
 }
 
+
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     BOOST_LOG_TRIVIAL(trace) << "RenderingManager::RenderingManager()";
+
+    BOOST_LOG_TRIVIAL(info) << "Listing all devices: " << sycl::device::get_devices(sycl::info::device_type::all).size();
+
+    for (auto device : sycl::device::get_devices(sycl::info::device_type::all)) {
+        std::cout << "  Device: " << device.get_info<sycl::info::device::name>()
+            << std::endl;
+    }
+
     k_q = sycl::queue(CUDASelector());
     d_q = sycl::queue(CUDASelector());
 

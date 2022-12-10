@@ -48,7 +48,10 @@ Install [Boost 1.80.00](https://www.boost.org/doc/libs/1_62_0/more/getting_start
 Currently, the 16 version of Clang, is not available on Visual Studio, so if you want to avoid the mess to setup Visual Studio for clangw16, you can apply this quick dirty patch[^1]:
 You need to override the BOOST_LIB_TOOLSET variable, located in C:\Program Files\boost\boost_1_80_0\boost\config\auto_link.hpp to "clangw16", for example by typing #define BOOST_LIB_TOOLSET "clangw15" in the line 227.
 
-Finally run build.bat. It will download automatically the rest of the dependencies, including the DPC++ Intel's toolchain. 
+Run build.bat. It will download automatically the rest of the dependencies, including the DPC++ Intel's toolchain. 
+
+Finally add "\build\_deps\sycl_llvm-src\build\bin" to %PATH% and "\build\_deps\sycl_llvm-src\build\lib" to %LIB% Environment variables
+
 
 <!--- If you want to use your own SYCL implementation, you can just run build.bat with an additional argument pointing your sycl_workspace installation.)-->
 

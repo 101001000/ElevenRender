@@ -158,7 +158,7 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 
 
 // TODO: move this to outside a kernel. Reseting buffers and initializations can be done with memset.
-void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out, OslMaterial* dev_osl) {
+void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
 
     // Initializing RNG
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
@@ -692,33 +692,13 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
 
     copy_scene(temp, dev_scene, q);
 
-    BOOST_LOG_TRIVIAL(info) << "OSL MATERIAL TEST";
-
-    OslMaterial* osl = new OslMaterial();
-
-    osl->program = generate_statement();
-
-    BOOST_LOG_TRIVIAL(info) << "PARSED";
-
-    printStatement(*osl->program);
-
-    OslMaterial* dev_osl = sycl::malloc_device<OslMaterial>(1, q);;
-
-    BOOST_LOG_TRIVIAL(info) << "COPYING";
-
-    copy_osl_material(osl, dev_osl, q);
-
-    BOOST_LOG_TRIVIAL(info) << "COPIED";
-
-    int* c = sycl::malloc_device<int>(1, q);
-
     BOOST_LOG_TRIVIAL(debug) << "Starting setup kernels";
 
     q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(4096, 1024, h);
         h.parallel_for(sycl::range(scene->x_res * scene->y_res),
             [=](sycl::id<1> i) {
-                setupKernel(dev_scene, i, out, dev_osl);
+                setupKernel(dev_scene, i, out);
             });
         }).wait();
 

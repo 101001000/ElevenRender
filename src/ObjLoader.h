@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 
 #include "Vector.h"
 #include "Material.h"
@@ -31,7 +32,7 @@ public:
 
 	UnloadedMaterial parseMtl(std::ifstream& stream, std::string name);
 
-	void loadObjsRapid(std::string path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials);
+	void loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials);
 
 
 	MeshObject parseObj(std::ifstream& stream);

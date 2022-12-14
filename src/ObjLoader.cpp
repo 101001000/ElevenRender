@@ -48,13 +48,14 @@ UnloadedMaterial ObjLoader::parseMtl(std::ifstream& stream, std::string name) {
 	return umtl;
 }
 
-void ObjLoader::loadObjsRapid(std::string path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials) {
+void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials) {
 
-	auto result = rapidobj::ParseFile(path.c_str());
+	auto result = rapidobj::ParseFile(path);
+
+	std::cout << "loading objects from " << path << '\n';
 
     if (result.error) {
         std::cout << result.error.code.message() << '\n';
-		std::cout << path << '\n';
     }
 
     bool success = rapidobj::Triangulate(result);

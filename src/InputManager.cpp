@@ -1,6 +1,8 @@
 #include "CommandManager.h"
 #include "Managers.h"
-
+#include <numeric>
+#include <string>
+#include <algorithm>
 
 std::vector<const char*> str_to_argv(std::string str) {
     BOOST_LOG_TRIVIAL(trace) << "in str_to_argv()";
@@ -15,6 +17,16 @@ std::vector<const char*> str_to_argv(std::string str) {
     }
     BOOST_LOG_TRIVIAL(trace) << "out str_to_argv()";
     return argv;
+}
+
+std::string vec2str(std::vector<std::string> v) {
+    auto space = [](std::string a, std::string b)
+    {
+        return a + ' ' + b;
+    };
+    std::string result = std::accumulate(v.begin(), v.end(), std::string(""), space);
+    result.erase(0, 1);
+    return result;
 }
 
 void InputManager::execute_command_msg(Message msg) {
@@ -48,7 +60,7 @@ void InputManager::execute_command_msg(Message msg) {
         ("stop", "stop rendering")
 
         //TODO: make this with subcommand
-        ("path", po::value<std::string>(), "filesystem path where to load data")
+        ("path", po::value<std::vector<std::string>>()->multitoken(), "filesystem path where to load data")
         ("output", po::value<std::string>(), "filesystem path where to output data")
         ;
 
@@ -66,15 +78,21 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("load_object")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object";
+            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object ";
             std::vector<MeshObject> objects(0);
 
             if (vm.count("path")) {
-
                 std::vector<UnloadedMaterial> umtls(0);
-
                 ObjLoader objLoader;
-                objLoader.loadObjsRapid(vm["path"].as<std::string>(), objects, umtls);
+                std::string path_string = vec2str(vm["path"].as<std::vector<std::string>>());
+
+                BOOST_LOG_TRIVIAL(debug) << "path_string1: " << path_string;
+
+                path_string.erase(remove(path_string.begin(), path_string.end(), '\"'), path_string.end()); // Remove double quotes
+
+                BOOST_LOG_TRIVIAL(debug) << "path_string2: " << path_string;
+
+                objLoader.loadObjsRapid(path_string, objects, umtls);
             }
             else if (vm.count("sm")) {
                 BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
@@ -173,6 +191,7 @@ void InputManager::execute_command_msg(Message msg) {
                 Message data_msg = read_message();
                 boost::json::object json_data = data_msg.get_json_data();
                 try {
+                    //TODO add max_bounces
                     rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
                 }
                 catch (std::exception const& e) {

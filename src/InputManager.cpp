@@ -358,6 +358,9 @@ void InputManager::write_message(Message msg) {
         BOOST_LOG_TRIVIAL(error) << "TCP header size exceded.";
     }
 
+    while (str.size() < MESSAGE_HEADER_SIZE)
+        str += '\0';
+
     BOOST_LOG_TRIVIAL(trace) << "in InputManager::write_message()";
 
     //size_t a = sock.get()->write_some(boost::asio::buffer(str));

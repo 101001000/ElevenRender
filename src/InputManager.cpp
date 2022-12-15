@@ -144,7 +144,7 @@ void InputManager::execute_command_msg(Message msg) {
             catch (std::exception const& e) {
                 BOOST_LOG_TRIVIAL(error) << "Invalid camera format: " << e.what();
             }
-            f = std::bind(&CommandManager::load_camera, std::ref(cm));
+            f = std::bind(&CommandManager::load_camera, std::ref(cm), camera);
         }
 
         else if (vm.count("load_hdri")) {

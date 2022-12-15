@@ -79,9 +79,9 @@ void CommandManager::load_config(RenderParameters rp) {
     im->write_message(Message::OK());
 }
 
-void CommandManager::load_camera() {
+void CommandManager::load_camera(Camera camera) {
     BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_camera()";
-    //sm->scene.camera = camera;
+    sm->scene.camera = camera;
     im->write_message(Message::OK());
 }
 

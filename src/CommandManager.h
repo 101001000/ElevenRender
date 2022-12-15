@@ -31,7 +31,7 @@ public:
     void get_pass(std::string& pass);
     void start_render();
     void load_config(RenderParameters rp);
-    void load_camera();
+    void load_camera(Camera camera);
     void load_objects(std::vector<MeshObject> objects);
     void load_hdri(HDRI hdri);
 

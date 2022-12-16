@@ -196,13 +196,6 @@ void CommandManager::load_objects(std::vector<MeshObject> objects) {
     im->write_message(Message::OK());
 }
 
-void CommandManager::load_scene_from_obj(std::string& path) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_scene_from_obj(" << path << ")";
-    sm->scene = Scene::loadScene(path);
-
-    im->write_message(Message::OK());
-}
-
 void CommandManager::start_render() {
     BOOST_LOG_TRIVIAL(trace) << "CommandManager::start_render";
     rm->start_rendering(&(sm->scene));

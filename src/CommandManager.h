@@ -23,7 +23,6 @@ public:
 
     CommandManager();
 
-    void load_scene_from_obj(std::string& pass);
     void load_texture(Texture texture);
     void get_render_info();
     void load_material_from_json(boost::json::object json_mat);

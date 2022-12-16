@@ -62,6 +62,8 @@ void InputManager::execute_command_msg(Message msg) {
         //TODO: make this with subcommand
         ("path", po::value<std::vector<std::string>>()->multitoken(), "filesystem path where to load data")
         ("recompute_normals", "when loading an object, choose if the normals will be recomputed")
+        ("mirror_x", "when loading texture, flip horizontal pixels")
+        ("mirror_y", "when loading texture, flip vertical pixels")
         ("output", po::value<std::string>(), "filesystem path where to output data")
         ;
 
@@ -168,6 +170,13 @@ void InputManager::execute_command_msg(Message msg) {
                 float* data = data_msg.get_float_data();
                 tex = Texture(width, height, channels, data);
             }
+
+            if(vm.count("mirror_x"))
+                tex.mirror_x();
+
+            if (vm.count("mirror_y"))
+                tex.mirror_y();
+
             f = std::bind(&CommandManager::load_hdri, std::ref(cm), HDRI(tex));
         }
 
@@ -319,6 +328,13 @@ void InputManager::execute_command_msg(Message msg) {
                 float* data = data_msg.get_float_data();
                 tex = Texture(width, height, channels, data);
             }
+
+            if (vm.count("mirror_x"))
+                tex.mirror_x();
+
+            if (vm.count("mirror_y"))
+                tex.mirror_y();
+
             f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
         }
 

@@ -66,6 +66,33 @@ public:
        
 #endif
 
+
+    void mirror_x() {
+        float* new_data = new float[width * height * channels];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                for (int c = 0; c < channels; c++) {
+                    new_data[channels*(y * width + x) + c] = data[channels*(y * width + (width-x-1)) + c];
+                }
+            }
+        }
+        delete[] data;
+        data = new_data;
+    }
+
+    void mirror_y() {
+        float* new_data = new float[width * height * channels];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                for (int c = 0; c < channels; c++) {
+                    new_data[channels * (y * width + x) + c] = data[channels * ((height-y-1) * width + x) + c];
+                }
+            }
+        }
+        delete[] data;
+        data = new_data;
+    }
+
     // Limit the amount of channels to 3
     void clamp_channels() {
         std::cout << "Clamping channels" << std::endl;

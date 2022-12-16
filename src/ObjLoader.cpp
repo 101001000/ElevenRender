@@ -48,37 +48,30 @@ UnloadedMaterial ObjLoader::parseMtl(std::ifstream& stream, std::string name) {
 	return umtl;
 }
 
-void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials) {
+void recompute_normals_face_weight(MeshObject* mo, std::map<Vector3, std::vector<Tri>>& faces) {
+	for (int i = 0; i < mo->triCount; i++) {
+		for (int j = 0; j < 3; j++) {
+			Vector3 v = mo->tris[i].vertices[j];
+			Vector3 n;
+			for (int f = 0; f < faces[v].size(); f++) {
+				Vector3 edge2 = faces[v][f].vertices[2] - faces[v][f].vertices[0];
+				Vector3 edge1 = faces[v][f].vertices[1] - faces[v][f].vertices[0];
+				n += Vector3::cross(edge2, edge1);
+			}
+			mo->tris[i].normals[j] = n.normalized();
+		}
+	}
+}
+
+void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
 
 	auto result = rapidobj::ParseFile(path);
-
-	std::cout << "loading objects from " << path << '\n';
 
     if (result.error) {
         std::cout << result.error.code.message() << '\n';
     }
 
     bool success = rapidobj::Triangulate(result);
-
-	/*
-
-	for (const auto& mat : result.materials) {
-
-		std::cout << "loading mat " << mat.name << " with albedo "
-			<< mat.diffuse[0] << " - " << mat.diffuse[1] << " - " << mat.diffuse[2] <<
-			" with roughness " << mat.roughness <<
-			" with metallic " << mat.metallic << std::endl;
-
-		UnloadedMaterial umtl;
-		umtl.mat.name = mat.name;
-		umtl.mat.albedo = Vector3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
-		umtl.mat.metallic = 0;
-		umtl.mat.roughness = 1;
-		umtl.mat.specular = mat.specular[0];
-
-		materials.push_back(umtl);
-	}
-	*/
 
 	std::map<Vector3, std::vector<Tri>> faces;
 
@@ -88,8 +81,6 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 
 			std::vector<Tri>* tris = new std::vector<Tri>();
 			MeshObject* mo = new MeshObject();
-
-			std::cout << "SHAPE: " << shape.name;
 
 			for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
 
@@ -119,10 +110,11 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 					tri.uv[j] = Vector3(tu, tv, 0);
 				}
 
-				faces[tri.vertices[0]].push_back(tri);
-				faces[tri.vertices[1]].push_back(tri);
-				faces[tri.vertices[2]].push_back(tri);
-
+				if (recompute_normals) {
+					faces[tri.vertices[0]].push_back(tri);
+					faces[tri.vertices[1]].push_back(tri);
+					faces[tri.vertices[2]].push_back(tri);
+				}
 				tris->push_back(tri);
 			}
 
@@ -134,27 +126,12 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 				mo->matName = result.materials[shape.mesh.material_ids[0]].name;
 			}
 
-			std::cout << "computing " << mo->name << "...\n";
-
-			for (int i = 0; i < mo->triCount; i++) {
-				for (int j = 0; j < 3; j++) {
-					Vector3 v = mo->tris[i].vertices[j];
-					Vector3 n;
-					for (int f = 0; f < faces[v].size(); f++) {
-						Vector3 edge2 = faces[v][f].vertices[2] - faces[v][f].vertices[0];
-						Vector3 edge1 = faces[v][f].vertices[1] - faces[v][f].vertices[0];
-						n += Vector3::cross(edge2, edge1);
-					}
-					mo->tris[i].normals[j] = n.normalized();
-				}
-			}
-
-		    //mo->recomputeNormals();
+			if (recompute_normals)
+				recompute_normals_face_weight(mo, faces);
 
 			CalcTangents calcTang = CalcTangents();
 			calcTang.calc(mo);
 			meshObjects.push_back(*mo);
-
 		}
     }
 }

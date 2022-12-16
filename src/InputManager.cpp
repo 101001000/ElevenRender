@@ -61,6 +61,7 @@ void InputManager::execute_command_msg(Message msg) {
 
         //TODO: make this with subcommand
         ("path", po::value<std::vector<std::string>>()->multitoken(), "filesystem path where to load data")
+        ("recompute_normals", po::value<bool>(), "when loading an object, choose if the normals will be recomputed")
         ("output", po::value<std::string>(), "filesystem path where to output data")
         ;
 
@@ -85,14 +86,8 @@ void InputManager::execute_command_msg(Message msg) {
                 std::vector<UnloadedMaterial> umtls(0);
                 ObjLoader objLoader;
                 std::string path_string = vec2str(vm["path"].as<std::vector<std::string>>());
-
-                BOOST_LOG_TRIVIAL(debug) << "path_string1: " << path_string;
-
                 path_string.erase(remove(path_string.begin(), path_string.end(), '\"'), path_string.end()); // Remove double quotes
-
-                BOOST_LOG_TRIVIAL(debug) << "path_string2: " << path_string;
-
-                objLoader.loadObjsRapid(path_string, objects, umtls);
+                objLoader.loadObjsRapid(path_string, objects, umtls, vm.count("recompute_normals"));
             }
             else if (vm.count("sm")) {
                 BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
@@ -137,7 +132,6 @@ void InputManager::execute_command_msg(Message msg) {
                 camera.focalLength = camera_json["focal_length"].as_double();
                 camera.sensorWidth = camera_json["sensor_width"].as_double();
                 camera.sensorHeight = camera_json["sensor_height"].as_double();
-
                 camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
                 camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
             }

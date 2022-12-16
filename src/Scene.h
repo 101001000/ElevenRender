@@ -72,8 +72,4 @@ public:
 
 	BVH* buildBVH();
 
-	static Scene loadScene(std::string path);
-
-
-
 };

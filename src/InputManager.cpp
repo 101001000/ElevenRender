@@ -61,7 +61,7 @@ void InputManager::execute_command_msg(Message msg) {
 
         //TODO: make this with subcommand
         ("path", po::value<std::vector<std::string>>()->multitoken(), "filesystem path where to load data")
-        ("recompute_normals", po::value<bool>(), "when loading an object, choose if the normals will be recomputed")
+        ("recompute_normals", "when loading an object, choose if the normals will be recomputed")
         ("output", po::value<std::string>(), "filesystem path where to output data")
         ;
 

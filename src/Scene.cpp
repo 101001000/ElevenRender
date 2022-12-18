@@ -74,24 +74,26 @@ void Scene::pair_textures() {
 
 		for (int j = 0; j < textures.size(); j++) {
 
-			if (textures[j].name == materials[i].albedo_map) {
-				materials[i].albedoTextureID = j;
-			}
-			if (textures[j].name == materials[i].emission_map) {
-				materials[i].emissionTextureID = j;
-			}
-			if (textures[j].name == materials[i].roughness_map) {
-				materials[i].roughnessTextureID = j;
-			}
-			if (textures[j].name == materials[i].metallic_map) {
-				materials[i].metallicTextureID = j;
-			}
-			if (textures[j].name == materials[i].opacity_map) {
-				materials[i].opacityTextureID = j;
-			}
-			if (textures[j].name == materials[i].normal_map) {
-				materials[i].normalTextureID = j;
-			}
+			if (textures[j].name != "") {
+				if (textures[j].name == materials[i].albedo_map) {
+					materials[i].albedoTextureID = j;
+				}
+				if (textures[j].name == materials[i].emission_map) {
+					materials[i].emissionTextureID = j;
+				}
+				if (textures[j].name == materials[i].roughness_map) {
+					materials[i].roughnessTextureID = j;
+				}
+				if (textures[j].name == materials[i].metallic_map) {
+					materials[i].metallicTextureID = j;
+				}
+				if (textures[j].name == materials[i].opacity_map) {
+					materials[i].opacityTextureID = j;
+				}
+				if (textures[j].name == materials[i].normal_map) {
+					materials[i].normalTextureID = j;
+				}
+			}			
 		}
 	}
 

@@ -202,9 +202,15 @@ void CommandManager::start_render() {
     im->write_message(Message::OK());
 }
 
+void CommandManager::stop_render() {
+    BOOST_LOG_TRIVIAL(trace) << "CommandManager::stop_render";
+    stop_command = true;
+    im->write_message(Message::OK());
+}
+
 void CommandManager::run() {
     
-    while (1) {
+    while (!stop_command) {
 
         __asm("");
 
@@ -214,8 +220,6 @@ void CommandManager::run() {
             command_queue.pop();
         }
     }
-
-    
 }
 
 void CommandManager::init() {

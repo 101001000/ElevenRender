@@ -80,6 +80,7 @@ void InputManager::execute_command_msg(Message msg) {
             response << desc;
         }
 
+
         else if (vm.count("load_object")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object ";
             std::vector<MeshObject> objects(0);
@@ -258,7 +259,8 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("stop")) {
-            //TODO
+            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue stop";
+            f = std::bind(&CommandManager::stop_render, std::ref(cm));
         }
 
         else if (vm.count("pause")) {

@@ -159,6 +159,7 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy(dev_textures, scene->textures, sizeof(Texture) * scene->textureCount).wait();
 
     for (int i = 0; i < scene->textureCount; i++) {
+        BOOST_LOG_TRIVIAL(debug) << "Texture " << scene->textures[i].name;
         float* textureData = sycl::malloc_device<float>(scene->textures[i].width * scene->textures[i].height * scene->textures[i].channels, q);
         q.memcpy(textureData, scene->textures[i].data, sizeof(float) * scene->textures[i].width * scene->textures[i].height * scene->textures[i].channels).wait();
         q.memcpy(&(dev_textures[i].data), &textureData, sizeof(float*)).wait();

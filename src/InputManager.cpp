@@ -292,8 +292,8 @@ void InputManager::execute_command_msg(Message msg) {
             int height = json_metadata["height"].as_int64();
             int channels = json_metadata["channels"].as_int64();
 
-            std::string name = static_cast<std::string>(json_metadata["name"].as_string());
-            std::string color_space = static_cast<std::string>(json_metadata["color_space"].as_string());
+            std::string name = json_metadata["name"].as_string().c_str();
+            std::string color_space = json_metadata["color_space"].as_string().c_str();
 
             write_message(Message::OK());
 
@@ -326,7 +326,10 @@ void InputManager::execute_command_msg(Message msg) {
             else {
                 Message data_msg = read_message();
                 float* data = data_msg.get_float_data();
+                //TODO: Fix this constructor arguments. Well, every constructor in reality.
+                //TODO: Apply colorspace in loading
                 tex = Texture(width, height, channels, data);
+                tex.name = name;
             }
 
             if (vm.count("mirror_x"))

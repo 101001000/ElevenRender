@@ -171,7 +171,7 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         " Roughness: " << mtl.roughness <<
         " Specular: " << mtl.specular <<
         " Albedo Path: " << mtl.albedo_map <<
-        " Normal Path: " << mtl.albedo_map;
+        " Normal Path: " << mtl.normal_map;
 
 
     float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);

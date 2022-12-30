@@ -1,0 +1,62 @@
+
+#include "sycl.h"
+#include "llvmtest.h"
+
+int main(int argc, char* argv[]) {
+
+    class CUDASelector : public sycl::device_selector {
+    public:
+        int operator()(const sycl::device& device) const override {
+            if (device.get_platform().get_backend() == sycl::backend::ext_oneapi_cuda) {
+                return 1;
+            }
+            else {
+                return -1;
+            }
+        }
+    };
+
+    for (auto device : sycl::device::get_devices(sycl::info::device_type::all)) {
+        std::cout << "  Device: " << device.get_info<sycl::info::device::name>()
+            << std::endl;
+    }
+
+    sycl::buffer<sycl::cl_int, 1> Buffer(4);
+
+    // Creating SYCL queue
+    sycl::queue Queue;
+
+    sycl::device device = Queue.get_device();
+
+    std::cout << "Device selected: " << device.get_info<sycl::info::device::name>();
+
+
+    // Size of index space for kernel
+    sycl::range<1> NumOfWorkItems{ Buffer.size() };
+
+    // Submitting command group(work) to queue
+    Queue.submit([&](sycl::handler& cgh) {
+        // Getting write only access to the buffer on a device
+        auto Accessor = Buffer.get_access<sycl::access::mode::write>(cgh);
+    // Executing kernel
+    cgh.parallel_for<class FillBuffer>(
+        NumOfWorkItems, [=](sycl::id<1> WIid) {
+            // Fill buffer with indexes
+            Accessor[WIid] = ir_sum(10, 20);
+        });
+        });
+
+    // Getting read only access to the buffer on the host.
+    // Implicit barrier waiting for queue to complete the work.
+    const auto HostAccessor = Buffer.get_access<sycl::access::mode::read>();
+
+    // Check the results
+    bool MismatchFound = false;
+    for (size_t I = 0; I < Buffer.size(); ++I) {
+        std::cout << "i: " << I << " - " << HostAccessor[I] << std::endl;
+    }
+
+    //std::cout << "SUMA: " << ir_sum(10, 2) << std::endl;
+
+    return 0;
+}

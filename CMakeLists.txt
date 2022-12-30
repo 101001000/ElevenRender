@@ -31,7 +31,7 @@ endif()
 message(STATUS "Setting up clang...")
 
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-W#pragma-messages -Wno-unknown-cuda-version -Wno-enum-constexpr-conversion -Wno-linker-warnings -Wno-macro-redefined -fsycl -fsycl-targets=nvptx64-nvidia-cuda")
+set(CMAKE_CXX_FLAGS  "-W#pragma-messages -Wno-unknown-cuda-version -Wno-enum-constexpr-conversion -Wno-linker-warnings -Wno-macro-redefined -fsycl -fsycl-targets=spir64_x86_64")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/build/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
@@ -110,9 +110,11 @@ execute_process(WORKING_DIRECTORY build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAN
 include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include) 
 include_directories(src) 
 
+set_source_files_properties(src/llvmtest.ll PROPERTIES LANGUAGE CXX)
+
 FILE(GLOB SOURCES src/*.cpp)
 FILE(GLOB LAN_SOURCES src/lan/*.cpp)
-add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src/mikktspace.c)
+add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src/mikktspace.c src/llvmtest.ll)
 
 #target_link_libraries(ElevenRender PUBLIC Boost::program_options Boost::json Boost::log Boost::asio)
 

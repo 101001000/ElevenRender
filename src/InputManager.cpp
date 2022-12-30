@@ -29,6 +29,95 @@ std::string vec2str(std::vector<std::string> v) {
     return result;
 }
 
+template<class T>
+class LoadCommand {
+public:
+    boost::program_options::variables_map& vm;
+    CommandManager& cm;
+    InputManager& im;
+    std::string command;
+    T object;
+
+    LoadCommand(boost::program_options::variables_map& _vm, CommandManager& _cm, InputManager& _im, std::string _command) : vm(_vm), cm(_cm), im(_im), command(_command) {};
+
+    virtual T path_load() {};
+    virtual T sm_load() {};
+    virtual T tcp_load(InputManager& im) {};
+    virtual std::function<void()> bind() {};
+
+    std::function<void()> execute() {
+        if (vm.count(command)) {
+            if (vm.count("path")) {
+                object = path_load();
+            }                                                                          
+            else if (vm.count("sm")) {
+                object = sm_load();
+            }
+            else {
+                object = tcp_load(im);
+            }
+        }
+        return bind();
+    }
+};
+
+class LoadCameraCommand : public LoadCommand<Camera> {
+    
+    using LoadCommand::LoadCommand;
+
+    Camera parse_camerajson(boost::json::object camera_json) {
+        Camera camera;
+        boost::json::object position_json = camera_json["position"].as_object();
+        boost::json::object rotation_json = camera_json["rotation"].as_object();
+        camera.aperture = camera_json["aperture"].as_double();
+        camera.bokeh = camera_json["bokeh"].as_bool();
+        camera.focusDistance = camera_json["focus_distance"].as_double();
+        camera.focalLength = camera_json["focal_length"].as_double();
+        camera.sensorWidth = camera_json["sensor_width"].as_double();
+        camera.sensorHeight = camera_json["sensor_height"].as_double();
+        camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
+        camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
+        return camera;
+    }
+
+    Camera path_load() {
+        std::ifstream st(vm["path"].as<std::string>());
+        std::string str((std::istreambuf_iterator<char>(st)), std::istreambuf_iterator<char>());
+        return parse_camerajson(boost::json::parse(str).as_object());
+    }
+
+    Camera tcp_load(InputManager& im) {
+        Message data_msg = im.read_message();
+        return parse_camerajson(data_msg.get_json_data());
+    }
+
+    std::function<void()> bind() {
+        return std::bind(&CommandManager::load_camera, std::ref(cm), object);
+    }
+};
+
+
+class LoadConfigCommand : public LoadCommand<RenderParameters> {
+
+    using LoadCommand::LoadCommand;
+
+    RenderParameters tcp_load(InputManager& im) {
+        Message data_msg = im.read_message();
+        boost::json::object json_data = data_msg.get_json_data();
+        try {
+            //TODO add max_bounces
+            return RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
+        }
+        catch (std::exception const& e) {
+            BOOST_LOG_TRIVIAL(error) << "Invalid config format: " << e.what();
+        }
+    }
+
+    std::function<void()> bind() {
+        return std::bind(&CommandManager::load_config, std::ref(cm), object);
+    }
+};
+
 void InputManager::execute_command_msg(Message msg) {
 
     std::string command = msg.get_string_data();
@@ -75,12 +164,17 @@ void InputManager::execute_command_msg(Message msg) {
 
         po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
         po::notify(vm);
+             
+
+        if (vm.count("load_camera"))
+            f = LoadCameraCommand(vm, *cm, *this, "load_camera").execute();
+
+        if (vm.count("load_config"))
+            f = LoadConfigCommand(vm, *cm, *this, "load_config").execute();
 
         if (vm.count("help")) {
             response << desc;
         }
-
-
         else if (vm.count("load_object")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object ";
             std::vector<MeshObject> objects(0);
@@ -104,46 +198,7 @@ void InputManager::execute_command_msg(Message msg) {
             f = std::bind(&CommandManager::load_objects, std::ref(cm), objects);
         }
 
-        
-        else if (vm.count("load_camera")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_camera";
-            Camera camera;
-            boost::json::object camera_json;
-
-            if (vm.count("path")) {
-                std::ifstream st(vm["path"].as<std::string>());
-                std::string str((std::istreambuf_iterator<char>(st)), std::istreambuf_iterator<char>());
-                camera_json = boost::json::parse(str).as_object();
-            }
-            else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
-                //TODO implement sm object loading
-            }
-            else {
-                Message data_msg = read_message();
-                camera_json = data_msg.get_json_data();
-            }
-
-            try {
-
-                boost::json::object position_json = camera_json["position"].as_object();
-                boost::json::object rotation_json = camera_json["rotation"].as_object();
-
-                camera.aperture = camera_json["aperture"].as_double();
-                camera.bokeh = camera_json["bokeh"].as_bool();
-                camera.focusDistance = camera_json["focus_distance"].as_double();
-                camera.focalLength = camera_json["focal_length"].as_double();
-                camera.sensorWidth = camera_json["sensor_width"].as_double();
-                camera.sensorHeight = camera_json["sensor_height"].as_double();
-                camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
-                camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
-            }
-            catch (std::exception const& e) {
-                BOOST_LOG_TRIVIAL(error) << "Invalid camera format: " << e.what();
-            }
-            f = std::bind(&CommandManager::load_camera, std::ref(cm), camera);
-        }
-
+ 
         else if (vm.count("load_hdri")) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_hdri";
 

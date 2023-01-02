@@ -62,6 +62,23 @@ Finally add "\build\_deps\sycl_llvm-src\build\bin" to %PATH% and "\build\_deps\s
 
 ## Docs
 
+### ASL
+Eleven Render runs a custom formally specified shading language called Abstract Shading Language. ASL tries to unify shading languages, acting as middle step between other shading languages and Eleven.
+
+Graph2OSL is a python tool I'm writting in the Eleven Blender's repo to convert Blender's shading node graph to OSL serialized shadergroup following the OSL specification serializing proposal.
+
+OSL2ASL is a syntax converter I'm plannign to code, to convert OSL code to ASL code
+
+ASL2LLVM is a formally correct compiler I'm writting as a part of my Master's thesis. The output is LLVM-IR code which can be compiled through some LLVM backend to almost any GPU/CPU architecture.
+
+
+
+The compilation steps for a blender OSL material, are shown in the diagram below.
+
+![alt text](https://i.imgur.com/sy46de6.png)
+*Compilation steps for blender materials*
+
+
 <details open>
 <summary>Third party libraries used</summary>
 
@@ -82,7 +99,5 @@ Finally add "\build\_deps\sycl_llvm-src\build\bin" to %PATH% and "\build\_deps\s
 
 Eleven Render is the result of my Bachelor's Thesis and now my Master's Thesis. The way I worked on it was, to get the most features, in the smallest possible time, so most of the code is messy and unorganized. I'm working on modernizing the code and cleaning it up, as well as documenting it. Most of features are incomplete. The shading is giving me issues, so the implementation is probably not correct. The efficiency is also not the best and it's full of memory leaks. I hope to have all this sorted out in the following months, but for now, this is the render's state.
 
-## ASL
-Eleven Render runs a custom formally specified shading language called Abstract Shading Language. ASL tries to unify shading languages, acting as middle step between shading code and Eleven. The current implementation, just covers an extremely inefficient intepretation of such a language. Compilation is planned in the future, but the current status of ASL is in very early stages.
 
 ## License

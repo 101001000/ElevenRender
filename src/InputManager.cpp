@@ -166,13 +166,17 @@ void InputManager::execute_command_msg(Message msg) {
         po::notify(vm);
              
 
+
+
+
+
         if (vm.count("load_camera"))
             f = LoadCameraCommand(vm, *cm, *this, "load_camera").execute();
 
-        if (vm.count("load_config"))
+        else if (vm.count("load_config"))
             f = LoadConfigCommand(vm, *cm, *this, "load_config").execute();
 
-        if (vm.count("help")) {
+        else if (vm.count("help")) {
             response << desc;
         }
         else if (vm.count("load_object")) {
@@ -419,84 +423,78 @@ void InputManager::execute_command_msg(Message msg) {
     BOOST_LOG_TRIVIAL(trace) << "out InputManager::execute_command";
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void InputManager::write_message(Message msg) {
-    BOOST_LOG_TRIVIAL(trace) << "in InputManager::write_message()";
 
-    std::string str = serialize(Message::msg2json_header(msg));
+    std::string header_str = serialize(Message::msg2json_header(msg));
 
-    if (str.size() > MESSAGE_HEADER_SIZE) {
+    if (header_str.size() > MESSAGE_HEADER_SIZE)
         BOOST_LOG_TRIVIAL(error) << "TCP header size exceded.";
-    }
 
-    while (str.size() < MESSAGE_HEADER_SIZE)
-        str += '\0';
+    // Fill with empty characters to fit header size.
+    header_str += std::string(MESSAGE_HEADER_SIZE - header_str.size(), '\0');
 
-    BOOST_LOG_TRIVIAL(trace) << "in InputManager::write_message()";
-
-    //size_t a = sock.get()->write_some(boost::asio::buffer(str));
-
-    boost::asio::write(*(sock.get()), boost::asio::buffer(str, MESSAGE_HEADER_SIZE));
+    BOOST_LOG_TRIVIAL(trace) << "Writting message with header: " << header_str;
+    boost::asio::write(*(sock.get()), boost::asio::buffer(header_str, MESSAGE_HEADER_SIZE));
 
     if (msg.data_size != 0 &&
         msg.data_format != Message::DataFormat::NONE &&
         msg.data != nullptr) {
-        BOOST_LOG_TRIVIAL(trace) << "InputManager::write_message -> writting additional " << msg.data_size << " bytes";
+        BOOST_LOG_TRIVIAL(trace) << "Writting additional data: " << msg.data_size << " bytes";
         boost::asio::write(*(sock.get()), boost::asio::buffer((char*)(msg.data), msg.data_size));
     }
-    BOOST_LOG_TRIVIAL(trace) << "out InputManager::write_message()";
 }
 
 
 Message InputManager::read_message() {
-    BOOST_LOG_TRIVIAL(trace) << "in InputManager::read_message()";
-
     Message msg;
+    char input_data[MESSAGE_HEADER_SIZE];
+    size_t header_size = sock.get()->read_some(boost::asio::buffer(input_data), error);
 
-    char input_data[TCP_MESSAGE_MAXSIZE];
+    if (header_size != MESSAGE_HEADER_SIZE)
+        BOOST_LOG_TRIVIAL(error) << "Header size mismatch: " << header_size << " bytes";
 
-    //boost::asio::read(*(sock.get()), boost::asio::buffer(input_data, TCP_MESSAGE_MAXSIZE));
-
-    size_t bytes_read = sock.get()->read_some(boost::asio::buffer(input_data), error);
-
-    if (bytes_read != TCP_MESSAGE_MAXSIZE) {
-        BOOST_LOG_TRIVIAL(error) << "Header size mismatch: " << bytes_read << " bytes";
-    }
-
-    BOOST_LOG_TRIVIAL(debug) << "ID ";
-
-    std::string input_str(input_data);
-
-    boost::json::value input_json;
-
-    BOOST_LOG_TRIVIAL(debug) << "Reading " << input_str;
+    std::string header_str(input_data);
+    BOOST_LOG_TRIVIAL(trace) << "Reading message with header: " << header_str;
 
     try {
-        input_json = boost::json::parse(input_str);
-
+        boost::json::value input_json = boost::json::parse(header_str);
         msg = Message::json2header(input_json.as_object());
 
         if (msg.data_size != 0) {
             BOOST_LOG_TRIVIAL(trace) << "InputManager::read_message() -> reading additional " << msg.data_size << "bytes";
+            // TODO: RAII
             msg.data = malloc(msg.data_size);
             boost::asio::read(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
         }
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << "InputManager::read_message(): " << e.what();
+        BOOST_LOG_TRIVIAL(error) << "Error parsing message. " << e.what();
     }
 
-    BOOST_LOG_TRIVIAL(debug) << msg.to_string();
-
-    BOOST_LOG_TRIVIAL(trace) << "out InputManager::read_message()";
     return msg;
 }
 
 void InputManager::run_tcp() {
-    BOOST_LOG_TRIVIAL(trace) << "int InputManager::run_tcp()";
-
     using boost::asio::ip::tcp;
     tcp::acceptor a = tcp::acceptor(io_context, tcp::endpoint(tcp::v4(), 5557));
 
+    // TODO: break condition.
+    // TODO: parametrize IP.
     while (1) {
         BOOST_LOG_TRIVIAL(info) << "Awaiting for a connection";
         sock = std::make_unique<boost::asio::ip::tcp::socket>(a.accept());
@@ -509,10 +507,12 @@ void InputManager::run_tcp() {
             if (msg.type == Message::Type::COMMAND) {
                 execute_command_msg(msg);
             }
+            else {
+                BOOST_LOG_TRIVIAL(error) << "Message recieved, but not a command.";
+            }
         }
         BOOST_LOG_TRIVIAL(info) << "Disconnected";
     }
-    BOOST_LOG_TRIVIAL(trace) << "out InputManager::run_tcp()";
 }
 
 

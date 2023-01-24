@@ -1,7 +1,5 @@
 #pragma once
 
-#define TCP_MESSAGE_MAXSIZE 1024
-
 #define SMOOTH_SHADING true
 #define USEBVH true
 #define HDRIIS false

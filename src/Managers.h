@@ -169,6 +169,8 @@ struct Message {
 };
 
 */
+
+
 class InputManager : Manager {
 
 public:
@@ -176,6 +178,9 @@ public:
     std::unique_ptr<boost::asio::ip::tcp::socket> sock;
     boost::system::error_code error;
     boost::asio::io_context io_context;
+
+    static const std::vector<std::pair<std::string, std::string>> load_commands;
+    static const std::vector<std::pair<std::string, std::string>> execution_commands;
 
     using Manager::Manager;
 
@@ -185,6 +190,7 @@ public:
     Message read_message();
     void write_message(Message msg);
 };
+
 
 class DenoiseManager : Manager {
 

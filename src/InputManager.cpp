@@ -28,7 +28,7 @@ std::string vec2str(std::vector<std::string> v) {
     result.erase(0, 1);
     return result;
 }
-
+/*
 template<class T>
 class LoadCommand {
 public:
@@ -425,8 +425,120 @@ void InputManager::execute_command_msg(Message msg) {
 
 
 
+*/
 
 
+const std::vector<std::pair<std::string, std::string>> InputManager::load_commands = {
+   {"load_config", "load configuration from tcp (use --path for importing .json config files)"},
+   {"load_object", "load object from tcp (use --path for importing wavefront .obj files)" },
+   {"load_camera", "load camera from tcp (use --path for importing camera .json files)" },
+   {"load_hdri", "load HDRI from tcp (use --path for importing .exr/.hdr files)"},
+   {"load_brdf_material", "load brdf material from tcp (use --path for importing .brdf files)"},
+   {"load_osl_material", "load osl material from tcp (use --path for importing .oslm files)"},
+};
+
+const std::vector<std::pair<std::string, std::string>> InputManager::execution_commands = {
+    {"start", "start rendering"},
+    {"pause", "pause rendering"},
+    {"stop", "stop rendering"}
+};
+
+
+Camera LoadCameraCommand::json_to_camera(boost::json::object camera_json) {
+    Camera camera;
+    boost::json::object position_json = camera_json["position"].as_object();
+    boost::json::object rotation_json = camera_json["rotation"].as_object();
+    camera.aperture = camera_json["aperture"].as_double();
+    camera.bokeh = camera_json["bokeh"].as_bool();
+    camera.focusDistance = camera_json["focus_distance"].as_double();
+    camera.focalLength = camera_json["focal_length"].as_double();
+    camera.sensorWidth = camera_json["sensor_width"].as_double();
+    camera.sensorHeight = camera_json["sensor_height"].as_double();
+    camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
+    camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
+    return camera;
+}
+
+
+
+
+
+Command load_command_factory(boost::program_options::variables_map& vm, std::string path) {
+
+    return Command();
+}
+
+Command load_command_factory(boost::program_options::variables_map& vm, Message& data_msg) {
+
+    return Command();
+}
+
+void InputManager::execute_command_msg(Message msg) {
+
+    namespace po = boost::program_options;
+
+    Command command;
+
+    std::string command_str = msg.get_string_data();
+    std::vector<const char*> argv = str_to_argv(command_str); //Parse command as argv
+    BOOST_LOG_TRIVIAL(debug) << "Executing command: " << command_str;
+    
+    po::variables_map vm;
+
+    //TODO: Abstracting description.
+    po::options_description desc("Allowed options");
+
+    for (const auto& [k, v] : InputManager::load_commands)
+        desc.add_options()(k.c_str(), v.c_str());
+
+    for (const auto& [k, v] : InputManager::execution_commands)
+        desc.add_options()(k.c_str(), v.c_str());
+
+    desc.add_options()
+        ("help", "produce help message")
+
+        //TODO: make this with subcommand
+        ("path", po::value<std::vector<std::string>>()->multitoken(), "filesystem path where to load data")
+        ("recompute_normals", "when loading an object, choose if the normals will be recomputed")
+        ("mirror_x", "when loading texture, flip horizontal pixels")
+        ("mirror_y", "when loading texture, flip vertical pixels")
+        ("output", po::value<std::string>(), "filesystem path where to output data");
+
+    po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
+    po::notify(vm);
+    
+    
+    // Return the iterator of the command in the load_commands vector.
+    auto it = std::find_if(vm.cbegin(), vm.cend(),
+        [&](auto const& vm_key) {
+            std::cout << "Checking " << vm_key.first << std::endl;
+            return std::find_if(InputManager::load_commands.cbegin(), InputManager::load_commands.cend(),
+                [vm_key](const auto& elem) {
+                    std::cout << "Analyzing " << elem.first << std::endl;
+                    return elem.first == vm_key.first;
+                }) != InputManager::load_commands.cend();
+        });
+
+    if (it != vm.cend()) {
+        // It's a load command.
+
+        if (vm.count("path")) {
+            command = load_command_factory(vm, vm["path"].as<std::string>());
+        }
+        else if (vm.count("sm")) {
+            BOOST_LOG_TRIVIAL(error) << "Shared memory not implemented yet!";
+        }
+        else {
+            Message data_msg = read_message();
+            command = load_command_factory(vm, data_msg);
+        }
+
+    }
+
+
+    
+
+}
 
 
 

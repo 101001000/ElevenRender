@@ -5,6 +5,22 @@
 #include <queue>
 #include "Managers.h"
 
+class Command {
+
+};
+
+template<class T>
+class LoadCommand : public Command {
+
+    T object;
+
+
+};
+
+class LoadCameraCommand : public LoadCommand<Camera> {
+    static Camera json_to_camera(boost::json::object camera_json);
+};
+
 
 class CommandManager {
 

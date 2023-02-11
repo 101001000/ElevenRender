@@ -5,7 +5,7 @@
 #include <algorithm>
 
 std::vector<const char*> str_to_argv(std::string str) {
-    BOOST_LOG_TRIVIAL(trace) << "in str_to_argv()";
+    LOG(trace) << "in str_to_argv()";
     std::string s;
     std::vector<const char*> argv;
     std::istringstream iss(str);
@@ -15,7 +15,7 @@ std::vector<const char*> str_to_argv(std::string str) {
         strcpy(c, s.c_str());
         argv.push_back(c);
     }
-    BOOST_LOG_TRIVIAL(trace) << "out str_to_argv()";
+    LOG(trace) << "out str_to_argv()";
     return argv;
 }
 
@@ -109,7 +109,7 @@ class LoadConfigCommand : public LoadCommand<RenderParameters> {
             return RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
         }
         catch (std::exception const& e) {
-            BOOST_LOG_TRIVIAL(error) << "Invalid config format: " << e.what();
+            LOG(error) << "Invalid config format: " << e.what();
         }
     }
 
@@ -122,7 +122,7 @@ void InputManager::execute_command_msg(Message msg) {
 
     std::string command = msg.get_string_data();
 
-    BOOST_LOG_TRIVIAL(trace) << "in InputManager::execute_command" << command;
+    LOG(trace) << "in InputManager::execute_command" << command;
     std::ostringstream response;
 
     namespace po = boost::program_options;
@@ -180,7 +180,7 @@ void InputManager::execute_command_msg(Message msg) {
             response << desc;
         }
         else if (vm.count("load_object")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_object ";
+            LOG(trace) << "InputManager::execute_command -> enqueue load_object ";
             std::vector<MeshObject> objects(0);
 
             if (vm.count("path")) {
@@ -191,12 +191,12 @@ void InputManager::execute_command_msg(Message msg) {
                 objLoader.loadObjsRapid(path_string, objects, umtls, vm.count("recompute_normals"));
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
                 //TODO implement TCP object loadingç
-                BOOST_LOG_TRIVIAL(error) << "TCP feature not implemented yet";
+                LOG(error) << "TCP feature not implemented yet";
             }
 
             f = std::bind(&CommandManager::load_objects, std::ref(cm), objects);
@@ -204,7 +204,7 @@ void InputManager::execute_command_msg(Message msg) {
 
  
         else if (vm.count("load_hdri")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_hdri";
+            LOG(trace) << "InputManager::execute_command -> enqueue load_hdri";
 
             Message metadata_msg = read_message();
 
@@ -222,7 +222,7 @@ void InputManager::execute_command_msg(Message msg) {
                 //TODO implement HDRI loading
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
@@ -241,13 +241,13 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("load_config")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_config";
+            LOG(trace) << "InputManager::execute_command -> enqueue load_config";
             RenderParameters rp;
             if (vm.count("path")) {
-                BOOST_LOG_TRIVIAL(error) << "load_config filesystem feature not implemented yet";
+                LOG(error) << "load_config filesystem feature not implemented yet";
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
@@ -258,7 +258,7 @@ void InputManager::execute_command_msg(Message msg) {
                     rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
                 }
                 catch (std::exception const& e) {
-                    BOOST_LOG_TRIVIAL(error) << "Invalid config format: " << e.what();
+                    LOG(error) << "Invalid config format: " << e.what();
                 }
             }
             f = std::bind(&CommandManager::load_config, std::ref(cm), rp);
@@ -266,7 +266,7 @@ void InputManager::execute_command_msg(Message msg) {
 
         //TODO: Separate json from material
         else if (vm.count("load_brdf_material")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_brdf_material";
+            LOG(trace) << "InputManager::execute_command -> enqueue load_brdf_material";
 
             Material material;
             boost::json::object material_json;
@@ -275,7 +275,7 @@ void InputManager::execute_command_msg(Message msg) {
                 //TODO implement config loading
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
@@ -293,7 +293,7 @@ void InputManager::execute_command_msg(Message msg) {
 
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
@@ -302,7 +302,7 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("get_pass")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue get_pass";
+            LOG(trace) << "InputManager::execute_command -> enqueue get_pass";
             std::string pass = vm["get_pass"].as<std::string>();
             if (vm.count("output")) {
                 //TODO: implement save pass
@@ -313,12 +313,12 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("start")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue start";
+            LOG(trace) << "InputManager::execute_command -> enqueue start";
             f = std::bind(&CommandManager::start_render, std::ref(cm));
         }
 
         else if (vm.count("stop")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue stop";
+            LOG(trace) << "InputManager::execute_command -> enqueue stop";
             f = std::bind(&CommandManager::stop_render, std::ref(cm));
         }
 
@@ -327,7 +327,7 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("get_info")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue get_info";
+            LOG(trace) << "InputManager::execute_command -> enqueue get_info";
             if (vm.count("output")) {
                 //TODO: implement save info as json
             }
@@ -337,7 +337,7 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else if (vm.count("load_texture")) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::execute_command -> enqueue load_texture";
+            LOG(trace) << "InputManager::execute_command -> enqueue load_texture";
 
             // 1: check args, send ok
             // 2: wait for metadata
@@ -370,10 +370,10 @@ void InputManager::execute_command_msg(Message msg) {
                 float* tmp_data = stbi_loadf(vm["path"].as<std::string>().c_str(), &l_width, &l_height, &l_channels, 0);
 
                 //TODO: Add error loading handling
-                BOOST_LOG_TRIVIAL(debug) << "Loaded texture from" << vm["path"].as<std::string>();
+                LOG(debug) << "Loaded texture from" << vm["path"].as<std::string>();
 
                 if (width != l_width || height != l_height || channels != l_channels) {
-                    BOOST_LOG_TRIVIAL(warning) << "Metadata - file metadata missmatch on " << name;
+                    LOG(warning) << "Metadata - file metadata missmatch on " << name;
                 }
 
                 tex = Texture(l_width, l_height, l_channels, tmp_data);
@@ -381,7 +381,7 @@ void InputManager::execute_command_msg(Message msg) {
                 stbi_image_free(tmp_data);
             }
             else if (vm.count("sm")) {
-                BOOST_LOG_TRIVIAL(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature not implemented yet";
                 //TODO implement sm object loading
             }
             else {
@@ -403,7 +403,7 @@ void InputManager::execute_command_msg(Message msg) {
         }
 
         else {
-            BOOST_LOG_TRIVIAL(error) << "Command not found";
+            LOG(error) << "Command not found";
         }
 
         if (f) {
@@ -417,10 +417,10 @@ void InputManager::execute_command_msg(Message msg) {
         }
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what();
+        LOG(error) << e.what();
     }
 
-    BOOST_LOG_TRIVIAL(trace) << "out InputManager::execute_command";
+    LOG(trace) << "out InputManager::execute_command";
 }
 
 
@@ -481,7 +481,7 @@ void InputManager::execute_command_msg(Message msg) {
 
     std::string command_str = msg.get_string_data();
     std::vector<const char*> argv = str_to_argv(command_str); //Parse command as argv
-    BOOST_LOG_TRIVIAL(debug) << "Executing command: " << command_str;
+    LOG(debug) << "Executing command: " << command_str;
     
     po::variables_map vm;
 
@@ -526,7 +526,7 @@ void InputManager::execute_command_msg(Message msg) {
             command = load_command_factory(vm, vm["path"].as<std::string>());
         }
         else if (vm.count("sm")) {
-            BOOST_LOG_TRIVIAL(error) << "Shared memory not implemented yet!";
+            LOG(error) << "Shared memory not implemented yet!";
         }
         else {
             Message data_msg = read_message();
@@ -555,18 +555,18 @@ void InputManager::write_message(Message msg) {
     std::string header_str = serialize(Message::msg2json_header(msg));
 
     if (header_str.size() > MESSAGE_HEADER_SIZE)
-        BOOST_LOG_TRIVIAL(error) << "TCP header size exceded.";
+        LOG(error) << "TCP header size exceded.";
 
     // Fill with empty characters to fit header size.
     header_str += std::string(MESSAGE_HEADER_SIZE - header_str.size(), '\0');
 
-    BOOST_LOG_TRIVIAL(trace) << "Writting message with header: " << header_str;
+    LOG(trace) << "Writting message with header: " << header_str;
     boost::asio::write(*(sock.get()), boost::asio::buffer(header_str, MESSAGE_HEADER_SIZE));
 
     if (msg.data_size != 0 &&
         msg.data_format != Message::DataFormat::NONE &&
         msg.data != nullptr) {
-        BOOST_LOG_TRIVIAL(trace) << "Writting additional data: " << msg.data_size << " bytes";
+        LOG(trace) << "Writting additional data: " << msg.data_size << " bytes";
         boost::asio::write(*(sock.get()), boost::asio::buffer((char*)(msg.data), msg.data_size));
     }
 }
@@ -578,24 +578,24 @@ Message InputManager::read_message() {
     size_t header_size = sock.get()->read_some(boost::asio::buffer(input_data), error);
 
     if (header_size != MESSAGE_HEADER_SIZE)
-        BOOST_LOG_TRIVIAL(error) << "Header size mismatch: " << header_size << " bytes";
+        LOG(error) << "Header size mismatch: " << header_size << " bytes";
 
     std::string header_str(input_data);
-    BOOST_LOG_TRIVIAL(trace) << "Reading message with header: " << header_str;
+    LOG(trace) << "Reading message with header: " << header_str;
 
     try {
         boost::json::value input_json = boost::json::parse(header_str);
         msg = Message::json2header(input_json.as_object());
 
         if (msg.data_size != 0) {
-            BOOST_LOG_TRIVIAL(trace) << "InputManager::read_message() -> reading additional " << msg.data_size << "bytes";
+            LOG(trace) << "InputManager::read_message() -> reading additional " << msg.data_size << "bytes";
             // TODO: RAII
             msg.data = malloc(msg.data_size);
             boost::asio::read(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
         }
     }
     catch (std::exception const& e) {
-        BOOST_LOG_TRIVIAL(error) << "Error parsing message. " << e.what();
+        LOG(error) << "Error parsing message. " << e.what();
     }
 
     return msg;
@@ -608,22 +608,22 @@ void InputManager::run_tcp() {
     // TODO: break condition.
     // TODO: parametrize IP.
     while (1) {
-        BOOST_LOG_TRIVIAL(info) << "Awaiting for a connection";
+        LOG(info) << "Awaiting for a connection";
         sock = std::make_unique<boost::asio::ip::tcp::socket>(a.accept());
-        BOOST_LOG_TRIVIAL(info) << "Connected";
+        LOG(info) << "Connected";
 
         while (!error) {
-            BOOST_LOG_TRIVIAL(debug) << "Awaiting for command";
+            LOG(debug) << "Awaiting for command";
             Message msg = read_message();
-            BOOST_LOG_TRIVIAL(debug) << "Command message readed ";
+            LOG(debug) << "Command message readed ";
             if (msg.type == Message::Type::COMMAND) {
                 execute_command_msg(msg);
             }
             else {
-                BOOST_LOG_TRIVIAL(error) << "Message recieved, but not a command.";
+                LOG(error) << "Message recieved, but not a command.";
             }
         }
-        BOOST_LOG_TRIVIAL(info) << "Disconnected";
+        LOG(info) << "Disconnected";
     }
 }
 

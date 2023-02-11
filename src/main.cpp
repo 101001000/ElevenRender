@@ -32,8 +32,12 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
         }
     }
 
-    strm << rec[a_timestamp] << " - [" << rec[a_thread_id] << "] [" << rec[boost::log::trivial::severity] << "]: " << rec[boost::log::expressions::smessage];
-    //SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
+    //auto last_word = [](std::string path) {};
+
+    auto file_line_formatter = boost::log::expressions::stream << boost::log::expressions::attr<std::string>("File") << ": " << boost::log::expressions::attr<int>("Line");
+    strm << rec[a_timestamp] << " - [" << rec[a_thread_id] << "] [" << rec[boost::log::trivial::severity] << "][";
+    file_line_formatter(rec, strm); 
+    strm << "] -> " << rec[boost::log::expressions::smessage];
 }
 
 int main(int argc, char* argv[]) {
@@ -46,12 +50,15 @@ int main(int argc, char* argv[]) {
     sink->set_formatter(&coloring_formatter);
 
     boost::log::core::get()->add_sink(sink);
+    //boost::log::core::get()->add_thread_attribute("File", boost::log::attributes::mutable_constant<std::string>(""));
+    //boost::log::core::get()->add_thread_attribute("Line", boost::log::attributes::mutable_constant<int>(0));
+
     boost::log::add_common_attributes();
 
     CommandManager cm;
     cm.init();
    
-    BOOST_LOG_TRIVIAL(info) << "Quitting";
+    LOG(info) << "Quitting";
 
     return 0;
 }

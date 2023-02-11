@@ -683,13 +683,13 @@ void printStatement(Statement sta) {
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples) {
 
-    BOOST_LOG_TRIVIAL(info) << "Initializing rendering at " << target_samples << " sample target";
+    LOG(info) << "Initializing rendering at " << target_samples << " sample target";
 
     dev_Scene* temp = new dev_Scene(scene);
 
     copy_scene(temp, dev_scene, q);
 
-    BOOST_LOG_TRIVIAL(debug) << "Starting setup kernels";
+    LOG(debug) << "Starting setup kernels";
 
     q.submit([&](cl::sycl::handler& h) {
         sycl::stream out = sycl::stream(4096, 1024, h);
@@ -699,7 +699,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
             });
         }).wait();
 
-    BOOST_LOG_TRIVIAL(info) << "Setup finished";
+    LOG(info) << "Setup finished";
 
     //TODO: figure out how to manage max samples (noise cutoff?)
 
@@ -721,7 +721,7 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
    
 
 
-    BOOST_LOG_TRIVIAL(info) << "All samples added to the queue";
+    LOG(info) << "All samples added to the queue";
 
     return 0;
 }

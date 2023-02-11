@@ -12,7 +12,7 @@ CommandManager::CommandManager() {
 
 void CommandManager::get_pass(std::string& pass) {
 
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::get_pass(" << pass << ")";
+    LOG(trace) << "CommandManager::get_pass(" << pass << ")";
 
     Message pass_data_msg;
 
@@ -56,7 +56,7 @@ void CommandManager::get_render_info() {
 }
 
 void CommandManager::load_texture(Texture texture) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_texture(" << texture.name << ")";
+    LOG(trace) << "CommandManager::load_texture(" << texture.name << ")";
     sm->scene.addTexture(texture);
     sm->scene.pair_textures();
 
@@ -64,14 +64,14 @@ void CommandManager::load_texture(Texture texture) {
 }
 
 void CommandManager::load_hdri(HDRI hdri) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_hdri(" << hdri.texture.width << "x" << hdri.texture.height << ")";
-    BOOST_LOG_TRIVIAL(info) << hdri.texture.data[0];
+    LOG(trace) << "CommandManager::load_hdri(" << hdri.texture.width << "x" << hdri.texture.height << ")";
+    LOG(info) << hdri.texture.data[0];
     sm->scene.addHDRI(hdri);
     im->write_message(Message::OK());
 }
 
 void CommandManager::load_config(RenderParameters rp) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << ")";
+    LOG(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << ")";
     rm->rd.pars = rp;
     //TODO: Pars and scene both have redundant resolution.
     sm->scene.x_res = rp.width;
@@ -80,7 +80,7 @@ void CommandManager::load_config(RenderParameters rp) {
 }
 
 void CommandManager::load_camera(Camera camera) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_camera()";
+    LOG(trace) << "CommandManager::load_camera()";
     sm->scene.camera = camera;
     im->write_message(Message::OK());
 }
@@ -113,7 +113,7 @@ Vector3 parse_vector3(boost::json::object json) {
 
 void CommandManager::load_material_from_json(boost::json::object json_mat) {
 
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_material_from_json()" << json_mat;
+    LOG(trace) << "CommandManager::load_material_from_json()" << json_mat;
 
     Material mtl;
 
@@ -164,7 +164,7 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
         mtl.opacity_map = json_mat["opacity_map"].as_string();
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "Material parsed: " << mtl.name <<
+    LOG(debug) << "Material parsed: " << mtl.name <<
         " Albedo: " << mtl.albedo.x << ", " << mtl.albedo.y << ", " << mtl.albedo.z << ", " <<
         " Emission: " << mtl.emission.x << ", " << mtl.emission.y << ", " << mtl.emission.z << ", " << 
         " Metalness: " << mtl.metallic <<
@@ -186,7 +186,7 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
 }
 
 void CommandManager::load_objects(std::vector<MeshObject> objects) {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::load_objects(" << objects.size() << ")";
+    LOG(trace) << "CommandManager::load_objects(" << objects.size() << ")";
 
     for (MeshObject obj : objects) {
         sm->scene.addMeshObject(obj);
@@ -197,13 +197,13 @@ void CommandManager::load_objects(std::vector<MeshObject> objects) {
 }
 
 void CommandManager::start_render() {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::start_render";
+    LOG(trace) << "CommandManager::start_render";
     rm->start_rendering(&(sm->scene));
     im->write_message(Message::OK());
 }
 
 void CommandManager::stop_render() {
-    BOOST_LOG_TRIVIAL(trace) << "CommandManager::stop_render";
+    LOG(trace) << "CommandManager::stop_render";
     stop_command = true;
     im->write_message(Message::OK());
 }

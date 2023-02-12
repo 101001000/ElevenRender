@@ -8,7 +8,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
-
+#include <Windows.h>
 
 #define LOG(lvl)\
     BOOST_LOG_STREAM_WITH_PARAMS(::boost::log::trivial::logger::get(),\
@@ -18,3 +18,5 @@
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(a_timestamp, "TimeStamp", boost::log::attributes::local_clock::value_type);
 BOOST_LOG_ATTRIBUTE_KEYWORD(a_thread_id, "ThreadID", boost::log::attributes::current_thread_id::value_type);
+
+namespace logging { void init(); }

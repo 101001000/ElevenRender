@@ -52,15 +52,6 @@ find_package(Git REQUIRED)
 # And ninja.
 
 message(STATUS "Setting up Boost...")
-
-
-
-
-#set(BOOST_ENABLE_CMAKE ON)
-#find_package(Boost 1.79.0 COMPONENTS program_options json log REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS}) 
-
-#set(BOOST_ALL_NO_LIB)
 set(BOOST_INCLUDE_LIBRARIES program_options json log)
 add_subdirectory(boost EXCLUDE_FROM_ALL)
 

@@ -1,6 +1,6 @@
 include
-boost
 CMakeFiles
+boost
 lib
 third-party
 src/glad.c
@@ -37,4 +37,4 @@ blender_temp
 _deps
 CMakeLists3.txt
 string_replace.bat
-build/*
+build

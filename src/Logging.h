@@ -1,5 +1,6 @@
 #pragma once
 
+#define BOOST_ALL_NO_LIB // Needed in Windows to avoid Boost to add the "w" postfix to "clang15".
 #define  _WIN32_WINNT   0x0601
 
 #include <boost/log/trivial.hpp>

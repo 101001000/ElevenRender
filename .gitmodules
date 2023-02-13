@@ -1,0 +1,3 @@
+[submodule "boost"]
+	path = boost
+	url = https://github.com/101001000/boost_no_SEH.git

@@ -1,6 +1,5 @@
 include
 CMakeFiles
-boost
 lib
 third-party
 src/glad.c

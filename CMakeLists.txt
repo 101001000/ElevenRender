@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 set(FETCHCONTENT_QUIET FALSE)
-set( CMAKE_CXX_STANDARD 17 )
 include(FetchContent)
 
 if(NOT SYCL_PATH)
@@ -30,11 +29,15 @@ endif()
 
 message(STATUS "Setting up clang...")
 
+# CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
+set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
+
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-W#pragma-messages -Wno-unknown-cuda-version -Wno-enum-constexpr-conversion -Wno-linker-warnings -Wno-macro-redefined -fsycl -fsycl-targets=nvptx64-nvidia-cuda")
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=nvptx64-nvidia-cuda")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/build/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
+#set(CMAKE_C_FLAGS  "-fsycl -fsycl-targets=nvptx64-nvidia-cuda")
 set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
@@ -50,11 +53,16 @@ find_package(Git REQUIRED)
 
 message(STATUS "Setting up Boost...")
 
-set(Boost_COMPILER "-clangw15")
-#set(BOOST_ENABLE_CMAKE ON)
-find_package(Boost 1.79.0 COMPONENTS program_options json log REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS}) 
 
+
+
+#set(BOOST_ENABLE_CMAKE ON)
+#find_package(Boost 1.79.0 COMPONENTS program_options json log REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS}) 
+
+#set(BOOST_ALL_NO_LIB)
+set(BOOST_INCLUDE_LIBRARIES program_options json log)
+add_subdirectory(boost EXCLUDE_FROM_ALL)
 
 message(STATUS "Getting RapidObj")
 message(STATUS ${Boost_INCLUDE_DIRS})
@@ -116,7 +124,8 @@ add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src
 
 #target_link_libraries(ElevenRender PUBLIC Boost::program_options Boost::json Boost::log Boost::asio)
 
-target_link_libraries(ElevenRender ${Boost_LIBRARIES})
+#target_link_libraries(ElevenRender ${Boost_LIBRARIES})
+target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
 target_link_libraries(ElevenRender sycl)

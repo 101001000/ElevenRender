@@ -10,11 +10,14 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <Windows.h>
+#include <string>
+
+#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
 #define LOG(lvl)\
     BOOST_LOG_STREAM_WITH_PARAMS(::boost::log::trivial::logger::get(),\
         (::boost::log::keywords::severity = ::boost::log::trivial::lvl)) \
-        << ::boost::log::add_value("Line", __LINE__) << ::boost::log::add_value("File", __FILE_NAME__)
+        << ::boost::log::add_value("Line", __LINE__) << ::boost::log::add_value("File", __FILENAME__)
 
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(a_timestamp, "TimeStamp", boost::log::attributes::local_clock::value_type);

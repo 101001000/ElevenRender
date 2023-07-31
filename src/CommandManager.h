@@ -13,7 +13,8 @@ template<class T>
 class LoadCommand : public Command {
 
     T object;
-
+public:
+    using LoadCommandType = T;
 
 };
 

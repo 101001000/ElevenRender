@@ -1,11 +1,11 @@
 #include "CommandManager.h"
+#include "Logging.h"
 #include "Managers.h"
 #include <numeric>
 #include <string>
 #include <algorithm>
 
 std::vector<const char*> str_to_argv(std::string str) {
-    LOG(trace) << "in str_to_argv()";
     std::string s;
     std::vector<const char*> argv;
     std::istringstream iss(str);
@@ -15,7 +15,6 @@ std::vector<const char*> str_to_argv(std::string str) {
         strcpy(c, s.c_str());
         argv.push_back(c);
     }
-    LOG(trace) << "out str_to_argv()";
     return argv;
 }
 
@@ -428,6 +427,12 @@ void InputManager::execute_command_msg(Message msg) {
 */
 
 
+
+// I need to register a command:
+
+// Register: "command: load_config", "desc: load configuration from tcp (use --path for importing .json config files)"
+
+
 const std::vector<std::pair<std::string, std::string>> InputManager::load_commands = {
    {"load_config", "load configuration from tcp (use --path for importing .json config files)"},
    {"load_object", "load object from tcp (use --path for importing wavefront .obj files)" },
@@ -460,13 +465,107 @@ Camera LoadCameraCommand::json_to_camera(boost::json::object camera_json) {
 }
 
 
-
-
-
-Command load_command_factory(boost::program_options::variables_map& vm, std::string path) {
-
-    return Command();
+template<class T>
+T load_from_path(const std::string path) {
+    return nullptr;
 }
+
+
+template<class T>
+T load(std::string path) {}
+
+template<>
+Texture load(std::string path) {
+    return Texture();
+}
+
+template<>
+HDRI load(std::string path) {
+    return HDRI();
+}
+
+Command load_command_factory(boost::program_options::variables_map& vm, InputCommand& ic, std::string path) {
+
+
+    std::bind(&load_from_path<Texture>, path);
+ 
+    load<Texture>(path);
+    load<HDRI>(path);
+
+
+
+    //else if (vm.count("load_texture")) {
+    //    LOG(trace) << "InputManager::execute_command -> enqueue load_texture";
+    //
+    //    // 1: check args, send ok
+    //    // 2: wait for metadata
+    //    // 3: check metadata, send ok
+    //    // 4: wait for texture data
+    //    // 5: generate texture
+    //
+    //    Message metadata_msg = read_message();
+    //
+    //    boost::json::object json_metadata = metadata_msg.get_json_data();
+    //
+    //    int width = json_metadata["width"].as_int64();
+    //    int height = json_metadata["height"].as_int64();
+    //    int channels = json_metadata["channels"].as_int64();
+    //
+    //    std::string name = json_metadata["name"].as_string().c_str();
+    //    std::string color_space = json_metadata["color_space"].as_string().c_str();
+    //
+    //    write_message(Message::OK());
+    //
+    //    Texture tex;
+    //
+    //    if (vm.count("path")) {
+    //
+    //        //TODO: Manage color space loading
+    //        stbi_set_flip_vertically_on_load(true);
+    //
+    //        int l_width, l_height, l_channels;
+    //
+    //        float* tmp_data = stbi_loadf(vm["path"].as<std::string>().c_str(), &l_width, &l_height, &l_channels, 0);
+    //
+    //        //TODO: Add error loading handling
+    //        LOG(debug) << "Loaded texture from" << vm["path"].as<std::string>();
+    //
+    //        if (width != l_width || height != l_height || channels != l_channels) {
+    //            LOG(warning) << "Metadata - file metadata missmatch on " << name;
+    //        }
+    //
+    //        tex = Texture(l_width, l_height, l_channels, tmp_data);
+    //
+    //        stbi_image_free(tmp_data);
+    //    }
+    //    else if (vm.count("sm")) {
+    //        LOG(error) << "shared memory feature not implemented yet";
+    //        //TODO implement sm object loading
+    //    }
+    //    else {
+    //        Message data_msg = read_message();
+    //        float* data = data_msg.get_float_data();
+    //        //TODO: Fix this constructor arguments. Well, every constructor in reality.
+    //        //TODO: Apply colorspace in loading
+    //        tex = Texture(width, height, channels, data);
+    //        tex.name = name;
+    //    }
+    //
+    //    if (vm.count("mirror_x"))
+    //        tex.mirror_x();
+    //
+    //    if (vm.count("mirror_y"))
+    //        tex.mirror_y();
+    //
+    //    f = std::bind(&CommandManager::load_texture, std::ref(cm), tex);
+    //
+    //return Command();
+}
+
+
+
+
+
 
 Command load_command_factory(boost::program_options::variables_map& vm, Message& data_msg) {
 
@@ -481,6 +580,7 @@ void InputManager::execute_command_msg(Message msg) {
 
     std::string command_str = msg.get_string_data();
     std::vector<const char*> argv = str_to_argv(command_str); //Parse command as argv
+
     LOG(debug) << "Executing command: " << command_str;
     
     po::variables_map vm;
@@ -507,14 +607,19 @@ void InputManager::execute_command_msg(Message msg) {
     po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
     po::notify(vm);
     
+
+    InputCommand lt{ "load_texture", "Load texture", LoadCommand<Texture>() };
+    InputCommand lh{ "load_hdri", "Load hdri", LoadCommand<HDRI>() };
+
+    std::vector<InputCommand> input_commands{ lt, lh };
+
+
     
     // Return the iterator of the command in the load_commands vector.
     auto it = std::find_if(vm.cbegin(), vm.cend(),
         [&](auto const& vm_key) {
-            std::cout << "Checking " << vm_key.first << std::endl;
             return std::find_if(InputManager::load_commands.cbegin(), InputManager::load_commands.cend(),
                 [vm_key](const auto& elem) {
-                    std::cout << "Analyzing " << elem.first << std::endl;
                     return elem.first == vm_key.first;
                 }) != InputManager::load_commands.cend();
         });

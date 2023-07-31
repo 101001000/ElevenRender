@@ -170,6 +170,17 @@ struct Message {
 
 */
 
+//TODO: Move inside their own header
+class InputCommand {
+public:
+    std::string command_name;
+    std::string desc;
+    Command command;
+    //std::function<T::LoadCommandType()> load_func;
+
+    InputCommand = deleted;
+};
+
 
 class InputManager : Manager {
 

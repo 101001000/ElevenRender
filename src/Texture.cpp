@@ -1,35 +1,12 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#include "Texture.h"
 
-#if !defined(__CUDACC__)
-#include <stb_image.h>
-#endif
 
-#include "Math.hpp"
-#include "sycl.h"
 
-//TODO: refactor, remove loading from filesystem to scene loader.
-class Texture {
-public:
-
-    enum class Filter { NO_FILTER, BILINEAR };
-    enum class CS { LINEAR, sRGB };
-
-    Filter filter = Filter::NO_FILTER;
-    Vector3 color;
-
-    std::string name;
-
-    int width;
-    int height;
-    float* data;
-    unsigned int channels;
-
-    explicit Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
+    Texture::Texture(std::string filepath) : Texture(filepath, CS::sRGB) {}
 
     //TODO fix this compilation nightmare
 #if !defined(__CUDACC__)
-    Texture(std::string filepath, CS colorSpace) {
+    Texture::Texture(std::string filepath, CS colorSpace) {
 
         if (colorSpace == CS::sRGB) {
             stbi_ldr_to_hdr_gamma(2.2f);
@@ -60,14 +37,14 @@ public:
         stbi_image_free(tmp_data);
     }
 #else
-    Texture(std::string filepath, CS colorSpace) {
+    Texture::Texture(std::string filepath, CS colorSpace) {
         printf("COMPILATION MISMATCH");
     }
        
 #endif
 
 
-    void mirror_x() {
+    void Texture::mirror_x() {
         float* new_data = new float[width * height * channels];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -80,7 +57,7 @@ public:
         data = new_data;
     }
 
-    void mirror_y() {
+    void Texture::mirror_y() {
         float* new_data = new float[width * height * channels];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -94,7 +71,7 @@ public:
     }
 
     // Limit the amount of channels to 3
-    void clamp_channels() {
+    void Texture::clamp_channels() {
         std::cout << "Clamping channels" << std::endl;
         // Channel count is modified when removing one channel.
         int or_channels = channels;
@@ -105,7 +82,7 @@ public:
         }
     }
 
-    void remove_last_channel() {
+    void Texture::remove_last_channel() {
         float* new_pixels = new float[width * height * (channels - 1)];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -120,7 +97,7 @@ public:
     }
 
     // Displaces pixels horizontally or vertically.
-    void pixel_shift(const float x_amount, const float y_amount) {
+    void Texture::pixel_shift(const float x_amount, const float y_amount) {
         float* shifted_pixels = new float[width * height * channels];
         for (int x = 0; x < width; x++) {
             int shifted_x = static_cast<int>(x + width * x_amount) % width;
@@ -136,13 +113,13 @@ public:
     }
 
     // TODO: This should gamma correct alpha channel?
-    void applyGamma(float gamma) {
+    void Texture::applyGamma(float gamma) {
         for (int i = 0; i < width * height * channels; i++) {
             data[i] = fast_pow(data[i], gamma);
         }
     }
 
-    Texture(int _width, int _height, int _channels, float* _data) {
+    Texture::Texture(int _width, int _height, int _channels, float* _data) {
         width = _width;
         height = _height;
         data = new float[width * height * _channels];
@@ -151,7 +128,7 @@ public:
         //clamp_channels();
     }
 
-    explicit Texture(Vector3 _color) {
+    Texture::Texture(Vector3 _color) {
 
         width = 1; height = 1;
         channels = 3;
@@ -160,7 +137,7 @@ public:
         data[0] = color.x; data[1] = color.y; data[2] = color.z;
     }
 
-    Texture() {
+    Texture::Texture() {
         width = 1;
         height = 1;
         channels = 1;
@@ -168,7 +145,7 @@ public:
         data[0] = 0;
     }
 
-    Vector3 getValueFromCoordinates(int x, int y) {
+    Vector3 Texture::getValueFromCoordinates(int x, int y) {
 
         Vector3 pixel;
 
@@ -195,11 +172,11 @@ public:
         return pixel;
     }
 
-    Vector3 getValueFromUV(float u, float v) {
+    Vector3 Texture::getValueFromUV(float u, float v) {
         return getValueFromCoordinates(u * width, v * height);
     }
 
-    Vector3 getValueBilinear(float u, float v) {
+    Vector3 Texture::getValueBilinear(float u, float v) {
         
         float x = u * width;
         float y = v * height;
@@ -222,7 +199,7 @@ public:
         return lerp(lerp(v1, v2, a), lerp(v3, v4, a), b);
 	}
 
-    Vector3 getValueFromUVFiltered(float u, float v) {
+    Vector3 Texture::getValueFromUVFiltered(float u, float v) {
         if (filter == Filter::BILINEAR) {
             return getValueBilinear(u, v);
         }
@@ -231,7 +208,7 @@ public:
         }
     }
 
-    static inline void sphericalMapping(Vector3 origin, Vector3 point, float radius, float& u, float& v) {
+    void Texture::sphericalMapping(Vector3 origin, Vector3 point, float radius, float& u, float& v) {
 
         // Point is normalized to radius 1 sphere
         Vector3 p = (point - origin) / radius;
@@ -246,7 +223,7 @@ public:
     }
 
 
-    inline Vector3 transformUV(float u, float v) {
+    Vector3 Texture::transformUV(float u, float v) {
 
         int x = u * width;
         int y = v * height;
@@ -259,7 +236,7 @@ public:
         return Vector3(nu, nv, 0);
     }
 
-    inline Vector3 inverseTransformUV(float u, float v) {
+    Vector3 Texture::inverseTransformUV(float u, float v) {
 
         int x = u * width;
         int y = v * height;
@@ -272,7 +249,7 @@ public:
         return Vector3(nu, nv, 0);
     }
 
-    inline Vector3 reverseSphericalMapping(float u, float v) {
+    Vector3 Texture::reverseSphericalMapping(float u, float v) {
 
         float phi = u * 2 * PI;
         float theta = v * PI;
@@ -285,7 +262,3 @@ public:
 
         return Vector3(a * px, py, a * pz);
     }
-};
-
-
-#endif

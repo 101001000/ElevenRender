@@ -3,8 +3,39 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+Camera parse_camerajson(boost::json::object camera_json) {
+    Camera camera;
+    boost::json::object position_json = camera_json["position"].as_object();
+    boost::json::object rotation_json = camera_json["rotation"].as_object();
+    camera.aperture = camera_json["aperture"].as_double();
+    camera.bokeh = camera_json["bokeh"].as_bool();
+    camera.focusDistance = camera_json["focus_distance"].as_double();
+    camera.focalLength = camera_json["focal_length"].as_double();
+    camera.sensorWidth = camera_json["sensor_width"].as_double();
+    camera.sensorHeight = camera_json["sensor_height"].as_double();
+    camera.position = Vector3(position_json["x"].as_double(), position_json["y"].as_double(), position_json["z"].as_double());
+    camera.rotation = Vector3(rotation_json["x"].as_double(), rotation_json["y"].as_double(), rotation_json["z"].as_double());
+    return camera;
+}
+
+Camera CameraDiskLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+Camera CameraTCPLoadInputCommand::load() {
+    return parse_camerajson(msg.get_json_data());
+}
+
+Texture TextureDiskLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+Texture TextureTCPLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
 CommandManager::CommandManager() {
-    im = std::make_shared<InputManager>(this);
+    //im = std::make_shared<InputManager>(this);
     rm = std::make_shared<RenderingManager>(this);
     dm = std::make_shared<DenoiseManager>(this);
     sm = std::make_shared<SceneManager>(this);
@@ -185,6 +216,34 @@ void CommandManager::load_material_from_json(boost::json::object json_mat) {
     im->write_message(Message::OK());
 }
 
+void CommandManager::execute_load_input_command(LoadInputCommand* ic) {
+
+    if (dynamic_cast<TextureLoadInputCommand*>(ic) != nullptr) {
+        Texture texture = dynamic_cast<TextureLoadInputCommand*>(ic)->load();
+        load_texture(texture);
+    }
+    else if (dynamic_cast<CameraLoadInputCommand*>(ic) != nullptr) {
+        Camera camera = dynamic_cast<CameraLoadInputCommand*>(ic)->load();
+        load_camera(camera);
+    }
+    else {
+        LOG(error) << "Error in execute_load_input_command";
+    }
+}
+
+void CommandManager::execute_input_command(InputCommand* ic) {
+
+    if (dynamic_cast<LoadInputCommand*>(ic) != nullptr) {
+        execute_load_input_command(dynamic_cast<LoadInputCommand*>(ic));
+    }
+    else if (dynamic_cast<LoadInputCommand*>(ic) != nullptr) {
+
+    }
+    else {
+        LOG(error) << "Error in execute_input_command";
+    }
+}
+
 void CommandManager::load_objects(std::vector<MeshObject> objects) {
     LOG(trace) << "CommandManager::load_objects(" << objects.size() << ")";
 
@@ -223,7 +282,7 @@ void CommandManager::run() {
 }
 
 void CommandManager::init() {
-    im_t = std::thread(&InputManager::run_tcp, this->im);
+    //im_t = std::thread(&InputManager::run_tcp, this->im);
     //cm_t = std::thread(&CommandManager::run, this);
     //wm->run();
     run();

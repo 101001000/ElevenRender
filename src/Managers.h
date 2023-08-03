@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CommandManager.h"
 #include "kernel.h"
 #include <functional>
 
@@ -16,6 +15,10 @@
 
 //Forward declaration
 class CommandManager;
+
+class Command {
+public:
+};
 
 class Manager {
 
@@ -170,17 +173,7 @@ struct Message {
 
 */
 
-//TODO: Move inside their own header
-class InputCommand {
-public:
-    std::string command_name;
-    std::string desc;
-    Command command;
-    //std::function<T::LoadCommandType()> load_func;
-
-    InputCommand = deleted;
-};
-
+/*
 
 class InputManager : Manager {
 
@@ -201,7 +194,7 @@ public:
     Message read_message();
     void write_message(Message msg);
 };
-
+*/
 
 class DenoiseManager : Manager {
 

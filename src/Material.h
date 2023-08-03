@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vector.h"
-#include "Texture.hpp"
+#include "Texture.h"
 
 class Material {
 

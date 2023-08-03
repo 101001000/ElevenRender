@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "Texture.hpp"
+#include "Texture.h"
 #include "Sampling.h"
 #include "sycl.h"
 

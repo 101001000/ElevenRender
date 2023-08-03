@@ -619,67 +619,6 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 }
 
 
-void printExp(Exp exp) {
-    switch (exp.type) {
-    case Exp::Type::NUL:
-        std::cout << "EXP(" << exp.idx << "): NUL";
-        break;
-    case Exp::Type::NUM:
-        std::cout << "EXP(" << exp.idx << "): N(" << exp.n << ")";
-        break;
-    case Exp::Type::VAR:
-        std::cout << "EXP(" << exp.idx << "): VAR(" << exp.x << ")";
-        break;
-    case Exp::Type::VEC:
-        std::cout << "EXP(" << exp.idx << "): VEC(";
-        printExp(*exp.e1);
-        std::cout << ", ";
-        printExp(*exp.e2);
-        std::cout << ", ";
-        printExp(*exp.e3);
-        std::cout << ")";
-        break;
-    case Exp::Type::SUM:
-        std::cout << "EXP(" << exp.idx << "): SUM(";
-        printExp(*exp.e1);
-        std::cout << " + ";
-        printExp(*exp.e2);
-        std::cout << ")";
-        break;
-    }
-}
-
-void printStatement(Statement sta) {
-    switch (sta.type) {
-    case Statement::Type::NUL:
-        std::cout << "STATEMENT: NUL";
-        break;
-    case Statement::Type::SKIP:
-        std::cout << "STATEMENT: SKIP";
-        break;
-    case Statement::Type::SEQ:
-        std::cout << "STATEMENT: SEQ (";
-        printStatement(*sta.s1);
-        std::cout << ", ";
-        printStatement(*sta.s2);
-        std::cout << ")";
-        break;
-    case Statement::Type::ASS:
-        std::cout << "STATEMENT: ASS(" << sta.x << " = ";
-        printExp(*sta.e);
-        std::cout << ")";
-        break;
-    case Statement::Type::IF:
-        std::cout << "STATEMENT: IF (";
-        printStatement(*sta.s1);
-        std::cout << ", ";
-        printStatement(*sta.s2);
-        std::cout << ")";
-        break;
-    }
-}
-
-
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples) {
 

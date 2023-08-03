@@ -1,3 +1,5 @@
+/*
+
 #include "CommandManager.h"
 #include "Logging.h"
 #include "Managers.h"
@@ -424,7 +426,7 @@ void InputManager::execute_command_msg(Message msg) {
 
 
 
-*/
+
 
 
 
@@ -467,7 +469,7 @@ Camera LoadCameraCommand::json_to_camera(boost::json::object camera_json) {
 
 template<class T>
 T load_from_path(const std::string path) {
-    return nullptr;
+    return T();
 }
 
 
@@ -563,15 +565,6 @@ Command load_command_factory(boost::program_options::variables_map& vm, InputCom
 }
 
 
-
-
-
-
-Command load_command_factory(boost::program_options::variables_map& vm, Message& data_msg) {
-
-    return Command();
-}
-
 void InputManager::execute_command_msg(Message msg) {
 
     namespace po = boost::program_options;
@@ -606,14 +599,13 @@ void InputManager::execute_command_msg(Message msg) {
 
     po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
     po::notify(vm);
-    
+   
 
     InputCommand lt{ "load_texture", "Load texture", LoadCommand<Texture>() };
     InputCommand lh{ "load_hdri", "Load hdri", LoadCommand<HDRI>() };
+    InputCommand lc{ "load_camera", "Load camera", LoadCommand<Camera>() };
 
-    std::vector<InputCommand> input_commands{ lt, lh };
-
-
+    std::vector<InputCommand> input_commands{ lt, lh, lc };
     
     // Return the iterator of the command in the load_commands vector.
     auto it = std::find_if(vm.cbegin(), vm.cend(),
@@ -626,23 +618,23 @@ void InputManager::execute_command_msg(Message msg) {
 
     if (it != vm.cend()) {
         // It's a load command.
-
         if (vm.count("path")) {
-            command = load_command_factory(vm, vm["path"].as<std::string>());
+            //command = load_command_factory(vm, vm["path"].as<std::string>());
+            LOG(error) << "NOT IMPLEMENTED";
         }
         else if (vm.count("sm")) {
             LOG(error) << "Shared memory not implemented yet!";
         }
         else {
             Message data_msg = read_message();
-            command = load_command_factory(vm, data_msg);
+            if (vm.count("load_camera")) {
+                cm->load_camera(LoadCameraCommand::json_to_camera(data_msg.get_json_data()));
+            }
         }
-
     }
-
-
-    
-
+    else {
+        LOG(warning) << "Not a load commmand";
+    }
 }
 
 
@@ -725,7 +717,7 @@ void InputManager::run_tcp() {
                 execute_command_msg(msg);
             }
             else {
-                LOG(error) << "Message recieved, but not a command.";
+                LOG(error) << "Message recieved, expected a command but it's not";
             }
         }
         LOG(info) << "Disconnected";
@@ -734,3 +726,4 @@ void InputManager::run_tcp() {
 
 
 
+*/

@@ -131,6 +131,7 @@ HDRI HdriTCPLoadInputCommand::load() {
         texture = Texture(width, height, channels, data);
         if (mirror_x) texture.mirror_x();
         if (mirror_y) texture.mirror_y();
+        texture.pixel_shift(0.5, 0);
     }
     catch (std::exception const& e) {
         LOG(error) << "Invalid config format: " << e.what();

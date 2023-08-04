@@ -172,7 +172,10 @@ int main(int argc, char* argv[]) {
 
     using boost::asio::ip::tcp;
 
+
+    LOG(info) << "Starting acceptor";
     tcp::acceptor a = tcp::acceptor(tcp_interface.io_context, tcp::endpoint(tcp::v4(), 5557));
+    LOG(info) << "Acceptor started";
 
     while (1) {
         LOG(info) << "Awaiting for a connection";

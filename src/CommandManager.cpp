@@ -18,6 +18,67 @@ Camera parse_camerajson(boost::json::object camera_json) {
     return camera;
 }
 
+
+Vector3 parse_vector3(boost::json::object json) {
+    return Vector3(json["r"].as_double(), json["g"].as_double(), json["b"].as_double());
+}
+
+
+
+Material parse_materialjson(boost::json::object json_mat) {
+
+    Material mtl;
+
+    if (json_mat.if_contains("name")) {
+        mtl.name = json_mat["name"].as_string();
+    }
+
+    if (json_mat.if_contains("albedo")) {
+        mtl.albedo = parse_vector3(json_mat["albedo"].as_object());
+    }
+
+    if (json_mat.if_contains("emission")) {
+        mtl.emission = parse_vector3(json_mat["emission"].as_object());
+    }
+    if (json_mat.if_contains("roughness")) {
+        mtl.roughness = json_mat["roughness"].as_double();
+    }
+    if (json_mat.if_contains("metalness")) {
+        mtl.metallic = json_mat["metalness"].as_double();
+    }
+    if (json_mat.if_contains("specular")) {
+        mtl.specular = json_mat["specular"].as_double();
+    }
+    if (json_mat.if_contains("opacity")) {
+        mtl.opacity = json_mat["opacity"].as_double();
+    }
+
+    if (json_mat.if_contains("albedo_map")) {
+        mtl.albedo_map = json_mat["albedo_map"].as_string();
+    }
+    if (json_mat.if_contains("emission_map")) {
+        mtl.emission_map = json_mat["emission_map"].as_string();
+    }
+    if (json_mat.if_contains("roughness_map")) {
+        mtl.roughness_map = json_mat["roughness_map"].as_string();
+    }
+    if (json_mat.if_contains("metallic_map")) {
+        mtl.metallic_map = json_mat["metallic_map"].as_string();
+    }
+    if (json_mat.if_contains("normal_map")) {
+        mtl.normal_map = json_mat["normal_map"].as_string();
+    }
+    if (json_mat.if_contains("opacity_map")) {
+        mtl.opacity_map = json_mat["opacity_map"].as_string();
+    }
+    float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);
+    mtl.ax = maxf(0.001, mtl.roughness / aspect);
+    mtl.ay = maxf(0.001, mtl.roughness * aspect);
+    return mtl;
+}
+
+
+
 Camera CameraDiskLoadInputCommand::load() {
     LOG(error) << "Not implemented yet";
 }
@@ -34,8 +95,81 @@ Texture TextureTCPLoadInputCommand::load() {
     LOG(error) << "Not implemented yet";
 }
 
+RenderParameters ConfigDiskLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+RenderParameters ConfigTCPLoadInputCommand::load() {
+
+    boost::json::object json_data = msg.get_json_data();
+    RenderParameters rp;
+
+    try {
+        rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid config format: " << e.what();
+    }
+
+    return rp;
+}
+
+HDRI HdriDiskLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+HDRI HdriTCPLoadInputCommand::load() {
+
+    Texture texture;
+    boost::json::object json_metadata = metadata_msg.get_json_data();
+    float* data = data_msg.get_float_data();
+
+    try {
+        int width = json_metadata["width"].as_int64();
+        int height = json_metadata["height"].as_int64();
+        int channels = json_metadata["channels"].as_int64();
+        texture = Texture(width, height, channels, data);
+        if (mirror_x) texture.mirror_x();
+        if (mirror_y) texture.mirror_y();
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid config format: " << e.what();
+    }
+    return HDRI(texture);
+}
+
+Material BrdfTCPLoadInputCommand::load() {
+    Material material;
+    try {
+        parse_materialjson(msg.get_json_data());
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid material format: " << e.what();
+    }
+    return material;
+}
+
+Material BrdfDiskLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+
+std::vector<MeshObject> ObjectsTCPLoadInputCommand::load() {
+    LOG(error) << "Not implemented yet";
+}
+
+std::vector<MeshObject> ObjectsDiskLoadInputCommand::load() {
+    std::vector<MeshObject> objects(0);
+    std::vector<UnloadedMaterial> umls(0);
+    ObjLoader objLoader;
+    path.erase(remove(path.begin(), path.end(), '\"'), path.end()); // Remove double quotes
+    objLoader.loadObjsRapid(path, objects, umls, recompute_normals);
+    return objects;
+}
+
+
+
 CommandManager::CommandManager() {
-    //im = std::make_shared<InputManager>(this);
     rm = std::make_shared<RenderingManager>(this);
     dm = std::make_shared<DenoiseManager>(this);
     sm = std::make_shared<SceneManager>(this);
@@ -70,7 +204,7 @@ void CommandManager::get_pass(std::string& pass) {
 }
 
 void CommandManager::get_render_info() {
-
+    LOG(trace) << "CommandManager::get_render_info()";
     RenderingManager::RenderInfo render_info = rm->get_render_info();
 
     Message render_info_msg;
@@ -117,6 +251,13 @@ void CommandManager::load_camera(Camera camera) {
 }
 
 
+void CommandManager::load_brdf_material(Material material) {
+    sm->scene.addMaterial(material);
+    sm->scene.pair_materials();
+    sm->scene.pair_textures();
+    im->write_message(Message::OK());
+}
+
 void CommandManager::save_pass(std::string& pass, std::string& path) {
 
     printf("Saving file %s...\n", path.c_str());
@@ -138,83 +279,6 @@ void CommandManager::save_pass(std::string& pass, std::string& path) {
     printf("Saved!\n");
 }
 
-Vector3 parse_vector3(boost::json::object json) {
-    return Vector3(json["r"].as_double(), json["g"].as_double(), json["b"].as_double());
-}
-
-void CommandManager::load_material_from_json(boost::json::object json_mat) {
-
-    LOG(trace) << "CommandManager::load_material_from_json()" << json_mat;
-
-    Material mtl;
-
-    if (json_mat.if_contains("name")) {
-        mtl.name = json_mat["name"].as_string();
-    }
-
-    if (json_mat.if_contains("albedo")) {
-        Vector3 al = parse_vector3(json_mat["albedo"].as_object());
-
-        //mtl.albedo = Vector3(sycl::pow(al.x, 1/2.2f), sycl::pow(al.y, 1 / 2.2f), sycl::pow(al.z, 1 / 2.2f));
-        mtl.albedo = al;
-    }
-
-    if (json_mat.if_contains("emission")) {
-        mtl.emission = parse_vector3(json_mat["emission"].as_object());
-    }
-    if (json_mat.if_contains("roughness")) {
-        mtl.roughness = json_mat["roughness"].as_double();
-    }
-    if (json_mat.if_contains("metalness")) {
-        mtl.metallic = json_mat["metalness"].as_double();
-    }
-    if (json_mat.if_contains("specular")) {
-        mtl.specular = json_mat["specular"].as_double();
-    }
-    if (json_mat.if_contains("opacity")) {
-        mtl.opacity = json_mat["opacity"].as_double();
-    }
-
-
-    if (json_mat.if_contains("albedo_map")) {
-        mtl.albedo_map = json_mat["albedo_map"].as_string();
-    }
-    if (json_mat.if_contains("emission_map")) {
-        mtl.emission_map = json_mat["emission_map"].as_string();
-    }
-    if (json_mat.if_contains("roughness_map")) {
-        mtl.roughness_map = json_mat["roughness_map"].as_string();
-    }
-    if (json_mat.if_contains("metallic_map")) {
-        mtl.metallic_map = json_mat["metallic_map"].as_string();
-    }
-    if (json_mat.if_contains("normal_map")) {
-        mtl.normal_map = json_mat["normal_map"].as_string();
-    }
-    if (json_mat.if_contains("opacity_map")) {
-        mtl.opacity_map = json_mat["opacity_map"].as_string();
-    }
-
-    LOG(debug) << "Material parsed: " << mtl.name <<
-        " Albedo: " << mtl.albedo.x << ", " << mtl.albedo.y << ", " << mtl.albedo.z << ", " <<
-        " Emission: " << mtl.emission.x << ", " << mtl.emission.y << ", " << mtl.emission.z << ", " << 
-        " Metalness: " << mtl.metallic <<
-        " Roughness: " << mtl.roughness <<
-        " Specular: " << mtl.specular <<
-        " Albedo Path: " << mtl.albedo_map <<
-        " Normal Path: " << mtl.normal_map;
-
-
-    float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);
-    mtl.ax = maxf(0.001, mtl.roughness / aspect);
-    mtl.ay = maxf(0.001, mtl.roughness * aspect);
-
-    sm->scene.addMaterial(mtl);
-    sm->scene.pair_materials();
-    sm->scene.pair_textures();
-
-    im->write_message(Message::OK());
-}
 
 void CommandManager::execute_load_input_command(LoadInputCommand* ic) {
 
@@ -226,6 +290,22 @@ void CommandManager::execute_load_input_command(LoadInputCommand* ic) {
         Camera camera = dynamic_cast<CameraLoadInputCommand*>(ic)->load();
         load_camera(camera);
     }
+    else if (dynamic_cast<ConfigLoadInputCommand*>(ic) != nullptr) {
+        RenderParameters config = dynamic_cast<ConfigLoadInputCommand*>(ic)->load();
+        load_config(config);
+    }
+    else if (dynamic_cast<HdriLoadInputCommand*>(ic) != nullptr) {
+        HDRI hdri = dynamic_cast<HdriLoadInputCommand*>(ic)->load();
+        load_hdri(hdri);
+    }
+    else if (dynamic_cast<BrdfLoadInputCommand*>(ic) != nullptr) {
+        Material material = dynamic_cast<BrdfLoadInputCommand*>(ic)->load();
+        load_brdf_material(material);
+    }
+    else if (dynamic_cast<ObjectsLoadInputCommand*>(ic) != nullptr) {
+        std::vector<MeshObject> objects = dynamic_cast<ObjectsLoadInputCommand*>(ic)->load();
+        load_objects(objects);
+    }
     else {
         LOG(error) << "Error in execute_load_input_command";
     }
@@ -236,11 +316,24 @@ void CommandManager::execute_input_command(InputCommand* ic) {
     if (dynamic_cast<LoadInputCommand*>(ic) != nullptr) {
         execute_load_input_command(dynamic_cast<LoadInputCommand*>(ic));
     }
-    else if (dynamic_cast<LoadInputCommand*>(ic) != nullptr) {
+    else if (dynamic_cast<ActionInputCommand*>(ic) != nullptr) {
 
+        if (dynamic_cast<StartInputCommand*>(ic) != nullptr) {
+            start_render();
+        }
+        else if (dynamic_cast<GetInfoInputCommand*>(ic) != nullptr) {
+            get_render_info();
+        }
+        else if (dynamic_cast<GetPassInputCommand*>(ic) != nullptr) {
+            get_pass(dynamic_cast<GetPassInputCommand*>(ic)->pass);
+        }
+        else {
+            LOG(error) << "Unrecognized input action command";
+        }
+           
     }
     else {
-        LOG(error) << "Error in execute_input_command";
+        LOG(error) << "Unrecognized input command";
     }
 }
 

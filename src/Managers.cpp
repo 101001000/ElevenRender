@@ -129,6 +129,10 @@ Message::DataFormat Message::str2data_format(std::string str) {
 
 boost::json::object Message::get_json_data() {
     LOG(trace) << "Message::get_json_data()";
+
+    if(data_format != DataFormat::JSON)
+        LOG(warning) << "Trying to extract invalid json data";
+
     boost::json::value json;
 
     try {
@@ -143,11 +147,19 @@ boost::json::object Message::get_json_data() {
 
 float* Message::get_float_data() {
     LOG(trace) << "Message::get_float_data()";
+
+    if (data_format != DataFormat::FLOAT3 && data_format !=  DataFormat::FLOAT4)
+        LOG(warning) << "Trying to extract invalid float data";
+
     return (static_cast<float*>(data));
 }
 
 std::string Message::get_string_data() {
     LOG(trace) << "Message::get_string_data()";
+
+    if (data_format != DataFormat::STRING)
+        LOG(warning) << "Trying to extract invalid string data";
+
     return std::string(static_cast<const char*>(data));
 }
 

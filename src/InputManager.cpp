@@ -192,7 +192,8 @@ void InputManager::execute_command_msg(Message msg) {
                 objLoader.loadObjsRapid(path_string, objects, umtls, vm.count("recompute_normals"));
             }
             else if (vm.count("sm")) {
-                LOG(error) << "shared memory feature not implemented yet";
+                LOG(error) << "shared memory feature
+                ";
                 //TODO implement sm object loading
             }
             else {

@@ -1,7 +1,7 @@
 #include "CommandManager.h"
 #include "Logging.h"
 #include "TCPInterface.h"
-
+#include <numeric>
 
 
 
@@ -18,16 +18,31 @@ std::vector<const char*> str_to_argv(std::string str) {
     return argv;
 }
 
+std::string vec2str(std::vector<std::string> v) {
+    auto space = [](std::string a, std::string b)
+    {
+        return a + ' ' + b;
+    };
+    std::string result = std::accumulate(v.begin(), v.end(), std::string(""), space);
+    result.erase(0, 1);
+    return result;
+}
 
 InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     
     std::string command_str = msg.get_string_data();
     std::vector<const char*> argv = str_to_argv(command_str); 
 
+    LOG(debug) << "Parsing: " << command_str;
+
     namespace po = boost::program_options;
     po::variables_map vm;
 
+    LOG(debug) << "1:";
+
     po::options_description desc("Allowed options");
+
+    LOG(debug) << "2:";
 
     const std::vector<std::pair<std::string, std::string>> load_commands = {
        {"load_config", "load configuration from tcp (use --path for importing .json config files)"},
@@ -50,6 +65,8 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     for (const auto& [k, v] : execution_commands)
         desc.add_options()(k.c_str(), v.c_str());
 
+    LOG(debug) << "3:";
+
     desc.add_options()
         ("help", "produce help message")
 
@@ -58,32 +75,88 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
         ("recompute_normals", "when loading an object, choose if the normals will be recomputed")
         ("mirror_x", "when loading texture, flip horizontal pixels")
         ("mirror_y", "when loading texture, flip vertical pixels")
-        ("output", po::value<std::string>(), "filesystem path where to output data");
+        ("output", po::value<std::string>(), "filesystem path where to output data")
+        ( "get_info", "get render information" )
+        ( "get_pass", po::value<std::string>(), "get render pass" );
+
+    LOG(debug) << "4:";
 
     po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
     po::notify(vm);
 
     InputCommand* ic = nullptr;
 
+    LOG(debug) << "5:";
+
     if (vm.count("path")) {
+
+        LOG(debug) << "6:";
+
+        std::string path = vec2str(vm["path"].as<std::vector<std::string>>());
+
         if (vm.count("load_camera"))
-            ic = new CameraDiskLoadInputCommand(vm["path"].as<std::string>());
+            ic = new CameraDiskLoadInputCommand(path);
         if (vm.count("load_texture"))
-            ic = new TextureDiskLoadInputCommand(vm["path"].as<std::string>());
+            ic = new TextureDiskLoadInputCommand(path);
+        if (vm.count("load_config"))
+            ic = new ConfigDiskLoadInputCommand(path);
+        if (vm.count("load_hdri"))
+            ic = new HdriDiskLoadInputCommand(path);
+        if (vm.count("load_brdf_material"))
+            ic = new BrdfDiskLoadInputCommand(path);
+        if (vm.count("load_object"))
+            ic = new ObjectsDiskLoadInputCommand(path, vm.count("recompute_normals"));
     }
     else if (vm.count("sm")) {
         LOG(error) << "Shared memory not implemented yet!";
     }
     else {
-        Message data_msg = tcp_interface.read_message();
-        if (vm.count("load_camera"))
+       
+        LOG(debug) << "7:";
+
+        if (vm.count("load_camera")) {
+            Message data_msg = tcp_interface.read_message();
             ic = new CameraTCPLoadInputCommand(data_msg);
-        if (vm.count("load_texture"))
-            ic = new TextureTCPLoadInputCommand(data_msg);
+        }
+        if (vm.count("load_texture")) {
+            Message data_msg = tcp_interface.read_message();
+            Message extra_data_msg = tcp_interface.read_message();
+            ic = new TextureTCPLoadInputCommand(data_msg, extra_data_msg);
+        }
+        if (vm.count("load_config")) {
+            Message data_msg = tcp_interface.read_message();
+            ic = new ConfigTCPLoadInputCommand(data_msg);
+        }
+        if (vm.count("load_hdri")) {
+            Message data_msg = tcp_interface.read_message();
+            Message extra_data_msg = tcp_interface.read_message();
+            ic = new HdriTCPLoadInputCommand(data_msg, extra_data_msg, vm.count("mirror_x"), vm.count("mirror_y"));
+        }
+        if (vm.count("load_brdf_material")) {
+            Message data_msg = tcp_interface.read_message();
+            ic = new BrdfTCPLoadInputCommand(data_msg);
+        }
+        if (vm.count("load_object")) {
+            Message data_msg = tcp_interface.read_message();
+            ic = new ObjectsTCPLoadInputCommand(data_msg, vm.count("recompute_normals"));
+        }
+        if (vm.count("start")) {
+            ic = new StartInputCommand();
+        }
+        if (vm.count("get_info")) {
+            LOG(debug) << "8:";
+            ic = new GetInfoInputCommand();
+        }
+        if (vm.count("get_pass")) {
+            ic = new GetPassInputCommand(vm["get_pass"].as<std::string>());
+        }
     }
 
     if (ic == nullptr) {
-        LOG(error) << "Something went wrong when parsing InputCommands!";
+        LOG(error) << "Input Command not recognized in: " << command_str;
+    }
+    else {
+        LOG(trace) << "Input Command recognized";
     }
 
     return ic;

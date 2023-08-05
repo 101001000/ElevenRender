@@ -142,7 +142,8 @@ HDRI HdriTCPLoadInputCommand::load() {
         int width = json_metadata["width"].as_int64();
         int height = json_metadata["height"].as_int64();
         int channels = json_metadata["channels"].as_int64();
-        texture = Texture(width, height, channels, data);
+        // Bilinear filter by default until I fix the blender thing.
+        texture = Texture(width, height, channels, data, Texture::Filter::BILINEAR);
         if (mirror_x) texture.mirror_x();
         if (mirror_y) texture.mirror_y();
         texture.pixel_shift(0.5, 0);

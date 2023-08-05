@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 // TODO: refactor str constructor
 // TODO: parametrize epsilon

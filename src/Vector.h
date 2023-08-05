@@ -201,6 +201,13 @@ public:
 		printf("x: %.3f, y: %.3f, z: %.3f.", x, y, z);
 	}
 
+	std::string to_string() const {
+		std::stringstream ss;
+		ss << "{\"x\":" << x << ", \"y\":" << y << ", \"z\":" << z << "}";
+		return ss.str();
+	}
+
+
 };
 
 inline Vector3 operator-(const Vector3& v1, const Vector3& v2) {

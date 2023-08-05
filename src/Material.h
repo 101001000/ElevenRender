@@ -41,4 +41,6 @@ public:
 	float sheen = 0;
 	float ax = 0;
 	float ay = 0;
+
+	std::string to_string() const;
 };

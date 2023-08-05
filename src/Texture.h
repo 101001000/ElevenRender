@@ -16,6 +16,7 @@ public:
     enum class CS { LINEAR, sRGB };
 
     Filter filter = Filter::NO_FILTER;
+    // This color need to be removed.
     Vector3 color;
 
     std::string name;
@@ -27,9 +28,10 @@ public:
 
     explicit Texture(std::string filepath);
 
-    Texture(std::string filepath, CS colorSpace);
+    Texture(std::string filepath, CS 
+        Space);
 
-
+    std::string to_string();
 
     void mirror_x();
 

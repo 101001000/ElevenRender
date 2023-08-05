@@ -38,14 +38,11 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     namespace po = boost::program_options;
     po::variables_map vm;
 
-    LOG(debug) << "1:";
-
     po::options_description desc("Allowed options");
-
-    LOG(debug) << "2:";
 
     const std::vector<std::pair<std::string, std::string>> load_commands = {
        {"load_config", "load configuration from tcp (use --path for importing .json config files)"},
+       {"load_texture", "load texture from tcp (use --path for importing image files)"},
        {"load_object", "load object from tcp (use --path for importing wavefront .obj files)" },
        {"load_camera", "load camera from tcp (use --path for importing camera .json files)" },
        {"load_hdri", "load HDRI from tcp (use --path for importing .exr/.hdr files)"},
@@ -79,18 +76,13 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
         ( "get_info", "get render information" )
         ( "get_pass", po::value<std::string>(), "get render pass" );
 
-    LOG(debug) << "4:";
-
     po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
     po::notify(vm);
 
     InputCommand* ic = nullptr;
 
-    LOG(debug) << "5:";
 
     if (vm.count("path")) {
-
-        LOG(debug) << "6:";
 
         std::string path = vec2str(vm["path"].as<std::vector<std::string>>());
 
@@ -112,8 +104,6 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     }
     else {
        
-        LOG(debug) << "7:";
-
         if (vm.count("load_camera")) {
             Message data_msg = tcp_interface.read_message();
             ic = new CameraTCPLoadInputCommand(data_msg);
@@ -144,7 +134,6 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
             ic = new StartInputCommand();
         }
         if (vm.count("get_info")) {
-            LOG(debug) << "8:";
             ic = new GetInfoInputCommand();
         }
         if (vm.count("get_pass")) {

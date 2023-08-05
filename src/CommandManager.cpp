@@ -92,7 +92,21 @@ Texture TextureDiskLoadInputCommand::load() {
 }
 
 Texture TextureTCPLoadInputCommand::load() {
-    LOG(error) << "Not implemented yet";
+    Texture texture;
+    boost::json::object json_metadata = metadata_msg.get_json_data();
+    float* data = data_msg.get_float_data();
+
+    try {
+        int width = json_metadata["width"].as_int64();
+        int height = json_metadata["height"].as_int64();
+        int channels = json_metadata["channels"].as_int64();
+        texture = Texture(width, height, channels, data);
+        texture.name = json_metadata["name"].as_string().c_str();
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid config format: " << e.what();
+    }
+    return texture;
 }
 
 RenderParameters ConfigDiskLoadInputCommand::load() {

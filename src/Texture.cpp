@@ -43,6 +43,11 @@
        
 #endif
 
+    std::string Texture::to_string() {
+        //TODO: Add filtering and color_space.
+        return "Texture " + name + " (" + std::to_string(width) + "x" + std::to_string(height) + "), " + std::to_string(channels) + " channels";
+    }
+
 
     void Texture::mirror_x() {
         float* new_data = new float[width * height * channels];

@@ -1,0 +1,36 @@
+#include "Material.h"
+
+std::string Material::to_string() const {
+    std::stringstream ss;
+    ss << "Name: " << name << "\n"
+        << "Albedo Map: " << albedo_map << "\n"
+        << "Emission Map: " << emission_map << "\n"
+        << "Roughness Map: " << roughness_map << "\n"
+        << "Metallic Map: " << metallic_map << "\n"
+        << "Normal Map: " << normal_map << "\n"
+        << "Opacity Map: " << opacity_map << "\n"
+        << "Albedo Texture ID: " << albedoTextureID << "\n"
+        << "Emission Texture ID: " << emissionTextureID << "\n"
+        << "Roughness Texture ID: " << roughnessTextureID << "\n"
+        << "Metallic Texture ID: " << metallicTextureID << "\n"
+        << "Normal Texture ID: " << normalTextureID << "\n"
+        << "Opacity Texture ID: " << opacityTextureID << "\n"
+        << "Albedo: " << "" << "\n"
+        << "Emission: " << "" << "\n"
+        << "Opacity: " << opacity << "\n"
+        << "Roughness: " << roughness << "\n"
+        << "Metallic: " << metallic << "\n"
+        << "Clearcoat Gloss: " << clearcoatGloss << "\n"
+        << "Clearcoat: " << clearcoat << "\n"
+        << "Anisotropic: " << anisotropic << "\n"
+        << "Eta: " << eta << "\n"
+        << "Transmission: " << transmission << "\n"
+        << "Specular: " << specular << "\n"
+        << "Specular Tint: " << specularTint << "\n"
+        << "Sheen Tint: " << sheenTint << "\n"
+        << "Subsurface: " << subsurface << "\n"
+        << "Sheen: " << sheen << "\n"
+        << "Ax: " << ax << "\n"
+        << "Ay: " << ay << "\n";
+    return ss.str();
+}

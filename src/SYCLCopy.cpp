@@ -145,6 +145,10 @@ void copy_scene(dev_Scene* scene, dev_Scene* dev_scene, sycl::queue& q) {
     q.memcpy(dev_materials, scene->materials, sizeof(Material) * scene->materialCount).wait();
     q.memcpy(&(dev_scene->materials), &(dev_materials), sizeof(Material*)).wait();
 
+    for (int i = 0; i < scene->materialCount; i++) {
+        LOG(debug) << "" << scene->materials[i].to_string();
+    }
+
     LOG(debug) << "Copying " << scene->pointLightCount << " pointlights";
 
     PointLight* dev_pointLights = sycl::malloc_device<PointLight>(scene->pointLightCount, q);

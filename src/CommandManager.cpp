@@ -156,7 +156,7 @@ HDRI HdriTCPLoadInputCommand::load() {
 Material BrdfTCPLoadInputCommand::load() {
     Material material;
     try {
-        parse_materialjson(msg.get_json_data());
+        material = parse_materialjson(msg.get_json_data());
     }
     catch (std::exception const& e) {
         LOG(error) << "Invalid material format: " << e.what();

@@ -18,6 +18,28 @@ Camera parse_camerajson(boost::json::object camera_json) {
     return camera;
 }
 
+Texture parse_texturejson(boost::json::object texture_metadata_json, float* data) {
+
+    int width = texture_metadata_json["width"].as_int64();
+    int height = texture_metadata_json["height"].as_int64();
+    int channels = texture_metadata_json["channels"].as_int64();
+
+    Texture::CS cs;
+
+    if (texture_metadata_json["color_space"].as_string() == "LINEAR") {
+        cs = Texture::CS::LINEAR;
+    }
+    else if (texture_metadata_json["color_space"].as_string() == "sRGB") {
+        cs = Texture::CS::sRGB;
+    }
+    else {
+        LOG(warning) << "Texture metadata colorspace not recognized";
+    }
+
+    return Texture(texture_metadata_json["name"].as_string().c_str(), width, height, channels, data, Texture::Filter::NO_FILTER, cs);
+}
+
+
 
 Vector3 parse_vector3(boost::json::object json) {
     return Vector3(json["r"].as_double(), json["g"].as_double(), json["b"].as_double());
@@ -98,14 +120,10 @@ Texture TextureTCPLoadInputCommand::load() {
     float* data = data_msg.get_float_data();
 
     try {
-        int width = json_metadata["width"].as_int64();
-        int height = json_metadata["height"].as_int64();
-        int channels = json_metadata["channels"].as_int64();
-        texture = Texture(width, height, channels, data, Texture::Filter::BILINEAR);
-        texture.name = json_metadata["name"].as_string().c_str();
+        texture = parse_texturejson(json_metadata, data);
     }
     catch (std::exception const& e) {
-        LOG(error) << "Invalid config format: " << e.what();
+        LOG(error) << "Invalid texture format: " << e.what();
     }
     return texture;
 }
@@ -140,11 +158,7 @@ HDRI HdriTCPLoadInputCommand::load() {
     float* data = data_msg.get_float_data();
 
     try {
-        int width = json_metadata["width"].as_int64();
-        int height = json_metadata["height"].as_int64();
-        int channels = json_metadata["channels"].as_int64();
-        // Bilinear filter by default until I fix the blender thing.
-        texture = Texture(width, height, channels, data, Texture::Filter::BILINEAR);
+        texture = parse_texturejson(json_metadata, data);
         if (mirror_x) texture.mirror_x();
         if (mirror_y) texture.mirror_y();
         texture.pixel_shift(0.5, 0);

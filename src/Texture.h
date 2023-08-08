@@ -48,7 +48,7 @@ public:
     // TODO: This should gamma correct alpha channel?
     void applyGamma(float gamma);
 
-    Texture(int _width, int _height, int _channels, float* _data, Filter _filter);
+    Texture(std::string _name, int _width, int _height, int _channels, float* _data, Filter _filter, CS _cs);
 
     explicit Texture(Vector3 _color);
 

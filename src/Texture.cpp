@@ -124,12 +124,24 @@
         }
     }
 
-    Texture::Texture(int _width, int _height, int _channels, float* _data, Filter _filter) :
-        width(_width), height(_height), channels(_channels), filter(_filter), data(_data){
-        //data = new float[width * height * _channels];
-        // !!!!!!!!!!!!!!!!! RAII
-        //memcpy(data, _data, sizeof(float) * width * height * channels);
-        //clamp_channels();
+
+
+    static float sRGBToLinear(float s) {
+        if (s <= 0.04045f) {
+            return s / 12.92f;
+        }
+        else {
+            return fast_pow((s + 0.055f) / 1.055f, 2.4f);
+        }
+    }
+
+    Texture::Texture(std::string _name, int _width, int _height, int _channels, float* _data, Filter _filter, CS _cs) :
+        name(_name), width(_width), height(_height), channels(_channels), filter(_filter), data(_data) {
+        if (_cs == CS::sRGB) {
+            for (int i = 0; i < width * height * channels; i++)
+                data[i] = sRGBToLinear(data[i]);
+        }
+
     }
 
     Texture::Texture(Vector3 _color) {
@@ -211,6 +223,7 @@
             return getValueFromUV(u, v);
         }
     }
+
 
     void Texture::sphericalMapping(Vector3 origin, Vector3 point, float radius, float& u, float& v) {
 

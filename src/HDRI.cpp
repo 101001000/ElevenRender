@@ -17,32 +17,6 @@ HDRI::HDRI(Vector3 color) {
 
 HDRI::HDRI() : HDRI(Vector3(0.5)) {}
 
-#if !defined(__CUDACC__)
-
-HDRI::HDRI(std::string filepath) {
-
-	int channels;
-	int width, height;
-
-	float* tmp_data = stbi_loadf(filepath.c_str(), &width, &height, &channels, 0);
-
-	texture = Texture(width, height, channels, tmp_data, Texture::Filter::BILINEAR);
-
-	// HDRI loading implemented is 180º degree shifted in the horizontal position
-	texture.pixel_shift(0.5, 0);
-
-	stbi_image_free(tmp_data);
-
-	cdf = new float[texture.width * texture.height + 1];
-
-	generateCDF();
-
-	printf("HDRI %s loaded\n", filepath.c_str());
-}
-#else
-
-#endif
-
 inline void HDRI::generateCDF2() {
 
 	for (int y = 0; y < texture.height; y++) {

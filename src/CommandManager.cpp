@@ -374,30 +374,3 @@ void CommandManager::start_render() {
     rm->start_rendering(&(sm->scene));
     im->write_message(Message::OK());
 }
-
-void CommandManager::stop_render() {
-    LOG(trace) << "CommandManager::stop_render";
-    stop_command = true;
-    im->write_message(Message::OK());
-}
-
-void CommandManager::run() {
-    
-    while (!stop_command) {
-
-        __asm("");
-
-        while (!command_queue.empty()) {
-            std::cout << "processing command " << std::endl;
-            command_queue.front()();
-            command_queue.pop();
-        }
-    }
-}
-
-void CommandManager::init() {
-    //im_t = std::thread(&InputManager::run_tcp, this->im);
-    //cm_t = std::thread(&CommandManager::run, this);
-    //wm->run();
-    run();
-}

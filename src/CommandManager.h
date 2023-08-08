@@ -192,7 +192,6 @@ public:
     void save_pass(std::string& pass, std::string& path);
     void get_pass(std::string& pass);
     void start_render();
-    void stop_render();
     void load_config(RenderParameters rp);
     void load_camera(Camera camera);
     void load_objects(std::vector<MeshObject> objects);
@@ -200,8 +199,4 @@ public:
 
     void execute_input_command(InputCommand* ic);
     void execute_load_input_command(LoadInputCommand* ic);
-
-    void run();
-    void init();
-
 };

@@ -57,7 +57,7 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     const std::vector<std::pair<std::string, std::string>> execution_commands = {
         {"start", "start rendering"},
         {"pause", "pause rendering"},
-        {"stop", "stop rendering"}
+        {"abort", "abort rendering"}
     };
 
     for (const auto& [k, v] : load_commands)

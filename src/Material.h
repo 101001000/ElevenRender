@@ -43,4 +43,10 @@ public:
 	float ay = 0;
 
 	std::string to_string() const;
+
+	inline static Material DefaultMaterial() {
+		Material mat;
+		mat.name = "default";
+		return mat;
+	}
 };

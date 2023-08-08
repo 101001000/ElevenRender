@@ -39,7 +39,7 @@ public:
 
 public:
 
-	Scene() {}
+	Scene() { materials.push_back(Material::DefaultMaterial());}
 
 	int materialCount();
 	int textureCount();

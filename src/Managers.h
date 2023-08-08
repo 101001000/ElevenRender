@@ -113,10 +113,19 @@ struct Message {
     inline static Message OK() {
         Message ok_message;
         ok_message.data = (void*)("ok");
-        ok_message.data_size = 3;
+        ok_message.data_size = strlen("ok");
         ok_message.data_format = DataFormat::STRING;
         ok_message.type = Type::STATUS;
         return ok_message;
+    }
+
+    inline static Message CloseSession() {
+        Message close_message;
+        close_message.data = (void*)("close_session");
+        close_message.data_size = strlen("close_session");
+        close_message.data_format = DataFormat::STRING;
+        close_message.type = Type::STATUS;
+        return close_message;
     }
 
     static boost::json::object msg2json_header(Message msg);

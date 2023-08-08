@@ -184,11 +184,7 @@ int main(int argc, char* argv[]) {
     logging::init();
 
     TCPInterface tcp_interface;
-    CommandManager cm;
-    cm.im = &tcp_interface;
-
     using boost::asio::ip::tcp;
-
 
     LOG(info) << "Starting acceptor";
     tcp::acceptor a = tcp::acceptor(tcp_interface.io_context, tcp::endpoint(tcp::v4(), 5557));
@@ -199,19 +195,29 @@ int main(int argc, char* argv[]) {
         tcp_interface.sock = std::make_unique<boost::asio::ip::tcp::socket>(a.accept());
         LOG(info) << "Connected";
 
+        CommandManager cm;
+        cm.im = &tcp_interface;
+
         while (!tcp_interface.error) {
             LOG(debug) << "Awaiting for InputCommand";
             Message msg = tcp_interface.read_message();
-            LOG(debug) << "Command message readed ";
+            LOG(debug) << "Message readed ";
             if (msg.type == Message::Type::COMMAND) {
                 InputCommand* ic = parse_input_command(msg, tcp_interface);
                 cm.execute_input_command(ic);
             }
-            else {
-                LOG(error) << "Message recieved, expected a command but it's not";
+            else if (msg.type == Message::Type::STATUS) {
+                if (msg.get_string_data() == "close_session") {
+                    LOG(info) << "Clossing session";
+                    break;
+                }
+                else {
+                    LOG(error) << "Message recieved, expected a command but it's not";
+                }
             }
         }
         LOG(info) << "Disconnected";
+        // Here I should clean the session.
     }
 
     LOG(info) << "Quitting";

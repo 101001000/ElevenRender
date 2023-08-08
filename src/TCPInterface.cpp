@@ -27,6 +27,10 @@ Message TCPInterface:: read_message() {
     char input_data[MESSAGE_HEADER_SIZE];
     size_t header_size = sock.get()->read_some(boost::asio::buffer(input_data), error);
 
+    if (error == boost::asio::error::eof) {
+        return Message::CloseSession();
+    }
+
     if (header_size != MESSAGE_HEADER_SIZE)
         LOG(error) << "Header size mismatch: " << header_size << " bytes";
 

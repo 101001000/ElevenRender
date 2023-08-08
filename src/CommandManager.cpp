@@ -92,6 +92,7 @@ Texture TextureDiskLoadInputCommand::load() {
 }
 
 Texture TextureTCPLoadInputCommand::load() {
+    LOG(trace) << "TextureTCPLoadInputCommand::load";
     Texture texture;
     boost::json::object json_metadata = metadata_msg.get_json_data();
     float* data = data_msg.get_float_data();
@@ -100,7 +101,7 @@ Texture TextureTCPLoadInputCommand::load() {
         int width = json_metadata["width"].as_int64();
         int height = json_metadata["height"].as_int64();
         int channels = json_metadata["channels"].as_int64();
-        texture = Texture(width, height, channels, data);
+        texture = Texture(width, height, channels, data, Texture::Filter::BILINEAR);
         texture.name = json_metadata["name"].as_string().c_str();
     }
     catch (std::exception const& e) {
@@ -298,6 +299,8 @@ void CommandManager::save_pass(std::string& pass, std::string& path) {
 
 void CommandManager::execute_load_input_command(LoadInputCommand* ic) {
 
+    LOG(trace) << "CommandManager::execute_load_input_command";
+
     if (dynamic_cast<TextureLoadInputCommand*>(ic) != nullptr) {
         Texture texture = dynamic_cast<TextureLoadInputCommand*>(ic)->load();
         load_texture(texture);
@@ -328,6 +331,8 @@ void CommandManager::execute_load_input_command(LoadInputCommand* ic) {
 }
 
 void CommandManager::execute_input_command(InputCommand* ic) {
+
+    LOG(trace) << "CommandManager::execute_input_command";
 
     if (dynamic_cast<LoadInputCommand*>(ic) != nullptr) {
         execute_load_input_command(dynamic_cast<LoadInputCommand*>(ic));

@@ -125,10 +125,10 @@
     }
 
     Texture::Texture(int _width, int _height, int _channels, float* _data, Filter _filter) :
-        width(_width), height(_height), channels(_channels), filter(_filter){
-        data = new float[width * height * _channels];
+        width(_width), height(_height), channels(_channels), filter(_filter), data(_data){
+        //data = new float[width * height * _channels];
         // !!!!!!!!!!!!!!!!! RAII
-        memcpy(data, _data, sizeof(float) * width * height * channels);
+        //memcpy(data, _data, sizeof(float) * width * height * channels);
         //clamp_channels();
     }
 

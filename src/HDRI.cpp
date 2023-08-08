@@ -26,7 +26,7 @@ HDRI::HDRI(std::string filepath) {
 
 	float* tmp_data = stbi_loadf(filepath.c_str(), &width, &height, &channels, 0);
 
-	texture = Texture(width, height, channels, tmp_data);
+	texture = Texture(width, height, channels, tmp_data, Texture::Filter::BILINEAR);
 
 	// HDRI loading implemented is 180º degree shifted in the horizontal position
 	texture.pixel_shift(0.5, 0);

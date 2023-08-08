@@ -3,6 +3,10 @@
 #include "TCPInterface.h"
 #include <numeric>
 
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/mapped_region.hpp>
+
+
 
 
 std::vector<const char*> str_to_argv(std::string str) {
@@ -100,7 +104,31 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
             ic = new ObjectsDiskLoadInputCommand(path, vm.count("recompute_normals"));
     }
     else if (vm.count("sm")) {
-        LOG(error) << "Shared memory not implemented yet!";
+
+        // QUICK SM PROTOTYPE WHICH NEEDS TO BE REFACTORED TO THEIR OWN INPUT MESSAGE.
+        if (vm.count("load_texture")) {
+            Message data_msg = tcp_interface.read_message();
+            Message extra_data_msg; 
+            using namespace boost::interprocess;
+
+            try {
+                boost::interprocess::file_mapping m_file("shm", boost::interprocess::read_only);
+                boost::interprocess::mapped_region region(m_file, boost::interprocess::read_only);
+
+                extra_data_msg.data = new float[region.get_size() / 4];
+                memcpy(extra_data_msg.data, region.get_address(), region.get_size());
+                extra_data_msg.type = Message::Type::DATA;
+                extra_data_msg.data_size = region.get_size();
+                extra_data_msg.data_format = Message::DataFormat::FLOAT4;
+            }
+            catch (const interprocess_exception& e) {
+                LOG(error) << e.what();
+            }
+            ic = new TextureTCPLoadInputCommand(data_msg, extra_data_msg);
+        }
+        else {
+            LOG(error) << "Shared memory not implemented yet!";
+        }
     }
     else {
        

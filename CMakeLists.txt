@@ -53,7 +53,7 @@ find_package(Git REQUIRED)
 
 message(STATUS "Setting up Boost...")
 set (BOOST_ENABLE_CMAKE ON)
-set(BOOST_INCLUDE_LIBRARIES program_options json log)
+set(BOOST_INCLUDE_LIBRARIES program_options json log interprocess)
 add_subdirectory(boost EXCLUDE_FROM_ALL)
 
 message(STATUS "Getting RapidObj")
@@ -117,7 +117,7 @@ add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src
 #target_link_libraries(ElevenRender PUBLIC Boost::program_options Boost::json Boost::log Boost::asio)
 
 #target_link_libraries(ElevenRender ${Boost_LIBRARIES})
-target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio)
+target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
 target_link_libraries(ElevenRender sycl)

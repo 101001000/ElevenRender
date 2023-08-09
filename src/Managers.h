@@ -205,12 +205,14 @@ public:
 };
 */
 
+//TODO: DenoiseManager shouldn't have a reference to CommandManager?
 class DenoiseManager : Manager {
 
-    OIDNDevice device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
+    OIDNDevice device;
 
 
 public:
-    using Manager::Manager;
+    explicit DenoiseManager(CommandManager* _cm);
+    ~DenoiseManager();
     void denoise(int width, int height, float* raw, float* result);
 };

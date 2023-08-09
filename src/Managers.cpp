@@ -273,11 +273,18 @@ Manager::Manager(CommandManager* _cm) {
     this->cm = _cm;
 }
 
+DenoiseManager::DenoiseManager(CommandManager* _cm) : Manager(_cm) {
+    device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
+    oidnCommitDevice(device);
+}
+
+DenoiseManager::~DenoiseManager() {
+    oidnReleaseDevice(device);
+}
+
 void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
 
     LOG(trace) << "DenoiseManager::denoise";
-
-    oidnCommitDevice(device);
 
     OIDNFilter filter =
         oidnNewFilter(device, "RT");  // generic ray tracing filter
@@ -299,6 +306,5 @@ void DenoiseManager::denoise(int width, int height, float* raw, float* result) {
 
     // Cleanup
     oidnReleaseFilter(filter);
-    oidnReleaseDevice(device);
 }
 

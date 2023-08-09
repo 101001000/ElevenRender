@@ -15,6 +15,7 @@ public:
 	std::string metallic_map;
 	std::string normal_map;
 	std::string opacity_map;
+	std::string transmission_map;
 
 	int albedoTextureID = -1;
 	int emissionTextureID = -1;
@@ -22,6 +23,7 @@ public:
 	int metallicTextureID = -1;
 	int normalTextureID = -1;
 	int opacityTextureID = -1;
+	int transmissionTextureID = -1;
 
 	Vector3 albedo = Vector3(0.5,0.5,0.5);
 	Vector3 emission = Vector3::Zero();

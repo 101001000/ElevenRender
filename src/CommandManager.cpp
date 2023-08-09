@@ -74,6 +74,9 @@ Material parse_materialjson(boost::json::object json_mat) {
     if (json_mat.if_contains("opacity")) {
         mtl.opacity = json_mat["opacity"].as_double();
     }
+    if (json_mat.if_contains("transmission")) {
+        mtl.transmission = json_mat["transmission"].as_double();
+    }
 
     if (json_mat.if_contains("albedo_map")) {
         mtl.albedo_map = json_mat["albedo_map"].as_string();
@@ -93,6 +96,10 @@ Material parse_materialjson(boost::json::object json_mat) {
     if (json_mat.if_contains("opacity_map")) {
         mtl.opacity_map = json_mat["opacity_map"].as_string();
     }
+    if (json_mat.if_contains("transmission_map")) {
+        mtl.transmission_map = json_mat["transmission_map"].as_string();
+    }
+
     float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);
     mtl.ax = maxf(0.001, mtl.roughness / aspect);
     mtl.ay = maxf(0.001, mtl.roughness * aspect);
@@ -225,14 +232,18 @@ void CommandManager::get_pass(std::string& pass) {
     
     float* raw_pass = rm->get_pass(pass);
     
+    LOG(info) << "DENOISE: " << rm->rd.pars.denoise;
+
     //TODO: fix this denoising patch.
-    if (rm->get_render_info().samples >= 999) {
+    if (rm->rd.pars.denoise) {
+        LOG(debug) << "Denoise started";
         float* denoise_pass = static_cast<float*>(malloc(rm->rd.pars.width * rm->rd.pars.height * sizeof(float) * 4));
         dm->denoise(rm->rd.pars.width, rm->rd.pars.height, raw_pass, denoise_pass);
         for (int i = 3; i < rm->rd.pars.width * rm->rd.pars.height * 4; i+=4) {
             denoise_pass[i] = 1;
         }
         pass_data_msg.data = denoise_pass;
+        LOG(debug) << "Denoise ended";
     }
     else {
         pass_data_msg.data = raw_pass;
@@ -273,9 +284,11 @@ void CommandManager::load_hdri(HDRI hdri) {
     im->write_message(Message::OK());
 }
 
+//TODO: redundant and mismatch
 void CommandManager::load_config(RenderParameters rp) {
     LOG(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << ")";
     rm->rd.pars = rp;
+    rm->rd.pars.denoise = rp.denoise;
     //TODO: Pars and scene both have redundant resolution.
     sm->scene.x_res = rp.width;
     sm->scene.y_res = rp.height;

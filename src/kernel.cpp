@@ -129,6 +129,15 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
             .x;
     }
 
+    if (material->transmissionTextureID < 0) {
+        hitdata.transmission = material->transmission;
+    }
+    else {
+        hitdata.transmission = dev_scene_g->textures[material->transmissionTextureID]
+            .getValueFromUVFiltered(hit.tu, hit.tv)
+            .x;
+    }
+
     if (material->normalTextureID < 0) {
         hitdata.normal = normal;
     }
@@ -153,7 +162,6 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
     hitdata.clearcoat = material->clearcoat;
     hitdata.anisotropic = material->anisotropic;
     hitdata.eta = material->eta;
-    hitdata.transmission = material->transmission;
     hitdata.specular = material->specular;
     hitdata.specularTint = material->specularTint;
     hitdata.sheenTint = material->sheenTint;
@@ -576,6 +584,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
         }
         else {
             ray = Ray(nearestHit.position + ray.direction * 0.001, ray.direction);
+            
         }
     }
 

@@ -198,6 +198,8 @@ int main(int argc, char* argv[]) {
         CommandManager cm;
         cm.im = &tcp_interface;
 
+        tcp_interface.write_message(Message::OK());
+
         while (!tcp_interface.error) {
             LOG(debug) << "Awaiting for InputCommand";
             Message msg = tcp_interface.read_message();

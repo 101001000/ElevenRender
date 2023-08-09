@@ -120,3 +120,4 @@ struct HitData {
 
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples);
+void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long BLOCK_SIZE, Scene* scene, dev_Scene* dev_scene);

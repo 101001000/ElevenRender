@@ -637,6 +637,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 }
 
 
+//TODO: refactor this code.
 
 int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples) {
 
@@ -646,40 +647,48 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
 
     copy_scene(temp, dev_scene, q);
 
-    const int BLOCK_SIZE = 16;
+    const int BLOCK_SIZE = 8;
 
-    sycl::range global{ scene->x_res + scene->x_res % BLOCK_SIZE,scene->y_res + scene->y_res % BLOCK_SIZE };
+    sycl::range global{ scene->x_res + (BLOCK_SIZE - (scene->x_res % BLOCK_SIZE)),scene->y_res + (BLOCK_SIZE - (scene->y_res % BLOCK_SIZE)) };
     sycl::range local{ BLOCK_SIZE,BLOCK_SIZE };
 
     LOG(debug) << "Starting setup kernels";
 
-    q.submit([&](cl::sycl::handler& h) {
-
-        h.parallel_for(sycl::nd_range{ global, local },
-        [=](sycl::nd_item<2> it) {
-                setupKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1));
-            });
-    }).wait();
-
-    LOG(info) << "Setup1 finished";
-
-    //TODO: figure out how to manage max samples (noise cutoff?)
-    // q.submit adds an overhead of ~5s for a simple scene at 3000x4000 which is proportional to the pixel amount even if I do not wait().
-
-    for (int i = 0; i < target_samples; i++) {
+    try {
         q.submit([&](cl::sycl::handler& h) {
 
             h.parallel_for(sycl::nd_range{ global, local },
             [=](sycl::nd_item<2> it) {
-                    renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), target_samples);
+                    setupKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1));
                 });
-            });
+            }).wait();
+    } catch (std::exception const& e) {
+        LOG(error) << "Error setting up kernels: " << e.what();
     }
 
+    LOG(info) << "Setup finished";
    
-
-
-    LOG(info) << "All samples added to the queue";
-
     return 0;
+}
+
+void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long BLOCK_SIZE, Scene* scene, dev_Scene* dev_scene) {
+
+    sycl::range global{ scene->x_res + (BLOCK_SIZE - (scene->x_res % BLOCK_SIZE)),scene->y_res + (BLOCK_SIZE - (scene->y_res % BLOCK_SIZE)) };
+    sycl::range local{ BLOCK_SIZE,BLOCK_SIZE };
+
+    try {
+        for (int i = 0; i < target_samples; i++) {
+            q.submit([&](cl::sycl::handler& h) {
+
+                h.parallel_for(sycl::nd_range{ global, local },
+                [=](sycl::nd_item<2> it) {
+                        renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), target_samples);
+                    });
+                }).wait();
+        }
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Error adding rendering kernels to the queue: " << e.what();
+    }
+    LOG(info) << "All samples added to the queue";
 }

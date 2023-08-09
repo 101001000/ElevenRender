@@ -221,8 +221,8 @@ void RenderingManager::start_rendering(Scene* scene) {
         }
     }
 
-    t_rend = std::thread(renderSetup, std::ref(k_q), std::ref(scene), std::ref(dev_scene), rd.pars.sampleTarget);
-    t_rend.join();
+    renderSetup(k_q, scene, dev_scene, rd.pars.sampleTarget);
+    t_rend = std::thread(kernel_render_enqueue, std::ref(k_q), rd.pars.sampleTarget, 8, std::ref(scene), std::ref(dev_scene));   
 
     rd.startTime = std::chrono::high_resolution_clock::now();
     LOG(trace) << "LEAVING RenderingManager::start_rendering()";

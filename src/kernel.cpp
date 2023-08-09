@@ -23,13 +23,26 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+uint32_t jenkins_one_at_a_time_hash(uint32_t seed) {
+    uint32_t hash = 0;
+    for (size_t i = 0; i < sizeof(uint32_t); i++) {
+        hash += (seed >> (i * 8)) & 0xFF;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
+}
+
 
 RngGenerator::RngGenerator(uint32_t _seed) {
-    this->state = _seed + 1;
+    this->state = jenkins_one_at_a_time_hash(_seed + 1);
 
-    for (int i = 0; i < _seed; i++) {
-        this->next();
-    }
+    //for (int i = 0; i < _seed; i++) {
+    //    this->next();
+    //}
 }
 
 float RngGenerator::next() {
@@ -158,11 +171,16 @@ void generateHitData(dev_Scene* dev_scene_g, Material* material,
 
 
 // TODO: move this to outside a kernel. Reseting buffers and initializations can be done with memset.
-void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
+void setupKernel(dev_Scene* dev_scene_g, int idx) {
 
-    // Initializing RNG
+    if (idx >= dev_scene_g->x_res * dev_scene_g->y_res) {
+        return;
+    }
+
+    //// Initializing RNG
     dev_scene_g->dev_randstate[idx] = RngGenerator(idx);
-
+    
+    
     // Setting pixel buffers to zero
     for (int i = 0; i < PASSES_COUNT; i++) {
         dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
@@ -179,11 +197,10 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
             (4 * idx + 3)] = 1.0;
     }
 
-    // Reset the amount of samples for each pixel.
-    dev_scene_g->dev_samples[idx] = 0;
+    // Reset the amount of samples for each pixel. (1.1s)
+    dev_scene_g->dev_samples[idx] = 1;
 
-    // Linking triangle information to mesh object tri ptr.
-    // TODO: figure out a cleaner way of doing this.
+    // (0s)
     if (idx == 0) {
         int triSum = 0;
         for (int i = 0; i < dev_scene_g->meshObjectCount; i++) {
@@ -192,6 +209,8 @@ void setupKernel(dev_Scene* dev_scene_g, int idx, sycl::stream out) {
         }
     }
 }
+
+
 
 // Throw a ray to the scene, and calculate the hit point.
 Hit throwRay(Ray ray, dev_Scene* scene) {
@@ -451,7 +470,6 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
     }
 }
 
-
 // Main Kernel
 void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
@@ -628,24 +646,25 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
 
     copy_scene(temp, dev_scene, q);
 
+    const int BLOCK_SIZE = 16;
+
+    sycl::range global{ scene->x_res + scene->x_res % BLOCK_SIZE,scene->y_res + scene->y_res % BLOCK_SIZE };
+    sycl::range local{ BLOCK_SIZE,BLOCK_SIZE };
+
     LOG(debug) << "Starting setup kernels";
 
     q.submit([&](cl::sycl::handler& h) {
-        sycl::stream out = sycl::stream(4096, 1024, h);
-        h.parallel_for(sycl::range(scene->x_res * scene->y_res),
-            [=](sycl::id<1> i) {
-                setupKernel(dev_scene, i, out);
-            });
-        }).wait();
 
-    LOG(info) << "Setup finished";
+        h.parallel_for(sycl::nd_range{ global, local },
+        [=](sycl::nd_item<2> it) {
+                setupKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1));
+            });
+    }).wait();
+
+    LOG(info) << "Setup1 finished";
 
     //TODO: figure out how to manage max samples (noise cutoff?)
-
-
-    sycl::range global{ scene->x_res + scene->x_res % 8,scene->y_res + scene->y_res % 8 };
-    sycl::range local{ 8,8 };
-
+    // q.submit adds an overhead of ~5s for a simple scene at 3000x4000 which is proportional to the pixel amount even if I do not wait().
 
     for (int i = 0; i < target_samples; i++) {
         q.submit([&](cl::sycl::handler& h) {

@@ -106,7 +106,14 @@ Camera CameraDiskLoadInputCommand::load() {
 }
 
 Camera CameraTCPLoadInputCommand::load() {
-    return parse_camerajson(msg.get_json_data());
+    Camera camera;
+    try {
+        camera = parse_camerajson(msg.get_json_data());
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid camera format: " << e.what();
+    }
+    return camera ;
 }
 
 Texture TextureDiskLoadInputCommand::load() {
@@ -194,7 +201,7 @@ std::vector<MeshObject> ObjectsDiskLoadInputCommand::load() {
     std::vector<UnloadedMaterial> umls(0);
     ObjLoader objLoader;
     path.erase(remove(path.begin(), path.end(), '\"'), path.end()); // Remove double quotes
-    objLoader.loadObjsRapid(path, objects, umls, recompute_normals);
+    objLoader.loadObjsRapid(path, objects, umls, 2);
     return objects;
 }
 

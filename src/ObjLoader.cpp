@@ -63,19 +63,18 @@ void recompute_normals_face_weight(MeshObject* mo, std::map<Vector3, std::vector
 	}
 }
 
-void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
 
-	auto result = rapidobj::ParseFile(path);
+void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
 
-    if (result.error) {
-        std::cout << result.error.code.message() << '\n';
-    }
+	if (result.error) {
+		std::cout << result.error.code.message() << '\n';
+	}
 
-    bool success = rapidobj::Triangulate(result);
+	bool success = rapidobj::Triangulate(result);
 
 	std::map<Vector3, std::vector<Tri>> faces;
 
-    for (const auto& shape : result.shapes) {
+	for (const auto& shape : result.shapes) {
 
 		if (shape.lines.indices.size() == 0) {
 
@@ -133,9 +132,17 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 			calcTang.calc(mo);
 			meshObjects.push_back(*mo);
 		}
-    }
+	}
 }
 
+
+void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
+	loadObjsRapid(rapidobj::ParseFile(path), meshObjects, materials, recompute_normals);
+}
+
+void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
+	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(material_str)), meshObjects, materials, recompute_normals);
+}
 
 MeshObject ObjLoader::parseObj(std::ifstream &stream) {
 

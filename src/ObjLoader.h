@@ -33,6 +33,8 @@ public:
 	UnloadedMaterial parseMtl(std::ifstream& stream, std::string name);
 
 	void loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals);
+	void loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals);
+	void loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals);
 
 
 	MeshObject parseObj(std::ifstream& stream);

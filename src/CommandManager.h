@@ -31,6 +31,11 @@ public:
     GetPassInputCommand(std::string _pass) : pass(_pass) {}
 };
 
+class GetSyclInfoInputCommand : public ActionInputCommand {
+public:
+    GetSyclInfoInputCommand() {}
+};
+
 class LoadInputCommand : public InputCommand {
 public:
     virtual ~LoadInputCommand() {}
@@ -190,6 +195,7 @@ public:
 
     void load_texture(Texture texture);
     void get_render_info();
+    void get_sycl_info();
     void load_brdf_material(Material material);
     void save_pass(std::string& pass, std::string& path);
     void get_pass(std::string& pass);

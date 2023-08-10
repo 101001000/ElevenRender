@@ -229,6 +229,7 @@ void RenderingManager::start_rendering(Scene* scene) {
 }
 
 
+
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
     LOG(trace) << "RenderingManager::RenderingManager()";
 

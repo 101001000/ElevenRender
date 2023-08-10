@@ -284,6 +284,59 @@ void CommandManager::get_render_info() {
     im->write_message(render_info_msg);
 }
 
+
+void CommandManager::get_sycl_info() {
+
+    try {
+        auto platforms = sycl::platform::get_platforms();
+        boost::json::object json_info;
+        boost::json::array json_devices;
+
+        for (const auto& platform : platforms) {
+            auto devices = platform.get_devices();
+
+            for (auto device : devices) {
+                boost::json::object json_device;
+                json_device["name"] = device.get_info<sycl::info::device::name>();
+                json_device["platform"] = platform.get_info<sycl::info::platform::name>();
+                json_device["memory"] = device.get_info<sycl::info::device::global_mem_size>();
+                json_device["max_compute_units"] = device.get_info<sycl::info::device::max_compute_units>();
+                auto dt = device.get_info<sycl::info::device::device_type>();
+
+                if (dt == sycl::info::device_type::cpu)
+                    json_device["type"] = "cpu";
+                if (dt == sycl::info::device_type::gpu)
+                    json_device["type"] = "gpu";
+                if (dt == sycl::info::device_type::host)
+                    json_device["type"] = "host";
+                if (dt == sycl::info::device_type::accelerator)
+                    json_device["type"] = "accelerator";
+                if (dt == sycl::info::device_type::all)
+                    json_device["type"] = "all";
+                if (dt == sycl::info::device_type::automatic)
+                    json_device["type"] = "automatic";
+                if (dt == sycl::info::device_type::custom)
+                    json_device["type"] = "custom";
+
+                json_devices.push_back(json_device);
+            }
+        }
+
+        json_info["devices"] = json_devices;
+
+        Message sycl_info_msg;
+
+        sycl_info_msg.data = (void*)(boost::json::serialize(json_info).c_str());
+        sycl_info_msg.data_format = Message::DataFormat::JSON;
+        sycl_info_msg.data_size = boost::json::serialize(json_info).size();
+        sycl_info_msg.type = Message::Type::DATA;
+        im->write_message(sycl_info_msg);
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid get_sycl_info" << e.what();
+    }
+}
+
 void CommandManager::load_texture(Texture texture) {
     LOG(trace) << "CommandManager::load_texture(" << texture.name << ")";
     sm->scene.addTexture(texture);
@@ -393,6 +446,9 @@ void CommandManager::execute_input_command(InputCommand* ic) {
         }
         else if (dynamic_cast<GetInfoInputCommand*>(ic) != nullptr) {
             get_render_info();
+        }
+        else if (dynamic_cast<GetSyclInfoInputCommand*>(ic) != nullptr) {
+            get_sycl_info();
         }
         else if (dynamic_cast<GetPassInputCommand*>(ic) != nullptr) {
             get_pass(dynamic_cast<GetPassInputCommand*>(ic)->pass);

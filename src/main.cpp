@@ -78,6 +78,7 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
         ("mirror_y", "when loading texture, flip vertical pixels")
         ("output", po::value<std::string>(), "filesystem path where to output data")
         ( "get_info", "get render information" )
+        ( "get_sycl_info", "get sycl information")
         ( "get_pass", po::value<std::string>(), "get render pass" );
 
     po::store(po::parse_command_line(argv.size(), argv.data(), desc), vm);
@@ -165,6 +166,9 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
         }
         if (vm.count("get_info")) {
             ic = new GetInfoInputCommand();
+        }
+        if (vm.count("get_sycl_info")) {
+            ic = new GetSyclInfoInputCommand();
         }
         if (vm.count("get_pass")) {
             ic = new GetPassInputCommand(vm["get_pass"].as<std::string>());

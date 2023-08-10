@@ -7,6 +7,7 @@
 #include "Texture.h"
 #include "Camera.h"
 #include "TCPInterface.h"
+#include <boost/interprocess/streams/bufferstream.hpp>
 
 class InputCommand {
 public:
@@ -148,7 +149,8 @@ public:
 class ObjectsTCPLoadInputCommand : public ObjectsLoadInputCommand {
 public:
     Message msg;
-    ObjectsTCPLoadInputCommand(Message _msg, bool _recompute_normals) : ObjectsLoadInputCommand(_recompute_normals), msg(_msg) {}
+    Message mtls_msg;
+    ObjectsTCPLoadInputCommand(Message _msg, Message _mtls_msg, bool _recompute_normals) : ObjectsLoadInputCommand(_recompute_normals), msg(_msg), mtls_msg(_mtls_msg) {}
     std::vector<MeshObject> load() override;
 };
 

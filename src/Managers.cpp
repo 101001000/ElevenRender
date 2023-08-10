@@ -188,6 +188,22 @@ public:
     }
 };
 
+class NameSelector : public sycl::device_selector {
+public:
+    std::string name;
+
+    NameSelector(std::string _name) : name(_name) {};
+
+    int operator()(const sycl::device& device) const override {
+        if (device.get_info<sycl::info::device::name>() == name) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    }
+};
+
 
 RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
@@ -212,6 +228,28 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     LOG(trace) << "RenderingManager::start_rendering()";
 
+    try {
+        k_q = sycl::queue(NameSelector(rd.pars.device));
+        d_q = sycl::queue(NameSelector(rd.pars.device));
+    }
+    catch (std::exception const& e) {
+        LOG(error) << e.what();
+    }
+
+    sycl::device device = k_q.get_device();
+
+    LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
+
+    auto work_item_dim = device.get_info<sycl::info::device::max_work_item_dimensions>();
+    auto work_item_size = device.get_info<sycl::info::device::max_work_item_sizes>();
+    auto work_item_group_size = device.get_info<sycl::info::device::max_work_group_size>();
+
+    //auto test = sycl::info::device::max_work_item_dimensions
+
+    LOG(info) << "dim " << work_item_dim << " is_x: " << work_item_size[0] << " is_y: " << work_item_size[1] << " is_z: " << work_item_size[2] << " gs: " << work_item_group_size;
+
+    dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
+
     for (int i = 0; i < PASSES_COUNT; i++) {
 
         if (rd.pars.passes_enabled[i]) {
@@ -221,8 +259,10 @@ void RenderingManager::start_rendering(Scene* scene) {
         }
     }
 
+    int BLOCK_SIZE = 8;
+
     renderSetup(k_q, scene, dev_scene, rd.pars.sampleTarget);
-    t_rend = std::thread(kernel_render_enqueue, std::ref(k_q), rd.pars.sampleTarget, 8, std::ref(scene), std::ref(dev_scene));   
+    t_rend = std::thread(kernel_render_enqueue, std::ref(k_q), rd.pars.sampleTarget, BLOCK_SIZE, std::ref(scene), std::ref(dev_scene));
 
     rd.startTime = std::chrono::high_resolution_clock::now();
     LOG(trace) << "LEAVING RenderingManager::start_rendering()";
@@ -231,23 +271,10 @@ void RenderingManager::start_rendering(Scene* scene) {
 
 
 RenderingManager::RenderingManager(CommandManager* _cm) : Manager(_cm){
+
     LOG(trace) << "RenderingManager::RenderingManager()";
 
-    LOG(info) << "Listing all devices: " << sycl::device::get_devices(sycl::info::device_type::all).size();
-
-    for (auto device : sycl::device::get_devices(sycl::info::device_type::all)) {
-        std::cout << "  Device: " << device.get_info<sycl::info::device::name>()
-            << std::endl;
-    }
-
-    k_q = sycl::queue(CUDASelector());
-    d_q = sycl::queue(CUDASelector());
-
-    sycl::device device = k_q.get_device();
-
-    LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
-
-    dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
+    //LOG(info) << "Listing all devices: " << sycl::device::get_devices(sycl::info::device_type::all).size();
 }
 
 

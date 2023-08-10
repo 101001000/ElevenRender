@@ -52,11 +52,12 @@ struct RenderParameters {
 
 	unsigned int width, height;
 	unsigned int sampleTarget;
+	std::string device;
 	bool denoise;
 
 	bool passes_enabled[PASSES_COUNT];
 
-	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise) {
+	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device) {
 		passes_enabled[BEAUTY] = true;
 		passes_enabled[DENOISE] = true;
 		passes_enabled[NORMAL] = true;

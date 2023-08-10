@@ -152,7 +152,7 @@ RenderParameters ConfigTCPLoadInputCommand::load() {
     RenderParameters rp;
 
     try {
-        rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool());
+        rp = RenderParameters(json_data["x_res"].as_int64(), json_data["y_res"].as_int64(), json_data["sample_target"].as_int64(), json_data["denoise"].as_bool(), json_data["device"].as_string().c_str());
     }
     catch (std::exception const& e) {
         LOG(error) << "Invalid config format: " << e.what();
@@ -354,9 +354,10 @@ void CommandManager::load_hdri(HDRI hdri) {
 
 //TODO: redundant and mismatch
 void CommandManager::load_config(RenderParameters rp) {
-    LOG(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << ")";
+    LOG(trace) << "CommandManager::load_config(" << rp.width << ", " << rp.height << ", " << rp.sampleTarget << rp.device << ")";
     rm->rd.pars = rp;
     rm->rd.pars.denoise = rp.denoise;
+    rm->rd.pars.device = rp.device;
     //TODO: Pars and scene both have redundant resolution.
     sm->scene.x_res = rp.width;
     sm->scene.y_res = rp.height;

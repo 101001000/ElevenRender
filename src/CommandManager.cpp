@@ -200,15 +200,30 @@ Material BrdfDiskLoadInputCommand::load() {
 
 
 std::vector<MeshObject> ObjectsTCPLoadInputCommand::load() {
-    LOG(error) << "Not implemented yet";
+    LOG(trace) << "ObjectsTCPLoadInputCommand::load(" << recompute_normals << ")";
+    std::vector<MeshObject> objects(0);
+    std::vector<UnloadedMaterial> umls(0);
+    ObjLoader objLoader;
+    LOG(trace) << "Buffer creating";
+    boost::interprocess::bufferstream input_stream(static_cast<char*>(msg.data), msg.data_size);
+    LOG(trace) << "Buffer created " << msg.data_size;
+    try {
+        objLoader.loadObjsRapid(input_stream, std::string_view(static_cast<char*>(mtls_msg.data)), objects, umls, recompute_normals);
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Invalid .obj file: " << e.what();
+    }
+    LOG(trace) << "Objects loaded";
+    return objects;
 }
 
 std::vector<MeshObject> ObjectsDiskLoadInputCommand::load() {
+    LOG(trace) << "ObjectsTCPLoadInputCommand::load()";
     std::vector<MeshObject> objects(0);
     std::vector<UnloadedMaterial> umls(0);
     ObjLoader objLoader;
     path.erase(remove(path.begin(), path.end(), '\"'), path.end()); // Remove double quotes
-    objLoader.loadObjsRapid(path, objects, umls, 2);
+    objLoader.loadObjsRapid(path, objects, umls, recompute_normals);
     return objects;
 }
 

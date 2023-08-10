@@ -156,7 +156,9 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
         }
         if (vm.count("load_object")) {
             Message data_msg = tcp_interface.read_message();
-            ic = new ObjectsTCPLoadInputCommand(data_msg, vm.count("recompute_normals"));
+            Message mat_msg = tcp_interface.read_message();
+            LOG(warning) << vm.count("recompute_normals");
+            ic = new ObjectsTCPLoadInputCommand(data_msg, mat_msg, vm.count("recompute_normals"));
         }
         if (vm.count("start")) {
             ic = new StartInputCommand();

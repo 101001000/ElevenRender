@@ -52,12 +52,13 @@ struct RenderParameters {
 
 	unsigned int width, height;
 	unsigned int sampleTarget;
+	unsigned int block_size;
 	std::string device;
 	bool denoise;
 
 	bool passes_enabled[PASSES_COUNT];
 
-	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device) {
+	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device, unsigned int _block_size) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device), block_size(_block_size) {
 		passes_enabled[BEAUTY] = true;
 		passes_enabled[DENOISE] = true;
 		passes_enabled[NORMAL] = true;
@@ -120,5 +121,5 @@ struct HitData {
 };
 
 
-int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples);
+int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples, unsigned int block_size);
 void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long BLOCK_SIZE, Scene* scene, dev_Scene* dev_scene);

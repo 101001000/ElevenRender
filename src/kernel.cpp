@@ -648,18 +648,16 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
 //TODO: refactor this code.
 
-int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples) {
+int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples, unsigned int block_size) {
 
-    LOG(info) << "Initializing rendering at " << target_samples << " sample target";
+    LOG(info) << "Initializing rendering at " << target_samples << " sample target and blocksize: " << block_size;
 
     dev_Scene* temp = new dev_Scene(scene);
 
     copy_scene(temp, dev_scene, q);
 
-    const int BLOCK_SIZE = 8;
-
-    sycl::range global{ scene->x_res + (BLOCK_SIZE - (scene->x_res % BLOCK_SIZE)),scene->y_res + (BLOCK_SIZE - (scene->y_res % BLOCK_SIZE)) };
-    sycl::range local{ BLOCK_SIZE,BLOCK_SIZE };
+    sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+    sycl::range local{ block_size,block_size };
 
     LOG(debug) << "Starting setup kernels";
 
@@ -680,10 +678,10 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
     return 0;
 }
 
-void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long BLOCK_SIZE, Scene* scene, dev_Scene* dev_scene) {
+void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long block_size, Scene* scene, dev_Scene* dev_scene) {
 
-    sycl::range global{ scene->x_res + (BLOCK_SIZE - (scene->x_res % BLOCK_SIZE)),scene->y_res + (BLOCK_SIZE - (scene->y_res % BLOCK_SIZE)) };
-    sycl::range local{ BLOCK_SIZE,BLOCK_SIZE };
+    sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+    sycl::range local{ block_size,block_size };
 
     try {
         for (int i = 0; i < target_samples; i++) {

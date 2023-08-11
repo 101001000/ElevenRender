@@ -33,7 +33,7 @@ message(STATUS "Setting up clang...")
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda")
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/build/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)

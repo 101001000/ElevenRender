@@ -64,7 +64,9 @@ void recompute_normals_face_weight(MeshObject* mo, std::map<Vector3, std::vector
 }
 
 
-void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
+void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
+
+	std::cout << "ahora a los objs\n";
 
 	if (result.error) {
 		std::cout << result.error.code.message() << '\n';
@@ -75,6 +77,8 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 	std::map<Vector3, std::vector<Tri>> faces;
 
 	for (const auto& shape : result.shapes) {
+
+		std::cout << "obj " << shape.name << "\n";
 
 		if (shape.lines.indices.size() == 0) {
 
@@ -121,27 +125,46 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 			mo->tris = tris->data();
 			mo->triCount = tris->size();
 
-			if (shape.mesh.material_ids[0] >= 0) {
-				mo->matName = result.materials[shape.mesh.material_ids[0]].name;
+			if (shape.mesh.material_ids.size() > 0) {
+
+				if (shape.mesh.material_ids[0] >= 0) {
+
+					std::cout << "Linkeando id " << shape.mesh.material_ids[0] << "\n";
+
+					if (result.materials.size() > 0 && shape.mesh.material_ids[0] < result.materials.size())
+						mo->matName = result.materials[shape.mesh.material_ids[0]].name;
+
+
+					std::cout << "matname: " << mo->matName << "\n";
+				}
 			}
+
+			std::cout << "normales\n";
 
 			if (recompute_normals)
 				recompute_normals_face_weight(mo, faces);
 
+			std::cout << "fin normales\n";
+
 			CalcTangents calcTang = CalcTangents();
 			calcTang.calc(mo);
+			std::cout << "fin calcTang\n";
+
 			meshObjects.push_back(*mo);
 		}
 	}
+
+	std::cout << "objs hecho\n";
 }
 
 
-void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
-	loadObjsRapid(rapidobj::ParseFile(path), meshObjects, materials, recompute_normals);
+void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
+	loadObjsRapid(rapidobj::ParseFile(path), meshObjects, recompute_normals);
 }
 
-void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, std::vector<UnloadedMaterial>& materials, bool recompute_normals) {
-	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(material_str)), meshObjects, materials, recompute_normals);
+void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
+	std::cout << material_str;
+	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(material_str)), meshObjects, recompute_normals);
 }
 
 MeshObject ObjLoader::parseObj(std::ifstream &stream) {

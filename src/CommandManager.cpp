@@ -99,6 +99,9 @@ Material parse_materialjson(boost::json::object json_mat) {
     if (json_mat.if_contains("transmission_map")) {
         mtl.transmission_map = json_mat["transmission_map"].as_string();
     }
+    if (json_mat.if_contains("albedo_shader_id")) {
+        mtl.albedoShaderID = json_mat["albedo_shader_id"].as_int64();
+    }
 
     float aspect = sycl::sqrt(1.0 - mtl.anisotropic * 0.9);
     mtl.ax = maxf(0.001, mtl.roughness / aspect);
@@ -291,6 +294,7 @@ void CommandManager::get_render_info() {
 void CommandManager::get_sycl_info() {
 
     try {
+
         auto platforms = sycl::platform::get_platforms();
         boost::json::object json_info;
         boost::json::array json_devices;
@@ -329,7 +333,11 @@ void CommandManager::get_sycl_info() {
 
         Message sycl_info_msg;
 
-        sycl_info_msg.data = (void*)(boost::json::serialize(json_info).c_str());
+        std::string serialized_string = boost::json::serialize(json_info);
+        char* data = new char[serialized_string.size() + 1]; 
+        std::strcpy(data, serialized_string.c_str());
+
+        sycl_info_msg.data = (void*)data;
         sycl_info_msg.data_format = Message::DataFormat::JSON;
         sycl_info_msg.data_size = boost::json::serialize(json_info).size();
         sycl_info_msg.type = Message::Type::DATA;

@@ -6,6 +6,7 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
+#include "kernel.h"
 
 
 
@@ -185,6 +186,7 @@ InputCommand* parse_input_command(Message msg, TCPInterface& tcp_interface) {
     return ic;
 }
 
+
 int main(int argc, char* argv[]) {
 
     logging::init();
@@ -229,6 +231,6 @@ int main(int argc, char* argv[]) {
     }
 
     LOG(info) << "Quitting";
-
+    
     return 0;
 }

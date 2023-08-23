@@ -33,7 +33,7 @@ message(STATUS "Setting up clang...")
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda")
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/build/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
@@ -111,12 +111,25 @@ include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include)
 include_directories(src) 
 
 FILE(GLOB SOURCES src/*.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
+
 FILE(GLOB LAN_SOURCES src/lan/*.cpp)
-add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src/mikktspace.c)
 
-#target_link_libraries(ElevenRender PUBLIC Boost::program_options Boost::json Boost::log Boost::asio)
+find_package(Python3 COMPONENTS Interpreter)
 
-#target_link_libraries(ElevenRender ${Boost_LIBRARIES})
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=spir64_x86_64 -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+	COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
+    COMMENT "Generating LLVM IR for shader_placeholder.cpp"
+)
+
+
+set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)
+add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
+
 target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)

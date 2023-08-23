@@ -3,6 +3,7 @@
 std::string Material::to_string() const {
     std::stringstream ss;
     ss << "Name: " << name << "\n"
+        << "Albedo Shader: " << albedoShaderID << "\n"
         << "Albedo Map: " << albedo_map << "\n"
         << "Emission Map: " << emission_map << "\n"
         << "Roughness Map: " << roughness_map << "\n"

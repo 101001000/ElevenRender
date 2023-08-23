@@ -19,6 +19,7 @@
 #include "OslMaterial.hpp"
 #include "lan/calc.tab.hpp"
 #include "SYCLCopy.h"
+#include "shader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -478,6 +479,7 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
     }
 }
 
+
 // Main Kernel
 void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
@@ -532,6 +534,15 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
         generateHitData(scene, material, hitdata, nearestHit);
 
+        if (material->albedoShaderID != -1) {
+            hitdata.albedo.x = 0;
+            hitdata.albedo.y = 0;
+            hitdata.albedo.z = 0;
+            //asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+        }
+
+        
         if (rnd.next() <= hitdata.opacity) {
 
             Vector3 wo = -ray.direction;     
@@ -638,11 +649,6 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
         scene->dev_samples[idx]++;
     }
     scene->dev_randstate[idx] = rnd;
-
-    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 0)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0,   ((float)y) / 1080.0)[0];
-    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 1)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0, ((float)y) / 1080.0)[1];
-    //scene->dev_passes[(BEAUTY * scene->x_res * scene->y_res * 4) + (4 * idx + 2)] = scene->hdri->texture.getValueFromUV(((float)x) / 1920.0, ((float)y) / 1080.0)[2];
-
 }
 
 

@@ -6,6 +6,33 @@ include(CheckCXXSourceCompiles)
 set(SYCL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
 set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler targets")
 
+
+# The DPC++ 2022-12 CUDA requires the cupti64 runtime library to be available in the path to load correctly pi_cuda.dll
+if(WIN32)
+    set(PATHS "$ENV{PATH}")
+    set(LIB_PREFIX "")
+    set(LIB_EXTENSION "dll")
+else()
+    message(WARNING "Linux CUDA cupti64* checker not implemented")
+endif()
+
+# Initial not found state
+set(CUPTI_LIBRARY_PATH NOTFOUND)
+
+# Iterate through the paths to find the cupti64XXX library
+foreach(DIR ${PATHS})
+    file(GLOB FOUND_LIBRARY "${DIR}/${LIB_PREFIX}cupti64*.${LIB_EXTENSION}")
+    if(FOUND_LIBRARY)
+        list(GET FOUND_LIBRARY 0 FIRST_MATCH)
+        set(CUPTI_LIBRARY_PATH ${FIRST_MATCH})
+        break()
+    endif()
+endforeach()
+
+if(NOT CUPTI_LIBRARY_PATH)
+    message(WARNING "Cupti64 not found in the paths! You won't be able to find CUDA devices if you don't set your path to: CUDA_DIR/extras/CUPTI/lib64")
+endif()
+
 message(STATUS "Checking dependencies...")
 find_package(Python3 REQUIRED)
 find_package(Git REQUIRED)

@@ -14,12 +14,11 @@ shader_dir, shader_placeholder = sys.argv[1:3]
 filenames = next(walk(shader_dir), (None, None, []))[2]
 filenames = sorted(filenames)
 
-if len(filenames) == 0:
-    print("No files found in the directory provided")
-    sys.exit(1)
-
-def addrspace2fptr(content):
-    return content.replace("float addrspace(4)* nocapture noundef align 4 dereferenceable(4)", "float* noundef nonnull align 4 dereferenceable(4)")
+def addrspace2fptr(content):  
+    spirv_adapt = content.replace("ptr", "float*")
+    cuda_adapt = spirv_adapt.replace("addrspace(4)", "")
+    ocl_adapt = cuda_adapt.replace("float* addrspace(2)", "ptr addrspace(2)")
+    return ocl_adapt
 
 def remove_metadata(content):
     no_number_metadata = re.sub('![0-9]+', " ", content, flags=re.DOTALL)
@@ -42,6 +41,7 @@ for filename in filenames:
                 
         with open(shader_placeholder, 'r') as f:
             placeholder_content = f.read()
+            placeholder_content = addrspace2fptr(placeholder_content)
            
         id = int(filename.replace(".ll", ""))
            
@@ -62,5 +62,5 @@ for filename in filenames:
             
            
         with open(shader_placeholder, 'w') as f:
-            f.write(addrspace2fptr(placeholder_content))
+            f.write(placeholder_content)
     

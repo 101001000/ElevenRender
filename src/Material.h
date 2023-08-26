@@ -25,6 +25,8 @@ public:
 	int opacityTextureID = -1;
 	int transmissionTextureID = -1;
 
+	int albedoShaderID = -1;
+
 	Vector3 albedo = Vector3(0.5,0.5,0.5);
 	Vector3 emission = Vector3::Zero();
 

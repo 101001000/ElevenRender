@@ -1,4 +1,4 @@
-#include <CL/sycl.hpp>
+#include "sycl.h"
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/arithmetic/inc.hpp>
 
@@ -8,7 +8,7 @@
     SYCL_EXTERNAL void asl_shade##n##_(float Px, float Py, float Pz, float Ix, float Iy, float Iz, float Nx, float Ny, float Nz, float Ngx, float Ngy, float Ngz, float u, float v, float& Cr, float& Cg, float& Cb);
 
 #define ASL_SHADE_DEF(z, n, text) \
-    SYCL_EXTERNAL void asl_shade##n##_(float Px, float Py, float Pz, float Ix, float Iy, float Iz, float Nx, float Ny, float Nz, float Ngx, float Ngy, float Ngz, float u, float v, float& Cr, float& Cg, float& Cb){}
+    SYCL_EXTERNAL void asl_shade##n##_(float Px, float Py, float Pz, float Ix, float Iy, float Iz, float Nx, float Ny, float Nz, float Ngx, float Ngy, float Ngz, float u, float v, float& Cr, float& Cg, float& Cb){Cr = 1; Cg = 1; Cb = 0;}
 
 #define ASL_SHADE_NAME(z, n, text) \
     asl_shade##n##_,

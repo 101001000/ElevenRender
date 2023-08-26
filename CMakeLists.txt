@@ -3,12 +3,14 @@ set(FETCHCONTENT_QUIET FALSE)
 include(FetchContent)
 
 if(NOT SYCL_PATH)
-    set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src)
+    #set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src)
+	set(SYCL_PATH C:/Users/Kike/Desktop/TFM/dpcpp202212git/llvm/build/)
 endif()
 
 message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
+message(STATUS ${SYCL_PATH})
 
-if(NOT EXISTS ${SYCL_PATH}/build/bin/clang++.exe)
+if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe)
 
 	message(STATUS "Getting Intel DPC++ framework...")
 	
@@ -32,17 +34,18 @@ message(STATUS "Setting up clang...")
 # CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
-set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64")
+#set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
+set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
-set(CMAKE_C_COMPILER "${SYCL_PATH}/build/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
+set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
 #set(CMAKE_C_FLAGS  "-fsycl -fsycl-targets=nvptx64-nvidia-cuda")
 set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
 
-link_directories(${CMAKE_SOURCE_DIR}/build/_deps/sycl_llvm-src/build/lib)
+#link_directories(${CMAKE_SOURCE_DIR}/build/_deps/sycl_llvm-src/build/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
@@ -108,18 +111,17 @@ execute_process(WORKING_DIRECTORY build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAN
 
 
 include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include) 
-include_directories(src) 
+include_directories(src)
+include_directories(${SYCL_PATH}/include/)  
 
 FILE(GLOB SOURCES src/*.cpp)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
-
-FILE(GLOB LAN_SOURCES src/lan/*.cpp)
 
 find_package(Python3 COMPONENTS Interpreter)
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=spir64_x86_64 -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
+    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
 	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
 	COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
@@ -128,9 +130,11 @@ add_custom_command(
 
 
 set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)
-add_executable(ElevenRender ${SOURCES} ${LAN_SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
+add_executable(ElevenRender ${SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
 
 target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
-target_link_libraries(ElevenRender sycl)
+target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib )
+target_link_libraries(ElevenRender sycl7)
+

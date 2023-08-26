@@ -206,7 +206,11 @@ int main(int argc, char* argv[]) {
         CommandManager cm;
         cm.im = &tcp_interface;
 
+        LOG(info) << "Command manager created";
+
         tcp_interface.write_message(Message::OK());
+
+        LOG(info) << "OK SENT";
 
         while (!tcp_interface.error) {
             LOG(debug) << "Awaiting for InputCommand";

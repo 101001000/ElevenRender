@@ -197,8 +197,8 @@
         float x = u * width;
         float y = v * height;
 
-        float t1x = floor(x);
-        float t1y = floor(y);
+        float t1x = sycl::floor(x);
+        float t1y = sycl::floor(y);
 
         float t2x = t1x + 1;
         float t2y = t1y + 1;

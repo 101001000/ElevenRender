@@ -241,12 +241,12 @@ void RenderingManager::start_rendering(Scene* scene) {
     LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
 
     auto work_item_dim = device.get_info<sycl::info::device::max_work_item_dimensions>();
-    auto work_item_size = device.get_info<sycl::info::device::max_work_item_sizes>();
+    //auto work_item_size = device.get_info<sycl::info::device::max_work_item_sizes>();
     auto work_item_group_size = device.get_info<sycl::info::device::max_work_group_size>();
 
     //auto test = sycl::info::device::max_work_item_dimensions
 
-    LOG(info) << "dim " << work_item_dim << " is_x: " << work_item_size[0] << " is_y: " << work_item_size[1] << " is_z: " << work_item_size[2] << " gs: " << work_item_group_size;
+    //LOG(info) << "dim " << work_item_dim << " is_x: " << work_item_size[0] << " is_y: " << work_item_size[1] << " is_z: " << work_item_size[2] << " gs: " << work_item_group_size;
 
     dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
 
@@ -296,6 +296,7 @@ float* RenderingManager::get_pass(std::string pass) {
 
 
 Manager::Manager(CommandManager* _cm) {
+    LOG(debug) << "Manager::Manager";
     this->cm = _cm;
 }
 

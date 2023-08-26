@@ -1,4 +1,6 @@
 #include "CommandManager.h"
+#include "kernel.h"
+#include "sycl.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -236,8 +238,12 @@ std::vector<MeshObject> ObjectsDiskLoadInputCommand::load() {
 
 
 CommandManager::CommandManager() {
+    LOG(debug) << "CommandManager constructor called";
+    LOG(debug) << "RM constructor called";
     rm = std::make_shared<RenderingManager>(this);
+    LOG(debug) << "DM constructor called";
     dm = std::make_shared<DenoiseManager>(this);
+    LOG(debug) << "SM constructor called";
     sm = std::make_shared<SceneManager>(this);
 }
 
@@ -290,8 +296,8 @@ void CommandManager::get_render_info() {
     im->write_message(render_info_msg);
 }
 
-
 void CommandManager::get_sycl_info() {
+
 
     try {
 
@@ -308,6 +314,8 @@ void CommandManager::get_sycl_info() {
                 json_device["platform"] = platform.get_info<sycl::info::platform::name>();
                 json_device["memory"] = device.get_info<sycl::info::device::global_mem_size>();
                 json_device["max_compute_units"] = device.get_info<sycl::info::device::max_compute_units>();
+                json_device["is_compatible"] = is_compatible(device);
+
                 auto dt = device.get_info<sycl::info::device::device_type>();
 
                 if (dt == sycl::info::device_type::cpu)

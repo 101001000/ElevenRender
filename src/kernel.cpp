@@ -538,8 +538,8 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             hitdata.albedo.x = 0;
             hitdata.albedo.y = 0;
             hitdata.albedo.z = 0;
-            //asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
-            asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            //asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
         }
 
         
@@ -571,7 +571,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
             float hdripdf = scene->hdri->pdf(iu * scene->hdri->texture.width, iv * scene->hdri->texture.height);
 
-            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * abs(Vector3::dot(wihdri, hitdata.normal)) / hdripdf;
+            Vector3 hdriInt = hdriValue * DisneyEval(hitdata, wo, hitdata.normal, wihdri) * sycl::abs(Vector3::dot(wihdri, hitdata.normal)) / hdripdf;
             
             float brdfpdf = DisneyPdf(hitdata, wo, hitdata.normal, wibrdf);
 
@@ -581,7 +581,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             //Vector3 hdriInt = textCoordinate;
             light += reduction * (hitdata.emission + hdriInt);
 
-            reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * abs(Vector3::dot(wibrdf, hitdata.normal)) / brdfpdf;
+            reduction *= DisneyEval(hitdata, wo, hitdata.normal, wibrdf) * sycl::abs(Vector3::dot(wibrdf, hitdata.normal)) / brdfpdf;
 
         
             // First hit
@@ -684,16 +684,22 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
     return 0;
 }
 
+
 void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long block_size, Scene* scene, dev_Scene* dev_scene) {
+
+    LOG(trace) << "kernel_render_enqueue::start";
 
     sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
     sycl::range local{ block_size,block_size };
-
+    
     try {
         for (int i = 0; i < target_samples; i++) {
+
+            LOG(trace) << "submitting one sample";
+
             q.submit([&](cl::sycl::handler& h) {
 
-                h.parallel_for(sycl::nd_range{ global, local },
+                h.parallel_for<KernelNameTest>(sycl::nd_range{ global, local },
                 [=](sycl::nd_item<2> it) {
                         renderingKernel(dev_scene, it.get_global_id(0) * dev_scene->y_res + it.get_global_id(1), target_samples);
                     });
@@ -704,4 +710,18 @@ void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long lon
         LOG(error) << "Error adding rendering kernels to the queue: " << e.what();
     }
     LOG(info) << "All samples added to the queue";
+}
+
+bool is_compatible(sycl::device& device) {
+    bool compatible = false;
+    try {
+        // Any call to KernelName needs to be in the same compiler unit as the parallel_for call where is called.
+        compatible = sycl::is_compatible<KernelNameTest>(device);  
+    }
+    catch (std::exception const& e) {
+        LOG(info) << "ERROR: " << e.what();
+    }
+
+    LOG(info) << "COMPATIBLE: " << compatible;
+    return compatible;
 }

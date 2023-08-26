@@ -17,9 +17,6 @@ if errorlevel 1 goto error
 ninja
 if errorlevel 1 goto error
 
-:: Copy necessary DLLs
-copy _deps\sycl_llvm-src\build\bin\sycl.dll .\bin\
-if errorlevel 1 goto error
 
 copy _deps\oidnzip-src\oidn-1.4.3.x64.vc14.windows\bin\OpenImageDenoise.dll .\bin\
 if errorlevel 1 goto error

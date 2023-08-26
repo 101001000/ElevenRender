@@ -103,7 +103,7 @@ float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
 
-    float NDotH = abs(Vector3::dot(N, H));
+    float NDotH = sycl::abs(Vector3::dot(N, H));
 
     // TODO: Fix importance sampling for microfacet transmission
     if (Vector3::dot(N, L) <= 0.0) {
@@ -124,8 +124,8 @@ float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
     float pdfGTR2_aniso = GTR2_aniso(NDotH, Vector3::dot(H, T), Vector3::dot(H, B), ax, ay) * NDotH;
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + hitdata.clearcoat);
-    float pdfSpec = lerp(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * abs(Vector3::dot(L, H)));
-    float pdfDiff = abs(Vector3::dot(L, N)) * (1.0 / PI);
+    float pdfSpec = lerp(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * sycl::abs(Vector3::dot(L, H)));
+    float pdfDiff = sycl::abs(Vector3::dot(L, N)) * (1.0 / PI);
 
     brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 
@@ -164,11 +164,11 @@ Vector3 DisneyEval(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
 
     Vector3 H = (L + V).normalized();
 
-    float NDotL = abs(Vector3::dot(N, L));
-    float NDotV = abs(Vector3::dot(N, V));
-    float NDotH = abs(Vector3::dot(N, H));
-    float VDotH = abs(Vector3::dot(V, H));
-    float LDotH = abs(Vector3::dot(L, H));
+    float NDotL = sycl::abs(Vector3::dot(N, L));
+    float NDotV = sycl::abs(Vector3::dot(N, V));
+    float NDotH = sycl::abs(Vector3::dot(N, H));
+    float VDotH = sycl::abs(Vector3::dot(V, H));
+    float LDotH = sycl::abs(Vector3::dot(L, H));
 
     Vector3 brdf = Vector3(0.0);
     Vector3 bsdf = Vector3(0.0);

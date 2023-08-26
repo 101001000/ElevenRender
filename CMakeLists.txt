@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-set(FETCHCONTENT_QUIET FALSE)
 include(FetchContent)
 include(CheckCXXSourceCompiles)
 
@@ -56,28 +55,27 @@ set (BOOST_ENABLE_CMAKE ON)
 set(BOOST_INCLUDE_LIBRARIES program_options json log interprocess)
 add_subdirectory(boost EXCLUDE_FROM_ALL)
 
-message(STATUS "Getting RapidObj")
-message(STATUS ${Boost_INCLUDE_DIRS})
+
+message(STATUS "Fetching external dependencies:")
 
 FetchContent_Declare(rapidobj
     GIT_REPOSITORY  https://github.com/guybrush77/rapidobj.git
-    GIT_TAG         origin/master)
+    GIT_TAG         origin/master
+	GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(rapidobj)
 include_directories(ElevenRender build/_deps/rapidobj-src/include)
 
-
-message(STATUS "Getting stb_image.h")
-
 FetchContent_Declare(stb_image
     URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image.h"
-	DOWNLOAD_NO_EXTRACT TRUE)
+	DOWNLOAD_NO_EXTRACT TRUE
+	GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(stb_image)
+
 include_directories(ElevenRender build/_deps/stb_image-src)
 
-message(STATUS "Getting stb_image_write.h")
-
+#TODO: Download this from github
 FetchContent_Declare(stb_image_write
     URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h"
 	DOWNLOAD_NO_EXTRACT TRUE)
@@ -85,18 +83,13 @@ FetchContent_Declare(stb_image_write
 FetchContent_MakeAvailable(stb_image_write)
 include_directories(ElevenRender build/_deps/stb_image_write-src)
 
-
-message(STATUS "Getting MikkTSpace")
-
 FetchContent_Declare(mikktspace
     GIT_REPOSITORY  https://github.com/mmikk/MikkTSpace.git
-	GIT_TAG         origin/master)
+	GIT_TAG         origin/master
+	GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(mikktspace)
 include_directories(ElevenRender build/_deps/mikktspace-src)
-
-
-message(STATUS "Getting Open Image Denoiser prebuilt")
 
 FetchContent_Declare(oidnzip
 	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/oidn-1.4.3.x64.vc14.windows.zip"
@@ -105,6 +98,8 @@ FetchContent_Declare(oidnzip
 
 FetchContent_MakeAvailable(oidnzip)
 execute_process(WORKING_DIRECTORY build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf oidn-1.4.3.x64.vc14.windows.zip)
+
+message(STATUS "All external dependencies fetched")
 
 
 include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include) 

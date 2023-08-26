@@ -1,14 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
 set(FETCHCONTENT_QUIET FALSE)
 include(FetchContent)
+include(CheckCXXSourceCompiles)
 
-if(NOT SYCL_PATH)
-    #set(SYCL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src)
-	set(SYCL_PATH C:/Users/Kike/Desktop/TFM/dpcpp202212git/llvm/build/)
-endif()
+# The path to the sycl compiler. By default it will download intel's dpc++
+set(SYCL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
+set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler targets")
 
-message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-message(STATUS ${SYCL_PATH})
+message(STATUS "Checking dependencies...")
+find_package(Python3 REQUIRED)
+find_package(Git REQUIRED)
+# And ninja.
+
+message(STATUS "SYCL compiler path set to: ${SYCL_PATH}")
+message(STATUS "SYCL compiler targets set to: ${SYCL_TARGETS}")
 
 if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe)
 
@@ -16,15 +21,15 @@ if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe)
 	
 	FetchContent_Declare(sycl_llvm
 		GIT_REPOSITORY  https://github.com/intel/llvm
-		GIT_TAG         5352b423f8913fce44e8276de68a39ffdb190bdc
+		GIT_TAG         6977f1aced3ed6a08573fdbdd4f35a5d719c8d98
 		GIT_PROGRESS TRUE)
 	
 	FetchContent_MakeAvailable(sycl_llvm)
 	
-	message(STATUS "Building Intel DPC++ framework...")
+	message(STATUS "Building Intel's DPC++ framework...")
 	
-	execute_process(COMMAND python ${SYCL_PATH}/buildbot/configure.py --cuda)
-	execute_process(COMMAND python ${SYCL_PATH}/buildbot/compile.py)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/configure.py --cuda)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/compile.py)
 
 endif()
 
@@ -34,25 +39,17 @@ message(STATUS "Setting up clang...")
 # CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
-#set(CMAKE_CXX_COMPILER "${SYCL_PATH}/build/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda")
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS}")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
-#set(CMAKE_C_FLAGS  "-fsycl -fsycl-targets=nvptx64-nvidia-cuda")
 set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
 
-#link_directories(${CMAKE_SOURCE_DIR}/build/_deps/sycl_llvm-src/build/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-
-message(STATUS "Checking dependencies...")
-find_package(Python3 REQUIRED)
-find_package(Git REQUIRED)
-# And ninja.
 
 message(STATUS "Setting up Boost...")
 set (BOOST_ENABLE_CMAKE ON)
@@ -112,12 +109,11 @@ execute_process(WORKING_DIRECTORY build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAN
 
 include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include) 
 include_directories(src)
-include_directories(${SYCL_PATH}/include/)  
+include_directories(${SYCL_PATH}/include/) 
+
 
 FILE(GLOB SOURCES src/*.cpp)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
-
-find_package(Python3 COMPONENTS Interpreter)
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
@@ -132,9 +128,21 @@ add_custom_command(
 set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)
 add_executable(ElevenRender ${SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
 
+
+target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib ) 
+
 target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
-target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib )
-target_link_libraries(ElevenRender sycl7)
+
+find_library(SYCL_LIBRARY 
+    NAMES sycl sycl6 sycl7
+    PATHS ${SYCL_PATH}/lib
+)
+
+if(NOT SYCL_LIBRARY)
+    message(FATAL_ERROR "SYCL library not found!")
+endif()
+
+target_link_libraries(ElevenRender ${SYCL_LIBRARY})
 

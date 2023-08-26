@@ -296,6 +296,7 @@ void CommandManager::get_render_info() {
     im->write_message(render_info_msg);
 }
 
+
 void CommandManager::get_sycl_info() {
 
 

@@ -538,7 +538,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             hitdata.albedo.x = 0;
             hitdata.albedo.y = 0;
             hitdata.albedo.z = 0;
-            asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            //asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
             //asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
         }
 
@@ -716,7 +716,7 @@ bool is_compatible(sycl::device& device) {
     bool compatible = false;
     try {
         // Any call to KernelName needs to be in the same compiler unit as the parallel_for call where is called.
-        compatible = sycl::is_compatible<KernelNameTest>(device);  
+        compatible = sycl::is_compatible<KernelNameTest>(device);
     }
     catch (std::exception const& e) {
         LOG(info) << "ERROR: " << e.what();

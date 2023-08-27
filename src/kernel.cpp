@@ -37,13 +37,8 @@ uint32_t jenkins_one_at_a_time_hash(uint32_t seed) {
     return hash;
 }
 
-
 RngGenerator::RngGenerator(uint32_t _seed) {
     this->state = jenkins_one_at_a_time_hash(_seed + 1);
-
-    //for (int i = 0; i < _seed; i++) {
-    //    this->next();
-    //}
 }
 
 float RngGenerator::next() {
@@ -528,7 +523,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             break;
         }
 
-        materialID = scene->meshObjects[nearestHit.objectID].materialID;
+        materialID = nearestHit.material_id;
 
         Material* material = &scene->materials[materialID];
 
@@ -538,7 +533,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             hitdata.albedo.x = 0;
             hitdata.albedo.y = 0;
             hitdata.albedo.z = 0;
-            //asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
             //asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
         }
 

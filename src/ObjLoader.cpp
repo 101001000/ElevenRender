@@ -1,4 +1,6 @@
 #include "ObjLoader.h"
+#include "Logging.h"
+#include <regex>
 
 std::string ObjLoader::getSecondWord(std::string str) {
 	std::string::size_type in = str.find_first_of(" ");
@@ -66,10 +68,8 @@ void recompute_normals_face_weight(MeshObject* mo, std::map<Vector3, std::vector
 
 void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
 
-	std::cout << "ahora a los objs\n";
-
 	if (result.error) {
-		std::cout << result.error.code.message() << '\n';
+		LOG(error) << result.error.code.message() << '\n';
 	}
 
 	bool success = rapidobj::Triangulate(result);
@@ -78,12 +78,14 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 
 	for (const auto& shape : result.shapes) {
 
-		std::cout << "obj " << shape.name << "\n";
-
 		if (shape.lines.indices.size() == 0) {
 
 			std::vector<Tri>* tris = new std::vector<Tri>();
 			MeshObject* mo = new MeshObject();
+
+			for (auto mat : shape.mesh.material_ids) {
+				LOG(warning) << mat;
+			}
 
 			for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
 
@@ -118,6 +120,16 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 					faces[tri.vertices[1]].push_back(tri);
 					faces[tri.vertices[2]].push_back(tri);
 				}
+
+				int face_id = i / 3;
+				int material_id = -1;
+
+				if (face_id < shape.mesh.material_ids.size())
+					material_id = shape.mesh.material_ids[face_id];
+
+				if(material_id < result.materials.size() && material_id > -1)
+					tri.matName = result.materials[material_id].name;
+
 				tris->push_back(tri);
 			}
 
@@ -125,36 +137,15 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 			mo->tris = tris->data();
 			mo->triCount = tris->size();
 
-			if (shape.mesh.material_ids.size() > 0) {
-
-				if (shape.mesh.material_ids[0] >= 0) {
-
-					std::cout << "Linkeando id " << shape.mesh.material_ids[0] << "\n";
-
-					if (result.materials.size() > 0 && shape.mesh.material_ids[0] < result.materials.size())
-						mo->matName = result.materials[shape.mesh.material_ids[0]].name;
-
-
-					std::cout << "matname: " << mo->matName << "\n";
-				}
-			}
-
-			std::cout << "normales\n";
-
 			if (recompute_normals)
 				recompute_normals_face_weight(mo, faces);
 
-			std::cout << "fin normales\n";
-
 			CalcTangents calcTang = CalcTangents();
 			calcTang.calc(mo);
-			std::cout << "fin calcTang\n";
 
 			meshObjects.push_back(*mo);
 		}
 	}
-
-	std::cout << "objs hecho\n";
 }
 
 
@@ -163,169 +154,9 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 }
 
 void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
-	std::cout << material_str;
-	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(material_str)), meshObjects, recompute_normals);
+	std::string str = std::string(material_str);
+	std::string result = std::regex_replace(str, std::regex("\\map_Bump"), "map_bump");
+	std::string result2 = std::regex_replace(result, std::regex("\\map_refl"), "refl");
+	std::cout << result2;
+	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(result2)), meshObjects, recompute_normals);
 }
-
-MeshObject ObjLoader::parseObj(std::ifstream &stream) {
-
-	std::streampos pos = stream.tellg();
-	std::string line;
-	std::vector<Tri>* tris = new std::vector<Tri>();
-
-	MeshObject mo;
-
-	while (std::getline(stream, line) && line[0] != 'o') {
-
-		if (line.find("usemtl") != std::string::npos) {
-			mo.matName = getSecondWord(line);
-		}
-
-		if (line[0] == 'v' && line[1] == ' ') {
-			vertices.push_back(Vector3(line.substr(2)) * Vector3(1, 1, -1));
-		}
-
-		if (line[0] == 'v' && line[1] == 't') {
-			textureCoord.push_back(Vector3(line.substr(2)));
-		}
-
-		if (line[0] == 'v' && line[1] == 'n') {
-			Vector3 n = Vector3(line.substr(2)) * Vector3(1, 1, -1);
-			normals.push_back(n);
-		}
-
-		if (line[0] == 'f') {
-
-			char f[3][1000];
-
-			f[0][0] = '\0';
-			f[1][0] = '\0';
-			f[2][0] = '\0';
-
-			Tri tri;
-
-			int idx = -1;
-
-			for (char& c : line) {
-
-				if (isdigit(c) || c == '/') {
-
-					if (idx == -1) { idx = 0; }
-					int len = strlen(f[idx]);
-
-					f[idx][len] = c;
-					f[idx][len + 1] = '\0';
-				}
-				else if (idx > -1) {
-					idx++;
-				}
-			}
-
-			for (int i = 0; i < 3; i++) {
-
-				char v[3][100];
-
-				v[0][0] = '\0';
-				v[1][0] = '\0';
-				v[2][0] = '\0';
-
-				int _idx = 0;
-
-				for (char& c : f[i]) {
-					if (c == '\0') { break; }
-
-					if (isdigit(c)) {
-						int len = strlen(v[_idx]);
-
-						v[_idx][len] = c;
-						v[_idx][len + 1] = '\0';
-					}
-					else {
-						_idx++;
-					}
-				}
-
-
-				if (strlen(v[0]) > 0) {
-					tri.vertices[i] = vertices.at(std::stoi(&(v[0])[0]) - 1);
-				}
-
-				if (strlen(v[1]) > 0) {
-					tri.uv[i] = textureCoord.at(std::stoi(&(v[1])[0]) - 1);
-				}
-
-				if (strlen(v[2]) > 0) {
-					tri.normals[i] = normals.at(std::stoi(&(v[2])[0]) - 1).normalized();
-				}
-				
-
-			}
-			tris->push_back(tri);
-		}
-	}
-
-	std::cout << "Obj loaded with " << tris->size() << " tris, " << vertices.size() << " vertices and " << normals.size() << " normals\n" << std::endl;
-
-	mo.tris = tris->data();
-	mo.triCount = tris->size();
-
-	CalcTangents calcTang = CalcTangents();
-	calcTang.calc(&mo);
-
-	for (int i = 0; i < mo.triCount; i++) {
-
-		std::cout << "Vx0: " << mo.tris[i].vertices[0].x << ", y: " << mo.tris[i].vertices[0].y << ", z: " << mo.tris[i].vertices[0].z << std::endl;
-		std::cout << "Nx0: " << mo.tris[i].normals[0].x << ", y: " << mo.tris[i].normals[0].y << ", z: " << mo.tris[i].normals[0].z << std::endl;
-		std::cout << "Tx0: " << mo.tris[i].tangents[0].x << ", y: " << mo.tris[i].tangents[0].y << ", z: " << mo.tris[i].tangents[0].z << std::endl;
-		std::cout << std::endl;
-		std::cout << "Vx1: " << mo.tris[i].vertices[1].x << ", y: " << mo.tris[i].vertices[1].y << ", z: " << mo.tris[i].vertices[1].z << std::endl;
-		std::cout << "Nx1: " << mo.tris[i].normals[1].x << ", y: " << mo.tris[i].normals[1].y << ", z: " << mo.tris[i].normals[1].z << std::endl;
-		std::cout << "Tx1: " << mo.tris[i].tangents[1].x << ", y: " << mo.tris[i].tangents[1].y << ", z: " << mo.tris[i].tangents[1].z << std::endl;
-		std::cout << std::endl;
-		std::cout << "Vx2: " << mo.tris[i].vertices[2].x << ", y: " << mo.tris[i].vertices[2].y << ", z: " << mo.tris[i].vertices[2].z << std::endl;
-		std::cout << "Nx2: " << mo.tris[i].normals[2].x << ", y: " << mo.tris[i].normals[2].y << ", z: " << mo.tris[i].normals[2].z << std::endl;
-		std::cout << "Tx2: " << mo.tris[i].tangents[2].x << ", y: " << mo.tris[i].tangents[2].y << ", z: " << mo.tris[i].tangents[2].z << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
-
-	}
-
-	return mo;
-}
-
-std::vector<MeshObject> ObjLoader::loadObjs(std::string path) {
-
-	std::ifstream input(path.c_str());
-	std::string line;
-	std::vector<MeshObject> meshObjects;
-
-	while (std::getline(input, line)) {
-
-		if (line[0] == 'o') {
-
-			printf("obj");
-
-			std::streampos pos = input.tellg();
-			meshObjects.push_back(parseObj(input));
-			input.seekg(pos);
-		}	
-	}
-	return meshObjects;
-}
-
-std::vector<UnloadedMaterial> ObjLoader::loadMtls(std::string path) {
-
-	std::ifstream input(path.c_str());
-	std::string line;
-	std::vector<UnloadedMaterial> mtls;
-
-	while (std::getline(input, line)) {
-		if (line.find("newmtl") != std::string::npos) {
-			std::streampos pos = input.tellg();
-			mtls.push_back(parseMtl(input, getSecondWord(line)));
-			input.seekg(pos);
-		}
-	}
-	return mtls;
-}
-

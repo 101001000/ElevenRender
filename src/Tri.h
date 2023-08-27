@@ -16,6 +16,10 @@ public:
     float tangentsSign;
 
     int objectID;
+    int materialID;
+
+    std::string matName;
+
 
 public:
 
@@ -115,7 +119,6 @@ public:
         hit.normal = shadingNormal;
         hit.gnormal = compNormal;
 
-
 #else
         Vector3 geomNormal = Vector3::cross(edge1, edge2).normalized();
 
@@ -135,6 +138,7 @@ public:
         hit.tu = tUV.x;
         hit.tv = tUV.y;
         hit.objectID = objectID;
+        hit.material_id = materialID;
 
         return true;
     }

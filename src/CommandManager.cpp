@@ -199,7 +199,7 @@ Material BrdfTCPLoadInputCommand::load() {
         material = parse_materialjson(msg.get_json_data());
     }
     catch (std::exception const& e) {
-        LOG(error) << "Invalid material format: " << e.what();
+        LOG(error) << "Invalid material format: " << e.what() << " with data: " << msg.get_string_data();
     }
     return material;
 }

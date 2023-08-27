@@ -101,19 +101,27 @@ void Scene::pair_textures() {
 
 void Scene::pair_materials() {
 
-	for (int i = 0; i < meshObjects.size(); i++) {
+	for (MeshObject obj : meshObjects) {
 
-		meshObjects[i].materialID = 0;
+		LOG(debug) << "Pairing obj " << obj.name;
 
-		for (int j = 0; j < materials.size(); j++) {
+		for (int i = 0; i < obj.triCount; i++) {
 
-			if (materials[j].name == meshObjects[i].matName) {
-				meshObjects[i].materialID = j;
+			LOG(debug) << "Pairing tri: " << i << " with matname: " << obj.tris[i].matName;
+
+			obj.tris[i].materialID = 0;
+
+			for (int j = 0; j < materials.size(); j++) {
+
+				if (materials[j].name == obj.tris[i].matName) {
+					LOG(debug) << "Paired! ";
+					obj.tris[i].materialID = j;
+				}
 			}
 		}
 	}
 
-	printf("Materials paired\n");
+	LOG(debug) << "All materials paired! ";
 
 }
 

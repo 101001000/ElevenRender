@@ -45,7 +45,15 @@
 
     std::string Texture::to_string() {
         //TODO: Add filtering and color_space.
-        return "Texture " + name + " (" + std::to_string(width) + "x" + std::to_string(height) + "), " + std::to_string(channels) + " channels";
+
+       std::string str = "Texture " + name + " (" + std::to_string(width) + "x" + std::to_string(height) + "), " + std::to_string(channels) + " channels";
+
+       //for (int i = 0; i < width * height * channels; i++) {
+       //    str += std::to_string(data[i]);
+       //    str += ",";
+       //}
+
+       return str;
     }
 
 
@@ -165,8 +173,11 @@
 
         Vector3 pixel;
 
-        clamp(x, 0, width - 1);
-        clamp(y, 0, height - 1);
+        x %= width;
+        y %= height;
+
+        if (x < 0) x *= -1;
+        if (y < 0) y *= -1;
 
         if (channels == 0) {
             pixel = Vector3();

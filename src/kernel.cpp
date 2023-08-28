@@ -649,7 +649,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
 //TODO: refactor this code.
 
-int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples, unsigned int block_size) {
+void renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int target_samples, unsigned int block_size) {
 
     LOG(info) << "Initializing rendering at " << target_samples << " sample target and blocksize: " << block_size;
 
@@ -675,8 +675,6 @@ int renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned int
     }
 
     LOG(info) << "Setup finished";
-   
-    return 0;
 }
 
 

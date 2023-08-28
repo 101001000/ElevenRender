@@ -69,8 +69,10 @@ void recompute_normals_face_weight(MeshObject* mo, std::map<Vector3, std::vector
 void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
 
 	if (result.error) {
-		LOG(error) << result.error.code.message() << '\n';
+		LOG(error) << result.error.code.message() << " in " << result.error.line << " : " << result.error.line_num;
 	}
+
+	
 
 	bool success = rapidobj::Triangulate(result);
 
@@ -82,10 +84,6 @@ void ObjLoader::loadObjsRapid(rapidobj::Result result, std::vector<MeshObject>& 
 
 			std::vector<Tri>* tris = new std::vector<Tri>();
 			MeshObject* mo = new MeshObject();
-
-			for (auto mat : shape.mesh.material_ids) {
-				LOG(warning) << mat;
-			}
 
 			for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
 
@@ -155,8 +153,12 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 
 void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
 	std::string str = std::string(material_str);
-	std::string result = std::regex_replace(str, std::regex("\\map_Bump"), "map_bump");
-	std::string result2 = std::regex_replace(result, std::regex("\\map_refl"), "refl");
-	std::cout << result2;
-	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(result2)), meshObjects, recompute_normals);
+	std::string result = std::regex_replace(str, std::regex("^(?!newmtl).+"), "");
+
+	//std::string result = std::regex_replace(str, std::regex("\\map_Bump"), "map_bump");
+	//std::string result2 = std::regex_replace(result, std::regex("\\map_refl"), "refl");
+	//std::string result3 = std::regex_replace(result2, std::regex("\\map_refl"), "refl");
+	//std::string result4 = std::regex_replace(result3, std::regex("\\map_Kd"), "");
+	std::cout << result;
+	loadObjsRapid(rapidobj::ParseStream(obj_stream, rapidobj::MaterialLibrary::String(result)), meshObjects, recompute_normals);
 }

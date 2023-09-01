@@ -6,6 +6,8 @@ include(CheckCXXSourceCompiles)
 set(SYCL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
 set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler targets")
 
+if(DEFINED OFFLOAD_ARCH)
+    set(SYCL_TARGET_BACKEND "-Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH)}")
 
 # The DPC++ 2022-12 CUDA requires the cupti64 runtime library to be available in the path to load correctly pi_cuda.dll
 if(WIN32)
@@ -40,6 +42,7 @@ find_package(Git REQUIRED)
 
 message(STATUS "SYCL compiler path set to: ${SYCL_PATH}")
 message(STATUS "SYCL compiler targets set to: ${SYCL_TARGETS}")
+message(STATUS "SYCL compiler target backend set to: ${SYCL_TARGET_BACKEND}")
 
 if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe OR NOT EXISTS ${SYCL_PATH}/bin/clang++)
 
@@ -66,7 +69,7 @@ message(STATUS "Setting up clang...")
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS}")
+set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_TARGET_BACKEND}")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
@@ -139,7 +142,7 @@ list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
+    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_TARGET_BACKEND} -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
 	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
 	COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp

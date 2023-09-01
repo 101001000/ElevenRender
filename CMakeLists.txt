@@ -8,6 +8,7 @@ set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler
 
 if(DEFINED OFFLOAD_ARCH)
     set(SYCL_TARGET_BACKEND "-Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH)}")
+endif()
 
 # The DPC++ 2022-12 CUDA requires the cupti64 runtime library to be available in the path to load correctly pi_cuda.dll
 if(WIN32)
@@ -68,11 +69,11 @@ message(STATUS "Setting up clang...")
 # CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
-set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
+set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++" CACHE INTERNAL "C++ compiler" FORCE)
 set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_TARGET_BACKEND}")
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
-set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
+set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang" CACHE INTERNAL "C compiler" FORCE)
 set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
@@ -121,18 +122,25 @@ FetchContent_Declare(mikktspace
 FetchContent_MakeAvailable(mikktspace)
 include_directories(ElevenRender build/_deps/mikktspace-src)
 
+
+if(WIN32)
+	SET(OIDN "oidn-1.4.3.x64.vc14.windows")
+else()
+	SET(OIDN "oidn-1.4.3.x64.vc14.linux")
+endif()
+
 FetchContent_Declare(oidnzip
-	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/oidn-1.4.3.x64.vc14.windows.zip"
+	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN}.zip"
 	DOWNLOAD_NO_EXTRACT TRUE
 )
 
 FetchContent_MakeAvailable(oidnzip)
-execute_process(WORKING_DIRECTORY build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf oidn-1.4.3.x64.vc14.windows.zip)
+execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN}.zip")
 
 message(STATUS "All external dependencies fetched")
 
 
-include_directories(build/_deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/include) 
+include_directories("build/_deps/oidnzip-src/${OIDN}/include") 
 include_directories(src)
 include_directories(${SYCL_PATH}/include/) 
 
@@ -157,8 +165,8 @@ add_executable(ElevenRender ${SOURCES} build/_deps/mikktspace-src/mikktspace.c s
 target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib ) 
 
 target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
-target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/OpenImageDenoise)
-target_link_libraries(ElevenRender _deps/oidnzip-src/oidn-1.4.3.x64.vc14.windows/lib/tbb)
+target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/OpenImageDenoise)
+target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/tbb)
 
 find_library(SYCL_LIBRARY 
     NAMES sycl sycl6 sycl7

@@ -41,7 +41,7 @@ find_package(Git REQUIRED)
 message(STATUS "SYCL compiler path set to: ${SYCL_PATH}")
 message(STATUS "SYCL compiler targets set to: ${SYCL_TARGETS}")
 
-if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe)
+if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe OR NOT EXISTS ${SYCL_PATH}/bin/clang++)
 
 	message(STATUS "Getting Intel DPC++ framework...")
 	

@@ -45,7 +45,7 @@ message(STATUS "SYCL compiler path set to: ${SYCL_PATH}")
 message(STATUS "SYCL compiler targets set to: ${SYCL_TARGETS}")
 message(STATUS "SYCL compiler target backend set to: ${SYCL_TARGET_BACKEND}")
 
-if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe OR NOT EXISTS ${SYCL_PATH}/bin/clang++)
+if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe AND NOT EXISTS ${SYCL_PATH}/bin/clang++)
 
 	message(STATUS "Getting Intel DPC++ framework...")
 	
@@ -124,18 +124,20 @@ include_directories(ElevenRender build/_deps/mikktspace-src)
 
 
 if(WIN32)
-	SET(OIDN "oidn-1.4.3.x64.vc14.windows")
+	SET(OIDN      "oidn-1.4.3.x64.vc14.windows.zip")
+	SET(OIDN_FILE "${OIDN}.zip")
 else()
 	SET(OIDN "oidn-1.4.3.x64.vc14.linux")
+	SET(OIDN_FILE "${OIDN}.tar.gz")
 endif()
 
 FetchContent_Declare(oidnzip
-	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN}.zip"
+	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN_FILE}"
 	DOWNLOAD_NO_EXTRACT TRUE
 )
 
 FetchContent_MakeAvailable(oidnzip)
-execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN}.zip")
+execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN_FILE}")
 
 message(STATUS "All external dependencies fetched")
 

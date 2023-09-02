@@ -8,7 +8,9 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
     std::map<unsigned int, unsigned int> windows_colors{ {info, 10}, {warning, 14}, {error, 12}, {fatal, 4}, {debug, 9}, {trace, 8} };
 
     // TODO: Make the Linux version
+#if defined (__WIN32__)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), windows_colors[rec[severity].get()]);
+#endif
 
     // TODO: Find a way to turn the thread_id hex representation to dec.
     auto file_line_formatter = stream << attr<std::string>("File") << ": " << attr<int>("Line");

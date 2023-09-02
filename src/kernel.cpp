@@ -16,7 +16,6 @@
 #include "Material.h"
 #include "Math.hpp"
 #include "PointLight.h"
-#include "OslMaterial.hpp"
 #include "SYCLCopy.h"
 #include "shader.h"
 

@@ -66,7 +66,11 @@ message(STATUS "Setting up clang...")
 # CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
-set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++" CACHE INTERNAL "C++ compiler" FORCE)
+if(WIN32)
+	set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
+else()
+	set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++" CACHE INTERNAL "C++ compiler" FORCE)
+endif()
 
 if(DEFINED OFFLOAD_ARCH)
         set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} -Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH}")
@@ -76,7 +80,11 @@ endif()
 
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
-set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang" CACHE INTERNAL "C compiler" FORCE)
+if(WIN32)
+	set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
+else()
+	set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang" CACHE INTERNAL "C compiler" FORCE)
+endif()
 set(CMAKE_C_COMPILER_WORKS 1)
 
 project(ElevenRender)
@@ -127,7 +135,7 @@ include_directories(ElevenRender build/_deps/mikktspace-src)
 
 
 if(WIN32)
-        SET(OIDN      "oidn-1.4.3.x64.vc14.windows.zip")
+        SET(OIDN      "oidn-1.4.3.x64.vc14.windows")
         SET(OIDN_FILE "${OIDN}.zip")
 else()
         SET(OIDN "oidn-1.4.3.x86_64.linux")
@@ -155,13 +163,26 @@ list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
 
 separate_arguments(CMAKE_CXX_FLAG_LIST UNIX_COMMAND ${CMAKE_CXX_FLAGS})
 
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
-    COMMENT "Generating LLVM IR for shader_placeholder.cpp"
-)
+
+if(WIN32)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
+		COMMENT "Generating LLVM IR for shader_placeholder.cpp"
+	)
+else()
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
+		COMMENT "Generating LLVM IR for shader_placeholder.cpp"
+	)
+endif()
+
 
 
 set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)

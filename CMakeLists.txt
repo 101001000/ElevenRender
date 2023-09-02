@@ -1,14 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 include(FetchContent)
 include(CheckCXXSourceCompiles)
+Set(FETCHCONTENT_QUIET FALSE)
+
 
 # The path to the sycl compiler. By default it will download intel's dpc++
 set(SYCL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
 set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler targets")
-
-if(DEFINED OFFLOAD_ARCH)
-    set(SYCL_TARGET_BACKEND "-Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH)}")
-endif()
 
 # The DPC++ 2022-12 CUDA requires the cupti64 runtime library to be available in the path to load correctly pi_cuda.dll
 if(WIN32)
@@ -47,20 +45,19 @@ message(STATUS "SYCL compiler target backend set to: ${SYCL_TARGET_BACKEND}")
 
 if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe AND NOT EXISTS ${SYCL_PATH}/bin/clang++)
 
-	message(STATUS "Getting Intel DPC++ framework...")
-	
-	FetchContent_Declare(sycl_llvm
-		GIT_REPOSITORY  https://github.com/intel/llvm
-		GIT_TAG         6977f1aced3ed6a08573fdbdd4f35a5d719c8d98
-		GIT_PROGRESS TRUE)
-	
-	FetchContent_MakeAvailable(sycl_llvm)
-	
-	message(STATUS "Building Intel's DPC++ framework...")
-	
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/configure.py --cuda)
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/compile.py)
+        message(STATUS "Getting Intel DPC++ framework...")
 
+        FetchContent_Declare(sycl_llvm
+                GIT_REPOSITORY  https://github.com/intel/llvm
+                GIT_TAG         6977f1aced3ed6a08573fdbdd4f35a5d719c8d98
+                GIT_PROGRESS TRUE)
+
+        FetchContent_MakeAvailable(sycl_llvm)
+
+        message(STATUS "Building Intel's DPC++ framework...")
+
+        execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/configure.py --cuda)
+        execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/compile.py)
 endif()
 
 
@@ -70,7 +67,13 @@ message(STATUS "Setting up clang...")
 set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
 
 set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++" CACHE INTERNAL "C++ compiler" FORCE)
-set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_TARGET_BACKEND}")
+
+if(DEFINED OFFLOAD_ARCH)
+        set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} -Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH}")
+else()
+        set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS}")
+endif()
+
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang" CACHE INTERNAL "C compiler" FORCE)
@@ -92,15 +95,15 @@ message(STATUS "Fetching external dependencies:")
 FetchContent_Declare(rapidobj
     GIT_REPOSITORY  https://github.com/guybrush77/rapidobj.git
     GIT_TAG         origin/master
-	GIT_PROGRESS TRUE)
+        GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(rapidobj)
 include_directories(ElevenRender build/_deps/rapidobj-src/include)
 
 FetchContent_Declare(stb_image
     URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image.h"
-	DOWNLOAD_NO_EXTRACT TRUE
-	GIT_PROGRESS TRUE)
+        DOWNLOAD_NO_EXTRACT TRUE
+        GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(stb_image)
 
@@ -109,52 +112,53 @@ include_directories(ElevenRender build/_deps/stb_image-src)
 #TODO: Download this from github
 FetchContent_Declare(stb_image_write
     URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h"
-	DOWNLOAD_NO_EXTRACT TRUE)
+        DOWNLOAD_NO_EXTRACT TRUE)
 
 FetchContent_MakeAvailable(stb_image_write)
 include_directories(ElevenRender build/_deps/stb_image_write-src)
 
 FetchContent_Declare(mikktspace
     GIT_REPOSITORY  https://github.com/mmikk/MikkTSpace.git
-	GIT_TAG         origin/master
-	GIT_PROGRESS TRUE)
+        GIT_TAG         origin/master
+        GIT_PROGRESS TRUE)
 
 FetchContent_MakeAvailable(mikktspace)
 include_directories(ElevenRender build/_deps/mikktspace-src)
 
 
 if(WIN32)
-	SET(OIDN      "oidn-1.4.3.x64.vc14.windows.zip")
-	SET(OIDN_FILE "${OIDN}.zip")
+        SET(OIDN      "oidn-1.4.3.x64.vc14.windows.zip")
+        SET(OIDN_FILE "${OIDN}.zip")
 else()
-	SET(OIDN "oidn-1.4.3.x64.vc14.linux")
-	SET(OIDN_FILE "${OIDN}.tar.gz")
+        SET(OIDN "oidn-1.4.3.x86_64.linux")
+        SET(OIDN_FILE "${OIDN}.tar.gz")
 endif()
 
 FetchContent_Declare(oidnzip
-	URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN_FILE}"
-	DOWNLOAD_NO_EXTRACT TRUE
+        URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN_FILE}"
+        DOWNLOAD_NO_EXTRACT TRUE
 )
 
 FetchContent_MakeAvailable(oidnzip)
-execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN_FILE}")
+#execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN_FILE}")
 
 message(STATUS "All external dependencies fetched")
 
 
-include_directories("build/_deps/oidnzip-src/${OIDN}/include") 
+include_directories("build/_deps/oidnzip-src/${OIDN}/include")
 include_directories(src)
-include_directories(${SYCL_PATH}/include/) 
+include_directories(${SYCL_PATH}/include/)
 
 
 FILE(GLOB SOURCES src/*.cpp)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
 
+separate_arguments(CMAKE_CXX_FLAG_LIST UNIX_COMMAND ${CMAKE_CXX_FLAGS})
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_TARGET_BACKEND} -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll 
-	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-	COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
+    COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
     COMMENT "Generating LLVM IR for shader_placeholder.cpp"
 )
@@ -164,13 +168,13 @@ set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)
 add_executable(ElevenRender ${SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
 
 
-target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib ) 
+target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib )
 
 target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/OpenImageDenoise)
 target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/tbb)
 
-find_library(SYCL_LIBRARY 
+find_library(SYCL_LIBRARY
     NAMES sycl sycl6 sycl7
     PATHS ${SYCL_PATH}/lib
 )
@@ -180,4 +184,3 @@ if(NOT SYCL_LIBRARY)
 endif()
 
 target_link_libraries(ElevenRender ${SYCL_LIBRARY})
-

@@ -316,6 +316,7 @@ void CommandManager::get_sycl_info() {
                 json_device["memory"] = device.get_info<sycl::info::device::global_mem_size>();
                 json_device["max_compute_units"] = device.get_info<sycl::info::device::max_compute_units>();
                 json_device["is_compatible"] = is_compatible(device);
+                json_device["online_compiler"] = device.has(sycl::aspect::online_compiler);
 
                 auto dt = device.get_info<sycl::info::device::device_type>();
 

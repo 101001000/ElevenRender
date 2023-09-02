@@ -17,7 +17,6 @@
 #include "Math.hpp"
 #include "PointLight.h"
 #include "OslMaterial.hpp"
-#include "lan/calc.tab.hpp"
 #include "SYCLCopy.h"
 #include "shader.h"
 
@@ -594,7 +593,8 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
         }
     }
 
-    // TODO: parametrize light clamp
+    // TODO: parametrize light 
+
     light = clamp(light, 0, 10);
 
     // TODO: cleanup

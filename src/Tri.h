@@ -40,7 +40,7 @@ public:
 
     inline bool hit(Ray& ray, Hit& hit) {
 
-        float EPSILON = 0.0000001;
+        float EPSILON = 0.0000001f;
 
         Vector3 edge1 = vertices[1] - vertices[0];
         Vector3 edge2 = vertices[2] - vertices[0];
@@ -51,20 +51,20 @@ public:
 
         float det = Vector3::dot(edge1, pvec);
 
-        inv_det = 1.0 / det;
+        inv_det = 1.0f / det;
 
         if (det > -EPSILON && det < EPSILON) return false;
 
         Vector3 tvec = ray.origin - vertices[0];
 
         u = Vector3::dot(tvec, pvec) * inv_det;
-        if (u < 0.0 || u > 1.0) {
+        if (u < 0 || u > 1) {
             return false;
         }
 
         Vector3 qvec = Vector3::cross(tvec, edge1);
         v = Vector3::dot(ray.direction, qvec) * inv_det;
-        if (v < 0.0 || (u + v) > 1.0) {
+        if (v < 0 || (u + v) > 1) {
             return false;
         }
 
@@ -109,7 +109,7 @@ public:
 
         Vector3 shadingPosition = p0 + (p1 - p0) * u + (p2 - p0) * v;
 
-        bool convex = Vector3::dot(shadingPosition - geomPosition, shadingNormal) > 0.0f;
+        bool convex = Vector3::dot(shadingPosition - geomPosition, shadingNormal) > 0;
         
         //Some objects have bad normals, as a quick fix, I'm just using the calculated normal unless the one from the vertex is similar to the calculated one.
         hit.tangent = shadingTangent;

@@ -103,7 +103,7 @@ float HDRI::pdf(int x, int y) {
 	float theta = ((static_cast<float>(y) / static_cast<float>(texture.height))) * PIF;
 
 	// Semisphere area
-	return ((dv.x + dv.y + dv.z) / radianceSum) * texture.width * texture.height / (2.0 * PIF * sycl::sin(theta));
+	return ((dv.x + dv.y + dv.z) / radianceSum) * texture.width * texture.height / (2.0f * PIF * sycl::sin(theta));
 }
 
 Vector3 HDRI::sample(float r1) {

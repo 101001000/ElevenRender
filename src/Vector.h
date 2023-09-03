@@ -95,7 +95,7 @@ public:
 
 
 	inline float length() const {
-		return sqrt(x * x + y * y + z * z);
+		return sycl::sqrt(x * x + y * y + z * z);
 	}
 
 	inline float length2() const {

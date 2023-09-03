@@ -273,7 +273,7 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
         return Vector3::Zero();
     }
 
-    pdf = (static_cast<float>(scene->pointLightCount)) / (2.0 * PI);
+    pdf = (static_cast<float>(scene->pointLightCount)) / (2.0 * PIF);
 
     // Retrieve a random light
     PointLight light = scene->pointLights[static_cast<int>(scene->pointLightCount * r1)];
@@ -411,7 +411,7 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
     // TODO CLEANUP AND PRECALC
     Vector3 rotation = camera.rotation;
 
-    rotation *= (PI / 180.0);
+    rotation *= (PIF / 180.0);
 
     Vector3 dir = Vector3(SPx, SPy, SPz) - camera.position;
     Vector3 dirXRot = Vector3(

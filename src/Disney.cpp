@@ -55,24 +55,24 @@ float DielectricFresnel(float cos_theta_i, float eta) {
 
 float GTR1(float NDotH, float a) {
     if (a >= 1.0) {
-        return (1.0 / PI);
+        return (1.0 / PIF);
     }
     float a2 = a * a;
     float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
-    return (a2 - 1.0) / (PI * sycl::log(a2) * t);
+    return (a2 - 1.0) / (PIF * sycl::log(a2) * t);
 }
 
 float GTR2(float NDotH, float a) {
     float a2 = a * a;
     float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
-    return a2 / (PI * t * t);
+    return a2 / (PIF * t * t);
 }
 
 float GTR2_aniso(float NDotH, float HDotX, float HDotY, float ax, float ay) {
     float a = HDotX / ax;
     float b = HDotY / ay;
     float c = a * a + b * b + NDotH * NDotH;
-    return 1.0 / (PI * ax * ay * c * c);
+    return 1.0 / (PIF * ax * ay * c * c);
 }
 
 float SmithG_GGX(float NDotV, float alphaG) {
@@ -125,7 +125,7 @@ float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + hitdata.clearcoat);
     float pdfSpec = lerp(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * sycl::abs(Vector3::dot(L, H)));
-    float pdfDiff = sycl::abs(Vector3::dot(L, N)) * (1.0 / PI);
+    float pdfDiff = sycl::abs(Vector3::dot(L, N)) * (1.0 / PIF);
 
     brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 
@@ -216,11 +216,11 @@ Vector3 DisneyEval(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
         float Fr = lerp(0.04, 1.0, FH);
         float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
 
-        Vector3 p1 = ((1.0 / PI) * lerp(Fd, ss, hitdata.subsurface) * Cdlin + Fsheen) * (1.0 - hitdata.metallic);
+        Vector3 p1 = ((1.0 / PIF) * lerp(Fd, ss, hitdata.subsurface) * Cdlin + Fsheen) * (1.0 - hitdata.metallic);
         Vector3 p2 = Gs * Fs * Ds;
         float p3 = 0.25 * hitdata.clearcoat * Gr * Fr * Dr;
 
-        brdf = ((1.0 / PI) * lerp(Fd, ss, hitdata.subsurface) * Cdlin + Fsheen) * (1.0 - hitdata.metallic)
+        brdf = ((1.0 / PIF) * lerp(Fd, ss, hitdata.subsurface) * Cdlin + Fsheen) * (1.0 - hitdata.metallic)
             + Gs * Fs * Ds
             + 0.25 * hitdata.clearcoat * Gr * Fr * Dr;
 

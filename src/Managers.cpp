@@ -262,7 +262,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     renderSetup(k_q, scene, dev_scene, rd.pars.sampleTarget, rd.pars.block_size);
     t_rend = std::thread(kernel_render_enqueue, std::ref(k_q), rd.pars.sampleTarget, rd.pars.block_size, std::ref(scene), std::ref(dev_scene));
 
-    rd.startTime = std::chrono::high_resolution_clock::now();
+    rd.startTime = std::chrono::steady_clock::now();
     LOG(trace) << "LEAVING RenderingManager::start_rendering()";
 }
 

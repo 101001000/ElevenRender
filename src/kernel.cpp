@@ -381,8 +381,8 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
     float ody = (-camera.sensorHeight / 2.0f) + dy;
 
     // Random part of the sampling offset so we get antialasing
-    float rx = (1.0 / static_cast<float>(scene.x_res)) * (r1 - 0.5f) * camera.sensorWidth;
-    float ry = (1.0 / static_cast<float>(scene.y_res)) * (r2 - 0.5f) * camera.sensorHeight;
+    float rx = (1.0f / static_cast<float>(scene.x_res)) * (r1 - 0.5f) * camera.sensorWidth;
+    float ry = (1.0f / static_cast<float>(scene.y_res)) * (r2 - 0.5f) * camera.sensorHeight;
 
     // Sensor point, the point where intersects the ray with the sensor
     float SPx = odx + rx;

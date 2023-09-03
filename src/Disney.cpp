@@ -116,7 +116,7 @@ float DisneyPdf(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
     float diffuseRatio = 0.5f * (1.0f - hitdata.metallic);
     float specularRatio = 1.0f - diffuseRatio;
 
-    float aspect = sycl::sqrt(1.0 - hitdata.anisotropic * 0.9f);
+    float aspect = sycl::sqrt(1.0f - hitdata.anisotropic * 0.9f);
     float ax = maxf(0.001f, hitdata.roughness / aspect);
     float ay = maxf(0.001f, hitdata.roughness * aspect);
 
@@ -180,7 +180,7 @@ Vector3 DisneyEval(HitData& hitdata, Vector3 V, Vector3 N, Vector3 L) {
         float Cdlum = 0.3f * Cdlin.x + 0.6f * Cdlin.y + 0.1f * Cdlin.z; // luminance approx.
 
         Vector3 Ctint = Cdlum > 0.0f ? Cdlin / Cdlum : Vector3(1.0f); // normalize lum. to isolate hue+sat
-        Vector3 Cspec0 = lerp(hitdata.specular * 0.08 * lerp(Vector3(1.0f), Ctint, hitdata.specularTint), Cdlin, hitdata.metallic);
+        Vector3 Cspec0 = lerp(hitdata.specular * 0.08f * lerp(Vector3(1.0f), Ctint, hitdata.specularTint), Cdlin, hitdata.metallic);
         Vector3 Csheen = lerp(Vector3(1.0f), Ctint, hitdata.sheenTint);
 
         // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing

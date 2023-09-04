@@ -680,11 +680,12 @@ void renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned in
 void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long block_size, Scene* scene, dev_Scene* dev_scene) {
 
     LOG(trace) << "kernel_render_enqueue::start";
-
-    sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
-    sycl::range local{ block_size,block_size };
     
     try {
+
+        sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+        sycl::range local{ block_size,block_size };
+
         for (int i = 0; i < target_samples; i++) {
 
             LOG(trace) << "submitting one sample";

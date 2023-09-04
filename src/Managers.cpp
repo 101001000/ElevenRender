@@ -209,15 +209,22 @@ RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
     LOG(debug) << "Getting render info";
 
-    float* dev_samples;
-    unsigned int sample_count = 0;
+    try {
+        float* dev_samples;
+        unsigned int sample_count = 0;
 
-    d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
+        d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
 
-    d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
+        d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
 
-    RenderInfo render_info;
-    render_info.samples = sample_count;
+        RenderInfo render_info;
+        render_info.samples = sample_count;
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Error copying render info: " << e.what();
+    }
+
+ 
 
     LOG(debug) << "Rendering info retrieved";
 

@@ -190,15 +190,15 @@ public:
 
 class NameSelector : public sycl::device_selector {
 public:
-    std::string name, platname;
+    std::string name;
 
-    NameSelector(std::string _name, std::string _platname) : name(_name), platname(_platname) {};
+    NameSelector(std::string _name) : name(_name) {};
 
     int operator()(const sycl::device& device) const override {
 
         sycl::platform plat = device.get_info<sycl::info::device::platform>();
 
-        if (device.get_info<sycl::info::device::name>() == name && plat.get_info<sycl::info::platform::name>() == platname) {
+        if (device.get_info<sycl::info::device::name>() + "|" + plat.get_info<sycl::info::platform::name>() == name) {
             return 1;
         }
         else {
@@ -241,8 +241,8 @@ void RenderingManager::start_rendering(Scene* scene) {
     LOG(trace) << "RenderingManager::start_rendering()";
 
     try {
-        k_q = sycl::queue(NameSelector(rd.pars.device, rd.pars.platform));
-        d_q = sycl::queue(NameSelector(rd.pars.device, rd.pars.platform));
+        k_q = sycl::queue(NameSelector(rd.pars.device));
+        d_q = sycl::queue(NameSelector(rd.pars.device));
     }
     catch (std::exception const& e) {
         LOG(error) << e.what();

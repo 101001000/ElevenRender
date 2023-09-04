@@ -190,12 +190,15 @@ public:
 
 class NameSelector : public sycl::device_selector {
 public:
-    std::string name;
+    std::string name, platname;
 
-    NameSelector(std::string _name) : name(_name) {};
+    NameSelector(std::string _name, std::string _platname) : name(_name), platname(_platname) {};
 
     int operator()(const sycl::device& device) const override {
-        if (device.get_info<sycl::info::device::name>() == name) {
+
+        sycl::platform plat = device.get_info<sycl::info::device::platform>();
+
+        if (device.get_info<sycl::info::device::name>() == name && plat.get_info<sycl::info::platform::name>() == platname) {
             return 1;
         }
         else {
@@ -238,8 +241,8 @@ void RenderingManager::start_rendering(Scene* scene) {
     LOG(trace) << "RenderingManager::start_rendering()";
 
     try {
-        k_q = sycl::queue(NameSelector(rd.pars.device));
-        d_q = sycl::queue(NameSelector(rd.pars.device));
+        k_q = sycl::queue(NameSelector(rd.pars.device, rd.pars.platform));
+        d_q = sycl::queue(NameSelector(rd.pars.device, rd.pars.platform));
     }
     catch (std::exception const& e) {
         LOG(error) << e.what();
@@ -248,6 +251,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     sycl::device device = k_q.get_device();
 
     LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
+    LOG(info) << "Platform selected: " << device.get_info<sycl::info::device::platform>().get_info<sycl::info::platform::name>();
 
     auto work_item_dim = device.get_info<sycl::info::device::max_work_item_dimensions>();
     //auto work_item_size = device.get_info<sycl::info::device::max_work_item_sizes>();
@@ -255,7 +259,7 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     //auto test = sycl::info::device::max_work_item_dimensions
 
-    //LOG(info) << "dim " << work_item_dim << " is_x: " << work_item_size[0] << " is_y: " << work_item_size[1] << " is_z: " << work_item_size[2] << " gs: " << work_item_group_size;
+    LOG(info) << "dim " << work_item_dim << " gs: " << work_item_group_size;
 
     dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
 

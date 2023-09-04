@@ -162,6 +162,7 @@ RenderParameters ConfigTCPLoadInputCommand::load() {
             json_data["sample_target"].as_int64(),
             json_data["denoise"].as_bool(),
             json_data["device"].as_string().c_str(),
+            json_data["platform"].as_string().c_str(),
             json_data["block_size"].as_int64());
     }
     catch (std::exception const& e) {

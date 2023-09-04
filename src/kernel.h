@@ -53,12 +53,12 @@ struct RenderParameters {
 	unsigned int width, height;
 	unsigned int sampleTarget;
 	unsigned int block_size;
-	std::string device;
+	std::string device, platform;
 	bool denoise;
 
 	bool passes_enabled[PASSES_COUNT];
 
-	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device, unsigned int _block_size) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device), block_size(_block_size) {
+	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device, std::string _platform, unsigned int _block_size) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device), platform(_platform), block_size(_block_size) {
 		passes_enabled[BEAUTY] = true;
 		passes_enabled[DENOISE] = true;
 		passes_enabled[NORMAL] = true;

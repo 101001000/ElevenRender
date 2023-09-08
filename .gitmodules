@@ -1,3 +1,12 @@
 [submodule "boost"]
 	path = boost
 	url = https://github.com/101001000/boost_no_SEH.git
+[submodule "submodules/MikkTSpace"]
+	path = submodules/MikkTSpace
+	url = https://github.com/mmikk/MikkTSpace.git
+[submodule "submodules/rapidobj"]
+	path = submodules/rapidobj
+	url = https://github.com/guybrush77/rapidobj.git
+[submodule "submodules/stb"]
+	path = submodules/stb
+	url = https://github.com/nothings/stb.git

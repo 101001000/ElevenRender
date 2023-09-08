@@ -20,7 +20,8 @@ if (DOWNLOAD_DPCPP AND SYCL_PATH)
 	message(FATAL_ERROR "DOWNLOAD_DPCPP and SYCL_PATH cannot be set together")
 endif()
 if (USE_ICPX AND CUSTOM_SHADERS)
-	message(FATAL_ERROR "ICPX won't support IR code emission")
+	message(WARNING "ICPX won't support IR code emission, CUSTOM_SHADERS forcibly disabled!")
+	set(CUSTOM_SHADERS OFF)
 endif()
 if (NOT SYCL_TARGETS)
 	message(WARNING "No targets selected, ElevenRender requires AOT for the running device, OpenCL cpu targets selected by default")
@@ -100,9 +101,8 @@ set(CMAKE_C_COMPILER_WORKS 1) # TODO: remove this
 #set(CMAKE_RC_COMPILER "${SYCL_PATH}/bin/${C_EXEC_NAME}" CACHE INTERNAL "RC compiler" FORCE)
 #set(CMAKE_RC_COMPILER_WORKS 1) # TODO: remove this
 set(CMAKE_CXX_FLAGS  "-Wno-unused-command-line-argument -fsycl -fsycl-targets=${SYCL_TARGETS}")
-set(SYCL_CLANG_EXTRA_FLAGS "-Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${OFFLOAD_ARCH} -Xsycl-target-backend=spir64_gen -device -Xsycl-target-backend=spir64_gen ${SPIR64_DEVICES}")
-separate_arguments(CMAKE_CXX_FLAG_LIST UNIX_COMMAND ${CMAKE_CXX_FLAGS})
-
+separate_arguments(SHADER_COMPILE_FLAGS UNIX_COMMAND ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${OFFLOAD_ARCH} -Xsycl-target-backend=spir64_gen -device -Xsycl-target-backend=spir64_gen ${SPIR64_DEVICES}")
 
 
 project(ElevenRender)
@@ -151,7 +151,7 @@ if(CUSTOM_SHADERS)
 	set_source_files_properties(${CMAKE_BINARY_DIR}/shader.ll PROPERTIES LANGUAGE CXX)
 	add_custom_command(
 		OUTPUT ${CMAKE_BINARY_DIR}/shader.ll
-		COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include ${CMAKE_CXX_FLAG_LIST} -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_BINARY_DIR}/shader.ll
+		COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include ${SHADER_COMPILE_FLAGS} -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_BINARY_DIR}/shader.ll
 		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_BINARY_DIR}/shader.ll
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py
 		COMMENT "Generating LLVM IR for shader_placeholder.cpp"

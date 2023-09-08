@@ -8,7 +8,7 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
     std::map<unsigned int, unsigned int> windows_colors{ {info, 10}, {warning, 14}, {error, 12}, {fatal, 4}, {debug, 9}, {trace, 8} };
 
     // TODO: Make the Linux version
-#if defined (__WIN32__)
+#if defined _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), windows_colors[rec[severity].get()]);
 #endif
 

@@ -9,7 +9,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
-#if defined (__WIN32__)
+#if defined _WIN32
 #include <windows.h>
 #endif
 #include <string>

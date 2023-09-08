@@ -2,7 +2,7 @@
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/arithmetic/inc.hpp>
 
-#define MAX_SHADERS 256
+#define MAX_SHADERS 4
 
 #define ASL_SHADE_DEC(z, n, text) \
     SYCL_EXTERNAL void asl_shade##n##_(float Px, float Py, float Pz, float Ix, float Iy, float Iz, float Nx, float Ny, float Nz, float Ngx, float Ngy, float Ngz, float u, float v, float& Cr, float& Cg, float& Cb);

@@ -3,205 +3,190 @@ include(FetchContent)
 include(CheckCXXSourceCompiles)
 Set(FETCHCONTENT_QUIET FALSE)
 
+# SYCL_PATH The path where Clang is installed
+# USE_ICPX 
+# SYCL_TARGETS
+# OFFLOAD_ARCH
+# SPIR64_DEVICES
+# DOWNLOAD_DPCPP
+# CUSTOM_SHADERS
 
-# The path to the sycl compiler. By default it will download intel's dpc++
-set(SYCL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
-set(SYCL_TARGETS "spir64_x86_64,nvptx64-nvidia-cuda" CACHE STRING "SYCL compiler targets")
 
-# The DPC++ 2022-12 CUDA requires the cupti64 runtime library to be available in the path to load correctly pi_cuda.dll
-if(WIN32)
-    set(PATHS "$ENV{PATH}")
-    set(LIB_PREFIX "")
-    set(LIB_EXTENSION "dll")
-else()
-    message(WARNING "Linux CUDA cupti64* checker not implemented")
+# SANITY CHECKS:
+if (NOT DOWNLOAD_DPCPP AND NOT SYCL_PATH)
+	message(FATAL_ERROR "SYCL_PATH not set!")
+endif()
+if (DOWNLOAD_DPCPP AND SYCL_PATH)
+	message(FATAL_ERROR "DOWNLOAD_DPCPP and SYCL_PATH cannot be set together")
+endif()
+if (NOT SYCL_TARGETS)
+	message(WARNING "No targets selected, ElevenRender requires AOT for the running device, OpenCL cpu targets selected by default")
+	set(SYCL_TARGETS "spir64_x86_64")
+endif()
+string(REPLACE "," ";" SYCL_TARGETS_LIST ${SYCL_TARGETS})
+if ("spir64_gen" IN_LIST SYCL_TARGETS_LIST AND NOT SPIR64_DEVICES)
+	message(FATAL_ERROR "No device selected for spir64_gen targets, selected all architectures by default. This option can slow down the compilation at the linking stage.")
+	set(SPIR64_DEVICES "bdw,skl,kbl,cfl,apl,bxt,glk,whl,aml,cml icllp,lkf,ehl,jsl,tgllp,rkl,adl-s,adl-p,adl-n,dg1,acm-g10,ats-m150,dg2-g10,acm-g11,ats-m75,dg2-g11,acm-g12,dg2-g12,pvc-sdv,pvc,gen11,gen12lp,gen8,gen9,xe,xe-hpc,xe-hpg")
+endif()
+if ("amdgcn-amd-amdhsa" IN_LIST SYCL_TARGETS_LIST AND NOT OFFLOAD_ARCH)
+	set(OFFLOAD_ARCH "native")
+	message(WARNING "No offload architecture selected for amdgcn-amd-amdhsa targets, selected the native architecture by default")
 endif()
 
-# Initial not found state
-set(CUPTI_LIBRARY_PATH NOTFOUND)
 
-# Iterate through the paths to find the cupti64XXX library
-foreach(DIR ${PATHS})
-    file(GLOB FOUND_LIBRARY "${DIR}/${LIB_PREFIX}cupti64*.${LIB_EXTENSION}")
-    if(FOUND_LIBRARY)
-        list(GET FOUND_LIBRARY 0 FIRST_MATCH)
-        set(CUPTI_LIBRARY_PATH ${FIRST_MATCH})
-        break()
-    endif()
-endforeach()
 
-if(NOT CUPTI_LIBRARY_PATH)
-    message(WARNING "Cupti64 not found in the paths! You won't be able to find CUDA devices if you don't set your path to: CUDA_DIR/extras/CUPTI/lib64")
-endif()
 
+# DEPDENDENCY CHECK:
 message(STATUS "Checking dependencies...")
 find_package(Python3 REQUIRED)
 find_package(Git REQUIRED)
-# And ninja.
+if ("nvptx64-nvidia-cuda" IN_LIST SYCL_TARGETS_LIST)
+	set(CUPTI_LIBRARY_PATH NOTFOUND)
+	if(WIN32)
+		set(PATHS "$ENV{PATH}")
+		set(LIB_PREFIX "")
+		set(LIB_EXTENSION "dll")
+		foreach(DIR ${PATHS})
+			file(GLOB FOUND_LIBRARY "${DIR}/${LIB_PREFIX}cupti64*.${LIB_EXTENSION}")
+			if(FOUND_LIBRARY)
+				list(GET FOUND_LIBRARY 0 FIRST_MATCH)
+				set(CUPTI_LIBRARY_PATH ${FIRST_MATCH})
+				break()
+			endif()
+		endforeach()
+		if(NOT CUPTI_LIBRARY_PATH)
+			message(WARNING "Cupti64 not found in the paths! You won't be able to find CUDA devices if you don't set your path to: CUDA_DIR/extras/CUPTI/lib64")
+		endif()
+	else()
+		message(WARNING "Linux CUDA cupti64* checker not implemented")
+	endif()
+endif()
 
-message(STATUS "SYCL compiler path set to: ${SYCL_PATH}")
-message(STATUS "SYCL compiler targets set to: ${SYCL_TARGETS}")
-message(STATUS "SYCL compiler target backend set to: ${SYCL_TARGET_BACKEND}")
-
-if(NOT EXISTS ${SYCL_PATH}/bin/clang++.exe AND NOT EXISTS ${SYCL_PATH}/bin/clang++)
-
-        message(STATUS "Getting Intel DPC++ framework...")
-
-        FetchContent_Declare(sycl_llvm
+# DPC++ DOWNLOAD
+option(DOWNLOAD_DPCPP "DPC++ download option" OFF)
+if(${DOWNLOAD_LLVM})
+	set(SYCL_PATH "${CMAKE_BINARY_DIR}/_deps/sycl_llvm-src/build" CACHE STRING "SYCL compiler path")
+    message(STATUS "Getting Intel DPC++ framework...")
+    FetchContent_Declare(sycl_llvm
                 GIT_REPOSITORY  https://github.com/intel/llvm
                 GIT_TAG         6977f1aced3ed6a08573fdbdd4f35a5d719c8d98
                 GIT_PROGRESS TRUE)
 
-        FetchContent_MakeAvailable(sycl_llvm)
-
-        message(STATUS "Building Intel's DPC++ framework...")
-
-        execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/configure.py --cuda)
-        execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/compile.py)
+    FetchContent_MakeAvailable(sycl_llvm)
+    message(STATUS "Building Intel's DPC++ framework...")
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/configure.py --cuda)
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SYCL_PATH}/../buildbot/compile.py)
 endif()
 
-
-message(STATUS "Setting up clang...")
-
-# CMake won't detect Clang ABI for the intel's Clang implementation with the -fsycl tag, so some compile features need to be specified manually.
-set(CMAKE_CXX_COMPILE_FEATURES cxx_constexpr cxx_std_11 cxx_alias_templates cxx_variadic_templates cxx_decltype)
-
+# COMPILER SETUP
+if(USE_ICPX)
+	set(CXX_EXEC_NAME "icpx")
+	set(C_EXEC_NAME "icx")
+else()
+	set(CXX_EXEC_NAME "clang++")
+	set(C_EXEC_NAME "clang")
+endif()
 if(WIN32)
-	set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++.exe" CACHE INTERNAL "C++ compiler" FORCE)
-else()
-	set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/clang++" CACHE INTERNAL "C++ compiler" FORCE)
+	set(CXX_EXEC_NAME "${CXX_EXEC_NAME}.exe")
+	set(C_EXEC_NAME "${C_EXEC_NAME}.exe")
 endif()
-
-if(DEFINED OFFLOAD_ARCH)
-        set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS} -Xsycl-target-backend --offload-arch=${OFFLOAD_ARCH}")
-else()
-        set(CMAKE_CXX_FLAGS  "-fsycl -fsycl-targets=${SYCL_TARGETS}")
-endif()
-
-set(CMAKE_CXX_COMPILER_WORKS 1)
-
-if(WIN32)
-	set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang.exe" CACHE INTERNAL "C compiler" FORCE)
-else()
-	set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/clang" CACHE INTERNAL "C compiler" FORCE)
-endif()
-set(CMAKE_C_COMPILER_WORKS 1)
-
-project(ElevenRender)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-
-message(STATUS "Setting up Boost...")
-set (BOOST_ENABLE_CMAKE ON)
-set(BOOST_INCLUDE_LIBRARIES program_options json log interprocess)
-add_subdirectory(boost EXCLUDE_FROM_ALL)
-
-
-message(STATUS "Fetching external dependencies:")
-
-FetchContent_Declare(rapidobj
-    GIT_REPOSITORY  https://github.com/guybrush77/rapidobj.git
-    GIT_TAG         origin/master
-        GIT_PROGRESS TRUE)
-
-FetchContent_MakeAvailable(rapidobj)
-include_directories(ElevenRender build/_deps/rapidobj-src/include)
-
-FetchContent_Declare(stb_image
-    URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image.h"
-        DOWNLOAD_NO_EXTRACT TRUE
-        GIT_PROGRESS TRUE)
-
-FetchContent_MakeAvailable(stb_image)
-
-include_directories(ElevenRender build/_deps/stb_image-src)
-
-#TODO: Download this from github
-FetchContent_Declare(stb_image_write
-    URL   "https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h"
-        DOWNLOAD_NO_EXTRACT TRUE)
-
-FetchContent_MakeAvailable(stb_image_write)
-include_directories(ElevenRender build/_deps/stb_image_write-src)
-
-FetchContent_Declare(mikktspace
-    GIT_REPOSITORY  https://github.com/mmikk/MikkTSpace.git
-        GIT_TAG         origin/master
-        GIT_PROGRESS TRUE)
-
-FetchContent_MakeAvailable(mikktspace)
-include_directories(ElevenRender build/_deps/mikktspace-src)
-
-
-if(WIN32)
-        SET(OIDN      "oidn-1.4.3.x64.vc14.windows")
-        SET(OIDN_FILE "${OIDN}.zip")
-else()
-        SET(OIDN "oidn-1.4.3.x86_64.linux")
-        SET(OIDN_FILE "${OIDN}.tar.gz")
-endif()
-
-FetchContent_Declare(oidnzip
-        URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN_FILE}"
-        DOWNLOAD_NO_EXTRACT TRUE
-)
-
-FetchContent_MakeAvailable(oidnzip)
-#execute_process(WORKING_DIRECTORY "build/_deps/oidnzip-src COMMAND ${CMAKE_COMMAND} -E tar xvf ${OIDN_FILE}")
-
-message(STATUS "All external dependencies fetched")
-
-
-include_directories("build/_deps/oidnzip-src/${OIDN}/include")
-include_directories(src)
-include_directories(${SYCL_PATH}/include/)
-
-
-FILE(GLOB SOURCES src/*.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
-
+set(CMAKE_CXX_COMPILER "${SYCL_PATH}/bin/${CXX_EXEC_NAME}" CACHE INTERNAL "C++ compiler" FORCE)
+set(CMAKE_CXX_COMPILER_WORKS 1) # TODO: remove this
+set(CMAKE_C_COMPILER "${SYCL_PATH}/bin/${C_EXEC_NAME}" CACHE INTERNAL "C compiler" FORCE)
+set(CMAKE_C_COMPILER_WORKS 1) # TODO: remove this
+#set(CMAKE_RC_COMPILER "${SYCL_PATH}/bin/${C_EXEC_NAME}" CACHE INTERNAL "RC compiler" FORCE)
+#set(CMAKE_RC_COMPILER_WORKS 1) # TODO: remove this
+set(CMAKE_CXX_FLAGS  "-Wno-unused-command-line-argument -fsycl -fsycl-targets=${SYCL_TARGETS}")
+set(SYCL_CLANG_EXTRA_FLAGS "-Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${OFFLOAD_ARCH} -Xsycl-target-backend=spir64_gen -device -Xsycl-target-backend=spir64_gen ${SPIR64_DEVICES}")
 separate_arguments(CMAKE_CXX_FLAG_LIST UNIX_COMMAND ${CMAKE_CXX_FLAGS})
 
 
+
+project(ElevenRender)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+# DEPENDENCIES SETUP:
 if(WIN32)
-	add_custom_command(
-		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		COMMAND powershell.exe -noninteractive -NoProfile -ExecutionPolicy Bypass -Command \"& {[IO.File]::WriteAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll', \([IO.File]::ReadAllText\('${CMAKE_CURRENT_SOURCE_DIR}\\src\\shader.ll'\) -replace \\\"`r`n\\\", \\\"`n\\\" \)\)}\;
-		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
-		COMMENT "Generating LLVM IR for shader_placeholder.cpp"
-	)
+    SET(OIDN_FOLDER "oidn-1.4.3.x64.vc14.windows")
+    SET(OIDN_FILE "${OIDN_FOLDER}.zip")
 else()
+    SET(OIDN_FOLDER "oidn-1.4.3.x86_64.linux")
+    SET(OIDN_FILE "${OIDN_FOLDER}.tar.gz")
+endif()
+FetchContent_Declare(oidnzip
+    URL "https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/${OIDN_FILE}"
+    DOWNLOAD_NO_EXTRACT TRUE
+)
+FetchContent_MakeAvailable(oidnzip)
+message(STATUS "UNZIPPING ${OIDN_FILE}")
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" "-E" "tar" "xvf" "${OIDN_FILE}"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/_deps/oidnzip-src
+)
+
+set(BOOST_ENABLE_CMAKE ON)
+set(BOOST_INCLUDE_LIBRARIES program_options json log interprocess)
+add_subdirectory(boost EXCLUDE_FROM_ALL)
+
+include_directories(ElevenRender ${CMAKE_CURRENT_SOURCE_DIR}/submodules/rapidobj/include)
+include_directories(ElevenRender ${CMAKE_CURRENT_SOURCE_DIR}/submodules/MikkTSpace)
+include_directories(ElevenRender ${CMAKE_CURRENT_SOURCE_DIR}/submodules/stb)
+include_directories(ElevenRender ${CMAKE_BINARY_DIR}/_deps/oidnzip-src/${OIDN_FOLDER}/include)
+include_directories(ElevenRender ${SYCL_PATH}/include/)
+include_directories(ElevenRender ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+
+FILE(GLOB SOURCES  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+
+
+# CUSTOM SHADING:
+option(CUSTOM_SHADERS "Custom shaders option" ON)
+if(CUSTOM_SHADERS)
+	list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp)
+	list(APPEND SOURCES ${CMAKE_BINARY_DIR}/shader.ll)
+	set_source_files_properties(${CMAKE_BINARY_DIR}/shader.ll PROPERTIES LANGUAGE CXX)
 	add_custom_command(
-		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAG_LIST} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_CURRENT_SOURCE_DIR}/src/shader.ll
-		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp
+		OUTPUT ${CMAKE_BINARY_DIR}/shader.ll
+		COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR}/boost/libs/preprocessor/include ${CMAKE_CXX_FLAG_LIST} -S -emit-llvm  ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp -o ${CMAKE_BINARY_DIR}/shader.ll
+		COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py ${CMAKE_CURRENT_SOURCE_DIR}/shaders/ ${CMAKE_BINARY_DIR}/shader.ll
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_placeholder.cpp ${CMAKE_CURRENT_SOURCE_DIR}/function_body_replace.py
 		COMMENT "Generating LLVM IR for shader_placeholder.cpp"
 	)
 endif()
 
 
+add_executable(ElevenRender ${SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/submodules/MikkTSpace/mikktspace.c)
 
-set_source_files_properties(src/shader.ll PROPERTIES LANGUAGE CXX)
-add_executable(ElevenRender ${SOURCES} build/_deps/mikktspace-src/mikktspace.c src/shader.ll)
 
+# Linking
 
 target_link_directories(ElevenRender PRIVATE ${SYCL_PATH}/lib )
-
-target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
-target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/OpenImageDenoise)
-target_link_libraries(ElevenRender _deps/oidnzip-src/${OIDN}/lib/tbb)
-
 find_library(SYCL_LIBRARY
     NAMES sycl sycl6 sycl7
     PATHS ${SYCL_PATH}/lib
 )
-
 if(NOT SYCL_LIBRARY)
     message(FATAL_ERROR "SYCL library not found!")
 endif()
 
+target_link_libraries(ElevenRender Boost::program_options Boost::json Boost::log_setup Boost::log Boost::asio Boost::interprocess)
 target_link_libraries(ElevenRender ${SYCL_LIBRARY})
+if(WIN32)
+	target_link_libraries(ElevenRender ${CMAKE_BINARY_DIR}/_deps/oidnzip-src/${OIDN_FOLDER}/lib/OpenImageDenoise.lib)
+	target_link_libraries(ElevenRender ${CMAKE_BINARY_DIR}/_deps/oidnzip-src/${OIDN_FOLDER}/lib/tbb.lib)
+else()
+	target_link_libraries(ElevenRender ${CMAKE_BINARY_DIR}/_deps/oidnzip-src/${OIDN_FOLDER}/lib/libOpenImageDenoise.so)
+	target_link_libraries(ElevenRender ${CMAKE_BINARY_DIR}/_deps/oidnzip-src/${OIDN_FOLDER}/lib/libtbb.so)
+endif()
+
+
+
+
+
+
+
+
+
+
+

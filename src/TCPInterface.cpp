@@ -23,21 +23,22 @@ void TCPInterface::write_message(Message msg) {
 
 
 Message TCPInterface:: read_message() {
+
     Message msg;
     char input_data[MESSAGE_HEADER_SIZE];
-    size_t header_size = sock.get()->read_some(boost::asio::buffer(input_data), error);
-
-    if (error == boost::asio::error::eof) {
-        return Message::CloseSession();
-    }
-
-    if (header_size != MESSAGE_HEADER_SIZE)
-        LOG(error) << "Header size mismatch: " << header_size << " bytes";
-
-    std::string header_str(input_data);
-    LOG(trace) << "Reading message with header: " << header_str;
 
     try {
+
+    boost::asio::read(*sock.get(), boost::asio::buffer(input_data, 1024));
+
+        if (error == boost::asio::error::eof) {
+            LOG(info) << "EOF";
+            return Message::CloseSession();
+        }
+
+        std::string header_str(input_data);
+        LOG(trace) << "Reading message with header: " << header_str;
+
         boost::json::value input_json = boost::json::parse(header_str);
         msg = Message::json2header(input_json.as_object());
 
@@ -45,11 +46,12 @@ Message TCPInterface:: read_message() {
             LOG(trace) << "InputManager::read_message() -> reading additional " << msg.data_size << "bytes";
             // TODO: RAII
             msg.data = malloc(msg.data_size);
-            boost::asio::read(*(sock.get()), boost::asio::buffer(msg.data, msg.data_size));
+            boost::asio::read(*sock.get(), boost::asio::buffer(msg.data, msg.data_size));
         }
+
     }
-    catch (std::exception const& e) {
-        LOG(error) << "Error parsing message. " << e.what();
+    catch (std::exception& e) {
+        std::cerr << "Error reading message: " << e.what() << std::endl;
     }
 
     return msg;

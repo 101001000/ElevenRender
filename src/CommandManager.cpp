@@ -289,7 +289,10 @@ void CommandManager::get_render_info() {
 
     json_info["samples"] = render_info.samples;
 
-    render_info_msg.data = (void*)(boost::json::serialize(json_info).c_str());
+    // RAII....
+    char* cstr_data = new char[boost::json::serialize(json_info).size() + 1];
+    std::strcpy(cstr_data, boost::json::serialize(json_info).c_str());
+    render_info_msg.data = static_cast<void*>(cstr_data);
     render_info_msg.data_format = Message::DataFormat::JSON;
     render_info_msg.data_size = boost::json::serialize(json_info).size();
     render_info_msg.type = Message::Type::DATA;

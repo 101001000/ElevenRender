@@ -231,15 +231,15 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     LOG(trace) << "RenderingManager::start_rendering()";
 
+    sycl::device device{ NameSelector(rd.pars.device) };
+
     try {
-        k_q = sycl::queue(NameSelector(rd.pars.device));
-        d_q = sycl::queue(NameSelector(rd.pars.device));
+        k_q = sycl::queue(device);
+        d_q = sycl::queue(device);
     }
     catch (std::exception const& e) {
         LOG(error) << e.what();
     }
-
-    sycl::device device = k_q.get_device();
 
     LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
 

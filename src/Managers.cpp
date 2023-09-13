@@ -212,12 +212,9 @@ RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
     LOG(debug) << "Getting render info";
 
-    float* dev_samples;
     unsigned int sample_count = 0;
 
-    d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
-
-    d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
+    d_q.memcpy(&sample_count, dev_scene->dev_samples, 1 * sizeof(unsigned int));
 
     RenderInfo render_info;
     render_info.samples = sample_count;
@@ -285,12 +282,9 @@ float* RenderingManager::get_pass(std::string pass) {
 
     LOG(debug) << "Retrieving pass: " << pass;
 
-    float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
-    d_q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
-
-    d_q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
+    d_q.memcpy(pass_result, dev_scene->dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
 
     LOG(debug) << "Pass retrieved!";
 

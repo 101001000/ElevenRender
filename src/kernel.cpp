@@ -656,7 +656,7 @@ void renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned in
 
     copy_scene(temp, dev_scene, q);
 
-    sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+    sycl::range global{ (scene->x_res / block_size) * block_size, (scene->y_res / block_size) * block_size };
     sycl::range local{ block_size,block_size };
 
     LOG(debug) << "Starting setup kernels";
@@ -681,7 +681,7 @@ void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long lon
 
     LOG(trace) << "kernel_render_enqueue::start";
 
-    sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+    sycl::range global{ (scene->x_res / block_size) * block_size, (scene->y_res / block_size) * block_size };
     sycl::range local{ block_size,block_size };
     
     try {

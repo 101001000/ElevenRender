@@ -211,16 +211,11 @@ public:
 RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
     LOG(debug) << "Getting render info";
+    unsigned int sample_count = 0;
+    unsigned int* dev_samples;
 
-    RenderInfo render_info;
-
-    try {
-        float* dev_samples;
-        unsigned int sample_count = 0;
-
-        d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*));
-
-        d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int));
+    d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*)).wait();
+    d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int)).wait();
 
 
         render_info.samples = sample_count;
@@ -240,15 +235,15 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     LOG(trace) << "RenderingManager::start_rendering()";
 
+    sycl::device device{ NameSelector(rd.pars.device) };
+
     try {
-        k_q = sycl::queue(NameSelector(rd.pars.device));
-        d_q = sycl::queue(NameSelector(rd.pars.device));
+        k_q = sycl::queue(device);
+        d_q = sycl::queue(device);
     }
     catch (std::exception const& e) {
         LOG(error) << e.what();
     }
-
-    sycl::device device = k_q.get_device();
 
     LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
     LOG(info) << "Platform selected: " << device.get_info<sycl::info::device::platform>().get_info<sycl::info::platform::name>();
@@ -275,7 +270,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     renderSetup(k_q, scene, dev_scene, rd.pars.sampleTarget, rd.pars.block_size);
     t_rend = std::thread(kernel_render_enqueue, std::ref(k_q), rd.pars.sampleTarget, rd.pars.block_size, std::ref(scene), std::ref(dev_scene));
 
-    rd.startTime = std::chrono::steady_clock::now();
+    //rd.startTime = std::chrono::high_resolution_clock::now();
     LOG(trace) << "LEAVING RenderingManager::start_rendering()";
 }
 
@@ -295,12 +290,11 @@ float* RenderingManager::get_pass(std::string pass) {
 
     LOG(debug) << "Retrieving pass: " << pass;
 
-    float* dev_passes;
     float* pass_result = new float[rd.pars.width * rd.pars.height * 4];
 
-    d_q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*));
-
-    d_q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float));
+    float* dev_passes;
+    d_q.memcpy(&dev_passes, &(dev_scene->dev_passes), sizeof(float*)).wait();
+    d_q.memcpy(pass_result, dev_passes + n, rd.pars.width * rd.pars.height * 4 * sizeof(float)).wait();
 
     LOG(debug) << "Pass retrieved!";
 

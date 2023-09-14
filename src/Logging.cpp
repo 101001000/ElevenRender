@@ -6,10 +6,12 @@ inline void coloring_formatter(boost::log::record_view const& rec, boost::log::f
     using namespace boost::log::expressions;
 
     std::map<unsigned int, unsigned int> windows_colors{ {info, 10}, {warning, 14}, {error, 12}, {fatal, 4}, {debug, 9}, {trace, 8} };
+    std::map<unsigned int, unsigned int> linux_colors{ {info, 32}, {warning, 33}, {error, 31}, {fatal, 31}, {debug, 34}, {trace, 37} };
 
-    // TODO: Make the Linux version
-#if defined (__WIN32__)
+#if defined _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), windows_colors[rec[severity].get()]);
+#else
+    strm << "\033[" << linux_colors[rec[severity].get()] << "m";
 #endif
 
     // TODO: Find a way to turn the thread_id hex representation to dec.

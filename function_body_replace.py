@@ -26,11 +26,16 @@ def remove_metadata(content):
     no_tbaa_metadata = no_loop_metadata.replace(", !tbaa", "")
     return no_tbaa_metadata
 
+with open(shader_placeholder, 'r', newline='') as f:
+    placeholder_content = f.read()
+    placeholder_content = addrspace2fptr(placeholder_content)
+           
+
 for filename in filenames:
     
     print("Opening ", filename)
 
-    with open(shader_dir + filename, 'r') as f:
+    with open(shader_dir + filename, 'r', newline='') as f:
     
         content = f.read()
         content = remove_metadata(content)
@@ -39,10 +44,7 @@ for filename in filenames:
         for r in reg_res:
             extracted_body = r.group()
                 
-        with open(shader_placeholder, 'r') as f:
-            placeholder_content = f.read()
-            placeholder_content = addrspace2fptr(placeholder_content)
-           
+
         id = int(filename.replace(".ll", ""))
            
         print("ID: ", id)
@@ -61,6 +63,6 @@ for filename in filenames:
             placeholder_content = placeholder_content.replace(match.group(), modified_content)
             
            
-        with open(shader_placeholder, 'w') as f:
-            f.write(placeholder_content)
+with open(shader_placeholder, 'w', newline='') as f:
+    f.write(placeholder_content)
     

@@ -3,15 +3,15 @@
 
 #include "Vector.h"
 
-#define PI 3.14159265358979323846f
-#define TWO_PI 6.28318530717958647692f
+#define PIF 3.14159265358979323846f
+#define TWO_PIF 6.28318530717958647692f
 
 #define FAST_LERP
 
 // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-inline double fast_pow(double a, double b) {
+inline float fast_pow(float a, float b) {
     union {
-        double d;
+        float d;
         int x[2];
     } u = { a };
     u.x[1] = static_cast<int>(b * (u.x[1] - 1072632447) + 1072632447);
@@ -51,7 +51,7 @@ inline static void limitUV(float& u, float& v) {
 }
 
 static Vector3 sqrt(Vector3 v) {
-    return Vector3(sqrt(v.x), sqrt(v.y), sqrt(v.z));
+    return Vector3(sycl::sqrt(v.x), sycl::sqrt(v.y), sycl::sqrt(v.z));
 }
 
 static Vector3 lerp(Vector3 a, Vector3 b, float c) {

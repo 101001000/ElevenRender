@@ -242,10 +242,10 @@
         Vector3 p = (point - origin) / radius;
 
         float theta = sycl::acos(-p.y);
-        float phi = sycl::atan2(-p.z, p.x) + PI;
+        float phi = sycl::atan2(-p.z, p.x) + PIF;
 
-        u = phi / (2 * PI);
-        v = theta / PI;
+        u = phi / (2 * PIF);
+        v = theta / PIF;
 
         limitUV(u,v);
     }
@@ -279,14 +279,14 @@
 
     Vector3 Texture::reverseSphericalMapping(float u, float v) {
 
-        float phi = u * 2 * PI;
-        float theta = v * PI;
+        float phi = u * 2 * PIF;
+        float theta = v * PIF;
 
-        float px = sycl::cos(phi - PI);
+        float px = sycl::cos(phi - PIF);
         float py = -sycl::cos(theta);
-        float pz = -sycl::sin(phi - PI);
+        float pz = -sycl::sin(phi - PIF);
 
-        float a = sqrt(1 - py * py);
+        float a = sycl::sqrt(1 - py * py);
 
         return Vector3(a * px, py, a * pz);
     }

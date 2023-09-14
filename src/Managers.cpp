@@ -211,15 +211,20 @@ public:
 RenderingManager::RenderInfo RenderingManager::get_render_info() {
 
     LOG(debug) << "Getting render info";
-
     unsigned int sample_count = 0;
     unsigned int* dev_samples;
 
     d_q.memcpy(&dev_samples, &(dev_scene->dev_samples), sizeof(unsigned int*)).wait();
     d_q.memcpy(&sample_count, dev_samples, 1 * sizeof(unsigned int)).wait();
 
-    RenderInfo render_info;
-    render_info.samples = sample_count;
+
+        render_info.samples = sample_count;
+    }
+    catch (std::exception const& e) {
+        LOG(error) << "Error copying render info: " << e.what();
+    }
+
+ 
 
     LOG(debug) << "Rendering info retrieved";
 
@@ -241,6 +246,7 @@ void RenderingManager::start_rendering(Scene* scene) {
     }
 
     LOG(info) << "Device selected: " << device.get_info<sycl::info::device::name>();
+    LOG(info) << "Platform selected: " << device.get_info<sycl::info::device::platform>().get_info<sycl::info::platform::name>();
 
     auto work_item_dim = device.get_info<sycl::info::device::max_work_item_dimensions>();
     //auto work_item_size = device.get_info<sycl::info::device::max_work_item_sizes>();
@@ -248,7 +254,7 @@ void RenderingManager::start_rendering(Scene* scene) {
 
     //auto test = sycl::info::device::max_work_item_dimensions
 
-    //LOG(info) << "dim " << work_item_dim << " is_x: " << work_item_size[0] << " is_y: " << work_item_size[1] << " is_z: " << work_item_size[2] << " gs: " << work_item_group_size;
+    LOG(info) << "dim " << work_item_dim << " gs: " << work_item_group_size;
 
     dev_scene = sycl::malloc_device<dev_Scene>(1, k_q);
 

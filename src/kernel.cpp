@@ -187,16 +187,16 @@ void setupKernel(dev_Scene* dev_scene_g, int idx) {
     for (int i = 0; i < PASSES_COUNT; i++) {
         dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
-            (4 * idx + 0)] = 0.0;
+            (4 * idx + 0)] = 0.0f;
         dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
-            (4 * idx + 1)] = 0.0;
+            (4 * idx + 1)] = 0.0f;
         dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
-            (4 * idx + 2)] = 0.0;
+            (4 * idx + 2)] = 0.0f;
         dev_scene_g->dev_passes[(i * dev_scene_g->x_res * dev_scene_g->y_res *
             4) +
-            (4 * idx + 3)] = 1.0;
+            (4 * idx + 3)] = 1.0f;
     }
 
     // Reset the amount of samples for each pixel. (1.1s)
@@ -273,7 +273,7 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
         return Vector3::Zero();
     }
 
-    pdf = (static_cast<float>(scene->pointLightCount)) / (2.0 * PI);
+    pdf = (static_cast<float>(scene->pointLightCount)) / (2.0f * PIF);
 
     // Retrieve a random light
     PointLight light = scene->pointLights[static_cast<int>(scene->pointLightCount * r1)];
@@ -283,7 +283,7 @@ Vector3 pointLight(Ray ray, HitData hitdata, dev_Scene* scene, Vector3 point,
     float dist = (light.position - point).length();
 
     // Test if the point is visible from the light
-    Ray shadowRay(point + newDir * 0.001, newDir);
+    Ray shadowRay(point + newDir * 0.001f, newDir);
     Hit shadowHit = throwRay(shadowRay, scene);
     float shadowDist = (shadowHit.position - point).length();
 
@@ -377,12 +377,12 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
         (static_cast<float>(y)) / (static_cast<float>(scene.y_res)) * camera.sensorHeight;
 
     // Absolute coordinates for the point where the first ray will be launched
-    float odx = (-camera.sensorWidth / 2.0) + dx;
-    float ody = (-camera.sensorHeight / 2.0) + dy;
+    float odx = (-camera.sensorWidth / 2.0f) + dx;
+    float ody = (-camera.sensorHeight / 2.0f) + dy;
 
     // Random part of the sampling offset so we get antialasing
-    float rx = (1.0 / static_cast<float>(scene.x_res)) * (r1 - 0.5) * camera.sensorWidth;
-    float ry = (1.0 / static_cast<float>(scene.y_res)) * (r2 - 0.5) * camera.sensorHeight;
+    float rx = (1.0f / static_cast<float>(scene.x_res)) * (r1 - 0.5f) * camera.sensorWidth;
+    float ry = (1.0f / static_cast<float>(scene.y_res)) * (r2 - 0.5f) * camera.sensorHeight;
 
     // Sensor point, the point where intersects the ray with the sensor
     float SPx = odx + rx;
@@ -411,7 +411,7 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
     // TODO CLEANUP AND PRECALC
     Vector3 rotation = camera.rotation;
 
-    rotation *= (PI / 180.0);
+    rotation *= (PIF / 180.0f);
 
     Vector3 dir = Vector3(SPx, SPy, SPz) - camera.position;
     Vector3 dirXRot = Vector3(
@@ -448,8 +448,8 @@ void calculateCameraRay(int x, int y, dev_Scene& scene, Camera& camera, Ray& ray
         // Sampling for the iris of the camera
         uniformCircleSampling(r3, r4, r5, rIPx, rIPy);
 
-        rIPx *= diameter * 0.5;
-        rIPy *= diameter * 0.5;
+        rIPx *= diameter * 0.5f;
+        rIPy *= diameter * 0.5f;
 
         Vector3 rIP(rIPx, rIPy, 0);
 
@@ -552,7 +552,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
 
             Vector3 wihdri = -scene->hdri->texture.reverseSphericalMapping(iu, iv).normalized();
 
-            Ray shadowRay(hitdata.position + hitdata.normal * 0.001, wihdri);
+            Ray shadowRay(hitdata.position + hitdata.normal * 0.001f, wihdri);
             Hit shadowHit = throwRay(shadowRay, scene);
 
             Vector3 hdriValue = scene->hdri->texture.getValueFromUV(iu, iv);
@@ -584,10 +584,10 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
                 bitangent = hitdata.bitangent;
             }
 
-            ray = Ray(nearestHit.position + wibrdf * 0.001, wibrdf);
+            ray = Ray(nearestHit.position + wibrdf * 0.001f, wibrdf);
         }
         else {
-            ray = Ray(nearestHit.position + ray.direction * 0.001, ray.direction);
+            ray = Ray(nearestHit.position + ray.direction * 0.001f, ray.direction);
             
         }
     }
@@ -680,11 +680,12 @@ void renderSetup(sycl::queue& q, Scene* scene, dev_Scene* dev_scene, unsigned in
 void kernel_render_enqueue(sycl::queue& q, int target_samples, unsigned long long block_size, Scene* scene, dev_Scene* dev_scene) {
 
     LOG(trace) << "kernel_render_enqueue::start";
-
-    sycl::range global{ (scene->x_res / block_size) * block_size, (scene->y_res / block_size) * block_size };
-    sycl::range local{ block_size,block_size };
     
     try {
+
+        sycl::range global{ scene->x_res + (block_size - (scene->x_res % block_size)),scene->y_res + (block_size - (scene->y_res % block_size)) };
+        sycl::range local{ block_size,block_size };
+
         for (int i = 0; i < target_samples; i++) {
 
             LOG(trace) << "submitting one sample";

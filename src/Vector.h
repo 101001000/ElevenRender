@@ -95,7 +95,7 @@ public:
 
 
 	inline float length() const {
-		return sqrt(x * x + y * y + z * z);
+		return sycl::sqrt(x * x + y * y + z * z);
 	}
 
 	inline float length2() const {
@@ -125,7 +125,7 @@ public:
 
 	inline bool operator==(const Vector3& v) {
 
-		float EPSILON = 0.0001;
+		float EPSILON = 0.0001f;
 
 		return sycl::abs(x - v.x) < EPSILON && sycl::abs(y - v.y) < EPSILON && sycl::abs(z - v.z) < EPSILON;
 	}
@@ -242,7 +242,7 @@ inline Vector3 reflect(Vector3 v1, Vector3 v2) {
 
 inline bool operator==(const Vector3& v1, const Vector3& v2) {
 
-	float EPSILON = 0.0001;
+	float EPSILON = 0.0001f;
 
 	return sycl::abs(v1.x - v2.x) < EPSILON && sycl::abs(v1.y - v2.y) < EPSILON && sycl::abs(v1.z - v2.z) < EPSILON;
 }

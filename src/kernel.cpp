@@ -263,6 +263,9 @@ dev_Scene::dev_Scene(Scene* scene) {
     x_res = scene->x_res;
     y_res = scene->y_res;
 
+    frame = scene->frame;
+    fps = scene->fps;
+
  }
 
 // Calculate the light amount from all the light-points.
@@ -532,7 +535,7 @@ void renderingKernel(dev_Scene* scene, int idx, int samples) {
             hitdata.albedo.y = 0;
             hitdata.albedo.z = 0;
             //asl_shade0_(nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
-            asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
+            asl_shade(material->albedoShaderID, nearestHit.position.x, nearestHit.position.y, nearestHit.position.z, ray.direction.x, ray.direction.y, ray.direction.z, hitdata.normal.x, hitdata.normal.y, hitdata.normal.z, hitdata.gnormal.x, hitdata.gnormal.y, hitdata.gnormal.z, nearestHit.tu, nearestHit.tv, scene->frame, scene->fps, hitdata.albedo.x, hitdata.albedo.y, hitdata.albedo.z);
         }
 
         

@@ -162,7 +162,9 @@ RenderParameters ConfigTCPLoadInputCommand::load() {
             json_data["sample_target"].as_int64(),
             json_data["denoise"].as_bool(),
             json_data["device"].as_string().c_str(),
-            json_data["block_size"].as_int64());
+            json_data["block_size"].as_int64(),
+            json_data["frame"].as_int64(),
+            json_data["fps"].as_int64());
     }
     catch (std::exception const& e) {
         LOG(error) << "Invalid config format: " << e.what();
@@ -383,6 +385,8 @@ void CommandManager::load_config(RenderParameters rp) {
     //TODO: Pars and scene both have redundant resolution.
     sm->scene.x_res = rp.width;
     sm->scene.y_res = rp.height;
+    sm->scene.frame = rp.frame;
+    sm->scene.fps = rp.fps;
     im->write_message(Message::OK());
 }
 

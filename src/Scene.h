@@ -33,6 +33,8 @@ public:
 
 	unsigned int x_res;
 	unsigned int y_res;
+	unsigned int frame;
+	unsigned int fps;
 
 	HDRI hdri;
 	Camera camera;

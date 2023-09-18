@@ -33,6 +33,9 @@ struct dev_Scene {
 	unsigned int x_res;
 	unsigned int y_res;
 
+	unsigned int frame;
+	unsigned int fps;
+
     PointLight* pointLights;
     MeshObject* meshObjects;
     Material* materials;
@@ -53,12 +56,13 @@ struct RenderParameters {
 	unsigned int width, height;
 	unsigned int sampleTarget;
 	unsigned int block_size;
+	unsigned int frame, fps;
 	std::string device;
 	bool denoise;
 
 	bool passes_enabled[PASSES_COUNT];
 
-	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device, unsigned int _block_size) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device), block_size(_block_size) {
+	RenderParameters(unsigned int width, unsigned int height, unsigned int sampleTarget, bool denoise, std::string _device, unsigned int _block_size, unsigned int frame, unsigned int fps) : width(width), height(height), sampleTarget(sampleTarget), denoise(denoise), device(_device), block_size(_block_size), frame(frame), fps(fps){
 		passes_enabled[BEAUTY] = true;
 		passes_enabled[DENOISE] = true;
 		passes_enabled[NORMAL] = true;

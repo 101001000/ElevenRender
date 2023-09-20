@@ -153,7 +153,8 @@ void ObjLoader::loadObjsRapid(std::filesystem::path path, std::vector<MeshObject
 
 void ObjLoader::loadObjsRapid(std::istream& obj_stream, std::string_view material_str, std::vector<MeshObject>& meshObjects, bool recompute_normals) {
 	std::string str = std::string(material_str);
-	std::string result = std::regex_replace(str, std::regex("^(?!newmtl).+"), "");
+	std::regex pattern("^((?!newmtl).)*$", std::regex::multiline);
+	std::string result = std::regex_replace(str, pattern, "");
 
 	//std::string result = std::regex_replace(str, std::regex("\\map_Bump"), "map_bump");
 	//std::string result2 = std::regex_replace(result, std::regex("\\map_refl"), "refl");

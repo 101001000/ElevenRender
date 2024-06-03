@@ -19,7 +19,6 @@ Download the last ElevenBlender release here: <span style="color:red">**There's 
 
 - Compatibility with both GPU and CPU (vendor independent)
 - Normal recalculation with Vertex Weighted algorithm (so if your model has broken normals you won't have to worry about)
-- Osl compatibility through a custom shading language
 - MIS (BRDF, Environment, PointLights)
 - Denoising (Open Image Denoiser) 
 
